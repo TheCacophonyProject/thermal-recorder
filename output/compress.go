@@ -1,0 +1,110 @@
+package output
+
+// XXX docs!
+// XXX tests!
+
+import (
+	"bytes"
+	"encoding/binary"
+	"io"
+	"math"
+
+	"github.com/TheCacophonyProject/lepton3"
+)
+
+type Compressor struct {
+	cols, rows int
+	frameDelta []int32
+	adjDeltas  []int32
+	outBuf     *bytes.Buffer
+}
+
+func NewCompressor(cols, rows int) *Compressor {
+	elems := rows * cols
+	outBuf := new(bytes.Buffer)
+	outBuf.Grow(2 * elems) // 16 bits per element; worst case
+	return &Compressor{
+		rows:       rows,
+		cols:       cols,
+		frameDelta: make([]int32, elems),
+		adjDeltas:  make([]int32, (elems)-1),
+		outBuf:     outBuf,
+	}
+}
+
+func (c *Compressor) Next(prev, curr *lepton3.Frame) (uint8, []byte) {
+	// Calculate the interframe delta
+	i := 0
+	for y := 0; y < c.rows; y++ {
+		for x := 0; x < c.cols; x++ {
+			d := int32(curr[y][x]) - int32(prev[y][x])
+			c.frameDelta[i] = d
+			i++
+		}
+	}
+
+	// Now the adjacent "delta of deltas"
+	var maxD uint32
+	for i := 0; i < len(c.frameDelta)-1; i++ {
+		d := c.frameDelta[i+1] - c.frameDelta[i]
+		c.adjDeltas[i] = d
+
+		absD := abs(d)
+		if absD > maxD {
+			maxD = absD
+		}
+	}
+
+	// How many bits required to store the largest delta?
+	width := numBits(maxD) + 1 // add 1 for sign bit
+
+	// Write out the starting frame delta value (required for reconstruction)
+	c.outBuf.Reset()
+	binary.Write(c.outBuf, binary.LittleEndian, c.frameDelta[0])
+
+	// Pack the deltas according to the bit width determined
+	packBits(width, c.adjDeltas, c.outBuf)
+
+	return width, c.outBuf.Bytes()
+}
+
+func packBits(width uint8, input []int32, w io.ByteWriter) {
+	var bits uint32 // scratch buffer
+	var nBits uint8 // number of bits in use in scratch
+	for _, d := range input {
+		bits |= encodeSign(d, width) << nBits
+		nBits += width
+		for nBits >= 8 {
+			w.WriteByte(uint8(bits))
+			bits >>= 8
+			nBits -= 8
+		}
+	}
+	if nBits > 0 {
+		w.WriteByte(uint8(bits))
+	}
+}
+
+func abs(x int32) uint32 {
+	if x < 0 {
+		return uint32(-x)
+	}
+	return uint32(x)
+}
+
+// encodeSign turns a signed value of the bit width specified into a
+// value of the same width encoded using sign-and-magnitude notation.
+//
+// Two's complement isn't used because it provides no advantage for
+// this use case. Encoding is purely for storage and no direct
+// arithmetic will be performed on these values.
+func encodeSign(v int32, width uint8) uint32 {
+	if v >= 0 {
+		return uint32(v)
+	}
+	return uint32(abs(v)) | 1<<(width-1)
+}
+
+func numBits(x uint32) uint8 {
+	return uint8(math.Floor(math.Log2(float64(x)) + 1))
+}
