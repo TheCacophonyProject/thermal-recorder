@@ -56,7 +56,7 @@ After these a number of fields will exist.
 
 | Name         | Length | Code  | Type    | Description
 | ------------ | ------ | ----- | ------- | ---------------------------------------------
-| Timestamp    | 8      | 'T'   | uint64  | Milliseconds since 1970-01-01 UTC
+| Timestamp    | 8      | 'T'   | uint64  | Microseconds since 1970-01-01 UTC
 | X resolution | 4      | 'X'   | uint32  | Frame X resolution (columns)
 | Y resolution | 4      | 'Y'   | uint32  | Frame Y resolution (rows)
 | Compression  | 8      | 'C'   | uint8   | Compression scheme in use (0 = uncompressed)
@@ -81,7 +81,7 @@ The following frame fields must exist in every frame:
 
 | Name       | Length | Code  | Type      | Description
 | ---------- | ------ | ----- | --------- | ---------------------------------------------
-| Offset     | 4      | 't'   | uint32    | Offset in milliseconds to timestamp in header
+| Offset     | 4      | 't'   | uint32    | Offset in microseconds to timestamp in header
 | Bit width  | 1      | 'w'   | uint8     | Bit width of the frame data
 | Frame size | 4      | 'f'   | uint32    | Size of the frame data
 
