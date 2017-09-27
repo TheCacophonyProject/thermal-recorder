@@ -49,8 +49,7 @@ func (c *Compressor) Next(prev, curr *lepton3.Frame) (uint8, []byte) {
 		d := c.frameDelta[i+1] - c.frameDelta[i]
 		c.adjDeltas[i] = d
 
-		absD := abs(d)
-		if absD > maxD {
+		if absD := abs(d); absD > maxD {
 			maxD = absD
 		}
 	}
@@ -72,7 +71,7 @@ func packBits(width uint8, input []int32, w io.ByteWriter) {
 	var bits uint32 // scratch buffer
 	var nBits uint8 // number of bits in use in scratch
 	for _, d := range input {
-		bits |= encodeSign(d, width) << nBits
+		bits |= twosComp(d, width) << nBits
 		nBits += width
 		for nBits >= 8 {
 			w.WriteByte(uint8(bits))
@@ -92,17 +91,12 @@ func abs(x int32) uint32 {
 	return uint32(x)
 }
 
-// encodeSign turns a signed value of the bit width specified into a
-// value of the same width encoded using sign-and-magnitude notation.
-//
-// Two's complement isn't used because it provides no advantage for
-// this use case. Encoding is purely for storage and no direct
-// arithmetic will be performed on these values.
-func encodeSign(v int32, width uint8) uint32 {
+func twosComp(v int32, width uint8) uint32 {
 	if v >= 0 {
 		return uint32(v)
 	}
-	return uint32(abs(v)) | 1<<(width-1)
+	widthMask := uint32((1 << width) - 1) // all 1's for the target width
+	return uint32(-(v+1))&widthMask ^ widthMask
 }
 
 func numBits(x uint32) uint8 {
