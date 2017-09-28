@@ -59,7 +59,7 @@ After these a number of fields will exist.
 | Timestamp    | 8      | 'T'   | uint64  | Microseconds since 1970-01-01 UTC
 | X resolution | 4      | 'X'   | uint32  | Frame X resolution (columns)
 | Y resolution | 4      | 'Y'   | uint32  | Frame Y resolution (rows)
-| Compression  | 8      | 'C'   | uint8   | Compression scheme in use (0 = uncompressed)
+| Compression  | 1      | 'C'   | uint8   | Compression scheme in use (0 = uncompressed)
 
 ### Future Header Fields
 
