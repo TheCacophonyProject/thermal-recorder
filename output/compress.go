@@ -35,8 +35,8 @@ func NewCompressor(cols, rows int) *Compressor {
 func (c *Compressor) Next(prev, curr *lepton3.Frame) (uint8, []byte) {
 	// Calculate the interframe delta.
 
-	// The output is written in "snaked" to avoid potentially greater
-	// deltas at the edges in the next stage.
+	// The output is written in a "snaked" fashion to avoid
+	// potentially greater deltas at the edges in the next stage.
 	var i int
 	for y := 0; y < c.rows; y++ {
 		i = y * c.cols
