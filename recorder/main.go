@@ -5,13 +5,10 @@
 package main
 
 import (
-	"bufio"
-	"bytes"
-	"encoding/binary"
 	"errors"
 	"fmt"
 	"log"
-	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
@@ -22,11 +19,15 @@ import (
 	"github.com/TheCacophonyProject/thermal_recorder/output"
 )
 
-// XXX most of this should come from a configuration file
+// XXX restarting camera if NextFrame dies
+
+// XXX these should come from a configuration file
 const (
-	spiSpeed  = 30000000
-	powerPin  = "GPIO23"
-	directory = "./r"
+	spiSpeed         = 30000000
+	powerPin         = "GPIO23"
+	directory        = "/mnt/ramdisk"
+	minRecordingSecs = 10
+	cameraHz         = 9 // approx
 )
 
 func main() {
@@ -46,26 +47,6 @@ func runMain() error {
 		return err
 	}
 
-	f, err := os.Create("out.cptv")
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	w := bufio.NewWriter(f)
-	defer w.Flush()
-
-	fw := output.NewWriter(w)
-	defer fw.Close()
-
-	hf := output.NewFields()
-	t0 := time.Now()
-	hf.Timestamp(output.Timestamp, t0)
-	hf.Uint32(output.XResolution, lepton3.FrameCols)
-	hf.Uint32(output.YResolution, lepton3.FrameRows)
-	hf.Uint8(output.Compression, 1)
-	fw.WriteHeader(hf)
-
 	camera := lepton3.New(spiSpeed)
 	err = camera.Open()
 	if err != nil {
@@ -74,23 +55,50 @@ func runMain() error {
 	defer camera.Close()
 	camera.SetLogFunc(func(t string) { log.Printf(t) })
 
-	compressor := output.NewCompressor(lepton3.FrameCols, lepton3.FrameRows)
+	movement := new(MovementDetector)
+
 	prevFrame := new(lepton3.Frame)
 	frame := new(lepton3.Frame)
-	for i := 0; i < 10; i++ {
+
+	var writer *output.FileWriter
+	recordingCount := 0
+	const minRecordingCount = minRecordingSecs * cameraHz
+	for {
 		err := camera.NextFrame(frame)
 		if err != nil {
 			return err
 		}
-		dt := uint64(time.Since(t0))
 
-		bitWidth, cFrame := compressor.Next(prevFrame, frame)
+		// If movement detected, bump the recording counter.
+		if movement.Detect(frame) {
+			recordingCount = minRecordingCount
+		}
 
-		ff := output.NewFields()
-		ff.Uint32(output.Offset, uint32(dt/1000))
-		ff.Uint8(output.BitWidth, uint8(bitWidth))
-		ff.Uint32(output.FrameSize, uint32(len(cFrame)))
-		fw.WriteFrame(ff, cFrame)
+		// Start or stop recording if required.
+		if recordingCount > 0 && writer == nil {
+			log.Println("recording started")
+			writer, err = output.NewFileWriter(newRecordingName())
+			if err != nil {
+				return err
+			}
+			err = writer.WriteHeader()
+			if err != nil {
+				return err
+			}
+		} else if recordingCount == 0 && writer != nil {
+			log.Println("recording stopped")
+			writer.Close()
+			writer = nil
+		}
+
+		// If recording, write the frame.
+		if writer != nil {
+			err := writer.WriteFrame(prevFrame, frame)
+			if err != nil {
+				return err
+			}
+			recordingCount--
+		}
 
 		frame, prevFrame = prevFrame, frame
 	}
@@ -98,16 +106,13 @@ func runMain() error {
 	return nil
 }
 
-func flattenFrame(f *lepton3.Frame) []byte {
-	out := new(bytes.Buffer)
-	out.Grow(2 * lepton3.FrameRows * lepton3.FrameCols)
-	for y := 0; y < len(f); y++ {
-		binary.Write(out, binary.LittleEndian, f[y])
-	}
-	return out.Bytes()
+func newRecordingName() string {
+	basename := time.Now().Format("20060102.150405.000.cptv")
+	return filepath.Join(directory, basename)
 }
 
 func powerupCamera(pin string) error {
+	// XXX can we detect if the camera was already powered up? If it was off sleep for a few seconds.
 	powerPin := gpioreg.ByName(pin)
 	if powerPin == nil {
 		return errors.New("unable to load power pin")

@@ -33,8 +33,7 @@ func NewCompressor(cols, rows int) *Compressor {
 }
 
 func (c *Compressor) Next(prev, curr *lepton3.Frame) (uint8, []byte) {
-	// Calculate the interframe delta.
-
+	// Generate the interframe delta.
 	// The output is written in a "snaked" fashion to avoid
 	// potentially greater deltas at the edges in the next stage.
 	var i int
@@ -44,9 +43,7 @@ func (c *Compressor) Next(prev, curr *lepton3.Frame) (uint8, []byte) {
 			i += c.cols - 1
 		}
 		for x := 0; x < c.cols; x++ {
-			d := int32(curr[y][x]) - int32(prev[y][x])
-			c.frameDelta[i] = d
-
+			c.frameDelta[i] = int32(curr[y][x]) - int32(prev[y][x])
 			if y%2 == 0 {
 				i++
 			} else {
@@ -55,44 +52,45 @@ func (c *Compressor) Next(prev, curr *lepton3.Frame) (uint8, []byte) {
 		}
 	}
 
-	// Now the adjacent "delta of deltas"
+	// Now generate the adjacent "delta of deltas".
 	var maxD uint32
 	for i := 0; i < len(c.frameDelta)-1; i++ {
 		d := c.frameDelta[i+1] - c.frameDelta[i]
 		c.adjDeltas[i] = d
-
 		if absD := abs(d); absD > maxD {
 			maxD = absD
 		}
 	}
 
 	// How many bits required to store the largest delta?
-	width := numBits(maxD) + 1 // add 1 for sign bit
+	width := numBits(maxD) + 1 // add 1 to allow for sign bit
 
 	// Write out the starting frame delta value (required for reconstruction)
 	c.outBuf.Reset()
 	binary.Write(c.outBuf, binary.LittleEndian, c.frameDelta[0])
 
 	// Pack the deltas according to the bit width determined
-	packBits(width, c.adjDeltas, c.outBuf)
-
+	PackBits(width, c.adjDeltas, c.outBuf)
 	return width, c.outBuf.Bytes()
 }
 
-func packBits(width uint8, input []int32, w io.ByteWriter) {
+// PackBits takes a slice of signed integers and packs them into an
+// abitrary (smaller) bit width. The most significant bit is written
+// out first.
+func PackBits(width uint8, input []int32, w io.ByteWriter) {
 	var bits uint32 // scratch buffer
 	var nBits uint8 // number of bits in use in scratch
 	for _, d := range input {
-		bits |= twosComp(d, width) << nBits
+		bits |= twosComp(d, width) << (32 - width - nBits)
 		nBits += width
 		for nBits >= 8 {
-			w.WriteByte(uint8(bits))
-			bits >>= 8
+			w.WriteByte(uint8(bits >> 24))
+			bits <<= 8
 			nBits -= 8
 		}
 	}
 	if nBits > 0 {
-		w.WriteByte(uint8(bits))
+		w.WriteByte(uint8(bits >> 24))
 	}
 }
 
