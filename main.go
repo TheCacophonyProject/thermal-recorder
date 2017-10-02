@@ -21,14 +21,7 @@ import (
 
 // XXX restarting camera if NextFrame dies
 
-// XXX these should come from a configuration file
-const (
-	spiSpeed         = 30000000
-	powerPin         = "GPIO23"
-	directory        = "/mnt/ramdisk"
-	minRecordingSecs = 10
-	cameraHz         = 9 // approx
-)
+const framesHz = 9 // approx
 
 func main() {
 	err := runMain()
@@ -38,16 +31,21 @@ func main() {
 }
 
 func runMain() error {
-	_, err := host.Init()
+	conf, err := ConfigFromFile("thermal-recorder.toml")
 	if err != nil {
 		return err
 	}
+	log.Printf("config: %+v", *conf)
 
-	if err := powerupCamera(powerPin); err != nil {
+	if _, err := host.Init(); err != nil {
 		return err
 	}
 
-	camera := lepton3.New(spiSpeed)
+	if err := powerupCamera(conf.PowerPin); err != nil {
+		return err
+	}
+
+	camera := lepton3.New(conf.SPISpeed)
 	err = camera.Open()
 	if err != nil {
 		return err
@@ -62,7 +60,7 @@ func runMain() error {
 
 	var writer *output.FileWriter
 	recordingCount := 0
-	const minRecordingCount = minRecordingSecs * cameraHz
+	minRecordingCount := conf.MinSecs * framesHz
 	for {
 		err := camera.NextFrame(frame)
 		if err != nil {
@@ -76,8 +74,9 @@ func runMain() error {
 
 		// Start or stop recording if required.
 		if recordingCount > 0 && writer == nil {
-			log.Println("recording started")
-			writer, err = output.NewFileWriter(newRecordingName())
+			filename := filepath.Join(conf.OutputDir, newRecordingName())
+			log.Printf("recording started: %s", filename)
+			writer, err = output.NewFileWriter(filename)
 			if err != nil {
 				return err
 			}
@@ -109,8 +108,7 @@ func runMain() error {
 }
 
 func newRecordingName() string {
-	basename := time.Now().Format("20060102.150405.000.cptv")
-	return filepath.Join(directory, basename)
+	return time.Now().Format("20060102.150405.000.cptv")
 }
 
 func powerupCamera(pin string) error {

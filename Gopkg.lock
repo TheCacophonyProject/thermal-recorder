@@ -2,6 +2,12 @@
 
 
 [[projects]]
+  name = "github.com/BurntSushi/toml"
+  packages = ["."]
+  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
+  version = "v0.3.0"
+
+[[projects]]
   branch = "master"
   name = "github.com/TheCacophonyProject/lepton3"
   packages = ["."]
@@ -46,6 +52,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "519475b0d76a24a34135ed2db7c7c3e199c7347c8232d6ad408cfd965c2e7c7e"
+  inputs-digest = "0e493af747dd662c6e725ee737418618008ed6d17ac47374a9c787044bc51570"
   solver-name = "gps-cdcl"
   solver-version = 1
