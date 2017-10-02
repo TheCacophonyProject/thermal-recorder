@@ -16,7 +16,7 @@ import (
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
 
-	"github.com/TheCacophonyProject/thermal_recorder/output"
+	"github.com/TheCacophonyProject/thermal-recorder/output"
 )
 
 // XXX restarting camera if NextFrame dies
