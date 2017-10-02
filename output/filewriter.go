@@ -53,6 +53,10 @@ func (fw *FileWriter) WriteFrame(prevFrame, frame *lepton3.Frame) error {
 	return fw.w.WriteFrame(fields, compFrame)
 }
 
+func (fw *FileWriter) Name() string {
+	return fw.f.Name()
+}
+
 func (fw *FileWriter) Close() {
 	fw.w.Close()
 	fw.bw.Flush()

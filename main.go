@@ -8,7 +8,9 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"path/filepath"
+	"regexp"
 	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
@@ -74,7 +76,7 @@ func runMain() error {
 
 		// Start or stop recording if required.
 		if recordingCount > 0 && writer == nil {
-			filename := filepath.Join(conf.OutputDir, newRecordingName())
+			filename := filepath.Join(conf.OutputDir, newRecordingTempName())
 			log.Printf("recording started: %s", filename)
 			writer, err = output.NewFileWriter(filename)
 			if err != nil {
@@ -87,8 +89,12 @@ func runMain() error {
 			// Start with an empty previous frame for a new recording.
 			prevFrame = new(lepton3.Frame)
 		} else if recordingCount == 0 && writer != nil {
-			log.Println("recording stopped")
 			writer.Close()
+			finalName, err := renameTempRecording(writer.Name())
+			if err != nil {
+				return err
+			}
+			log.Printf("recording stopped: %s\n", finalName)
 			writer = nil
 		}
 
@@ -107,8 +113,23 @@ func runMain() error {
 	return nil
 }
 
-func newRecordingName() string {
-	return time.Now().Format("20060102.150405.000.cptv")
+func newRecordingTempName() string {
+	return time.Now().Format("20060102.150405.000.cptv.temp")
+}
+
+func renameTempRecording(tempName string) (string, error) {
+	finalName := recordingFinalName(tempName)
+	err := os.Rename(tempName, finalName)
+	if err != nil {
+		return "", err
+	}
+	return finalName, nil
+}
+
+var reTempName = regexp.MustCompile(`(.+)\.temp$`)
+
+func recordingFinalName(filename string) string {
+	return reTempName.ReplaceAllString(filename, `$1`)
 }
 
 func powerupCamera(pin string) error {
