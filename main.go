@@ -85,6 +85,8 @@ func runMain() error {
 			if err != nil {
 				return err
 			}
+			// Start with an empty previous frame for a new recording.
+			prevFrame = new(lepton3.Frame)
 		} else if recordingCount == 0 && writer != nil {
 			log.Println("recording stopped")
 			writer.Close()
