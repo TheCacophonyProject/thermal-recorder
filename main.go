@@ -61,8 +61,9 @@ func runMain() error {
 	frame := new(lepton3.Frame)
 
 	var writer *output.FileWriter
+	framesRecorded := 0
+	maxFramesRecorded := conf.MaxSecs * framesHz
 	recordingCount := 0
-	recordingFrameLen := 0
 	minRecordingCount := conf.MinSecs * framesHz
 	for {
 		err := camera.NextFrame(frame)
@@ -90,7 +91,7 @@ func runMain() error {
 			// Start with an empty previous frame for a new recording.
 			prevFrame = new(lepton3.Frame)
 		} else if recordingCount == 0 && writer != nil ||
-				recordingFrameLen > conf.MaxLen {
+				framesRecorded > maxFramesRecorded {
 			writer.Close()
 			finalName, err := renameTempRecording(writer.Name())
 			if err != nil {
@@ -98,7 +99,8 @@ func runMain() error {
 			}
 			log.Printf("recording stopped: %s\n", finalName)
 			writer = nil
-			recordingFrameLen = 0
+			framesRecorded = 0
+			recordingCount = 0
 		}
 
 		// If recording, write the frame.
@@ -108,7 +110,7 @@ func runMain() error {
 				return err
 			}
 			recordingCount--
-			recordingFrameLen++
+			framesRecorded++
 		}
 
 		frame, prevFrame = prevFrame, frame
