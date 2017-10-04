@@ -16,9 +16,6 @@ import (
 	"periph.io/x/periph/conn/spi/spireg"
 )
 
-// XXX cpu utilisations seems to have gone up from 33% to 60% when writing PNGs. Recent change?
-// XXX measure error rate over time
-
 const (
 	// Video Over SPI packets
 	vospiHeaderSize = 4 // 2 byte ID, 2 byte CRC
@@ -36,7 +33,7 @@ const (
 	maxPacketNum      = 59
 
 	// SPI transfer
-	packetsPerRead     = 200 // XXX play around with this to check effect on CPU load and reliability
+	packetsPerRead     = 128
 	transferSize       = vospiPacketSize * packetsPerRead
 	packetBufferSize   = 1024
 	maxPacketsPerFrame = 1500 // including discards and then rounded up somewhat

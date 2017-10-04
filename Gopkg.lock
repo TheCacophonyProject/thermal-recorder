@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/TheCacophonyProject/lepton3"
   packages = ["."]
-  revision = "0311d640af6741584bb0f47a9f218dd9c2ab0941"
+  revision = "d2353be5f2f46222f5c55d1417bd69a27fcb5416"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
