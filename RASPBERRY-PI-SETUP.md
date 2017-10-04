@@ -1,19 +1,34 @@
+# Setting up a Raspberry Pi 3 for thermal-recorder
+
 * Start with Stretch Lite image
-* Using raspi-config
-  - Enable SPI
-  - Enable I2C
-  - Reduce GPU memory size to 16MB
 * Set a large SPI buffer
   - Add `spidev.bufsiz=65536` to /boot/cmdline.txt
-* Limit the CPU and core clocks to for stable SPI in /boot/config.txt
-```
-    arm_freq=600
-    arm_freq_min=600
+* Setup up Raspberry Pi hardware
+  - Enable SPI & I2C
+  - Reduce GPU memory size to 16MB
+  - Limit CPU and GPU core clocks for more stable SPI
 
-    core_freq=200
-    core_freq_min=200
+Use this /boot/config.txt:
+
 ```
-* Use the `powersave` CPU governor
-  - NOTE: suspect this is irrelevant with the CPU clock limited
-  - apt install cpufrequtils
-  - GOVERNOR="powersave" to /etc/default/cpufrequtils
+# For more options and information see
+# http://rpf.io/configtxt
+# Some settings may impact device functionality. See link above for details
+# Additional overlays and parameters are documented /boot/overlays/README
+
+gpu_mem=16
+start_x=0
+enable_uart=0
+
+arm_freq=600
+arm_freq_min=600
+
+gpu_freq=200
+gpu_freq_min=200
+
+dtparam=i2c_arm=on
+dtparam=spi=on
+
+# Enable audio (loads snd_bcm2835)
+dtparam=audio=on
+```
