@@ -16,6 +16,7 @@ type Config struct {
 	PowerPin  string `toml:"power-pin"`
 	OutputDir string `toml:"output-dir"`
 	MinSecs   int    `toml:"min-secs"`
+	MaxSecs   int    `toml:"max-secs"`
 }
 
 var defaultConfig = Config{
@@ -23,6 +24,7 @@ var defaultConfig = Config{
 	PowerPin:  "GPIO23",
 	OutputDir: ".",
 	MinSecs:   10,
+	MaxSecs:   600,
 }
 
 func ConfigFromFile(filename string) (*Config, error) {
