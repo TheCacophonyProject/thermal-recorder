@@ -27,7 +27,7 @@ func (d *movementDetector) Detect(frame *lepton3.Frame) bool {
 	d.count++
 	d.frames[2] = d.frames[1]
 	d.frames[1] = d.frames[0]
-	d.frames[0] = stripLow(frame, d)
+	d.frames[0] = d.stripLow(frame)
 	if d.count < 3 {
 		return false
 	}
@@ -36,10 +36,10 @@ func (d *movementDetector) Detect(frame *lepton3.Frame) bool {
 	d1 := absDiffFrames(d.frames[0], d.frames[1])
 	d2 := absDiffFrames(d.frames[1], d.frames[2])
 	m := andFrames(d1, d2)
-	return hasMovement(m, d)
+	return d.hasMovement(m)
 }
 
-func stripLow(f *lepton3.Frame, d *movementDetector) *lepton3.Frame {
+func (d *movementDetector) stripLow(f *lepton3.Frame) *lepton3.Frame {
 	out := new(lepton3.Frame)
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
@@ -82,7 +82,7 @@ func andFrames(a, b *lepton3.Frame) *lepton3.Frame {
 	return out
 }
 
-func hasMovement(f *lepton3.Frame, d *movementDetector) bool {
+func (d *movementDetector) hasMovement(f *lepton3.Frame) bool {
 	var count uint16 = 0
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
