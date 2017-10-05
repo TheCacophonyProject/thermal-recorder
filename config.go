@@ -17,6 +17,13 @@ type Config struct {
 	OutputDir string `toml:"output-dir"`
 	MinSecs   int    `toml:"min-secs"`
 	MaxSecs   int    `toml:"max-secs"`
+	Movement movement
+}
+
+type movement struct {
+	DeltaThresh uint16 `toml:"delta-thresh"`
+	CountThresh uint16 `toml:"count-thresh"`
+	TempThresh  uint16 `toml:"temp-thresh"`
 }
 
 var defaultConfig = Config{
@@ -25,6 +32,11 @@ var defaultConfig = Config{
 	OutputDir: ".",
 	MinSecs:   10,
 	MaxSecs:   600,
+	Movement:  movement{
+		DeltaThresh: 20,
+		CountThresh: 10,
+		TempThresh:  8000,
+	},
 }
 
 func ConfigFromFile(filename string) (*Config, error) {

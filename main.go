@@ -55,7 +55,8 @@ func runMain() error {
 	defer camera.Close()
 	camera.SetLogFunc(func(t string) { log.Printf(t) })
 
-	movement := new(MovementDetector)
+	movement := NewMovementDetector(conf.Movement.DeltaThresh,
+		conf.Movement.CountThresh, conf.Movement.TempThresh)
 
 	prevFrame := new(lepton3.Frame)
 	frame := new(lepton3.Frame)

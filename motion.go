@@ -6,20 +6,28 @@ import (
 	"github.com/TheCacophonyProject/lepton3"
 )
 
-const movementDeltaThresh = 20
-const movementCountThresh = 10
-const tempThresh = 8000 // XXX needs tweaking
-
-type MovementDetector struct {
+type movementDetector struct {
 	frames [3]*lepton3.Frame
 	count  uint64
+	movementDeltaThresh uint16
+	movementCountThresh uint16
+	tempThresh uint16
 }
 
-func (d *MovementDetector) Detect(frame *lepton3.Frame) bool {
+func NewMovementDetector(movementDeltaThresh, movementCountThresh,
+		tempThresh uint16) *movementDetector {
+	d := new(movementDetector)
+	d.movementDeltaThresh = movementDeltaThresh
+	d.movementCountThresh = movementCountThresh
+	d.tempThresh = tempThresh
+	return d
+}
+
+func (d *movementDetector) Detect(frame *lepton3.Frame) bool {
 	d.count++
 	d.frames[2] = d.frames[1]
 	d.frames[1] = d.frames[0]
-	d.frames[0] = stripLow(frame)
+	d.frames[0] = stripLow(frame, d)
 	if d.count < 3 {
 		return false
 	}
@@ -28,16 +36,16 @@ func (d *MovementDetector) Detect(frame *lepton3.Frame) bool {
 	d1 := absDiffFrames(d.frames[0], d.frames[1])
 	d2 := absDiffFrames(d.frames[1], d.frames[2])
 	m := andFrames(d1, d2)
-	return hasMovement(m)
+	return hasMovement(m, d)
 }
 
-func stripLow(f *lepton3.Frame) *lepton3.Frame {
+func stripLow(f *lepton3.Frame, d *movementDetector) *lepton3.Frame {
 	out := new(lepton3.Frame)
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
 			v := f[y][x]
-			if v < tempThresh {
-				out[y][x] = tempThresh
+			if v < d.tempThresh {
+				out[y][x] = d.tempThresh
 			} else {
 				out[y][x] = v
 			}
@@ -74,14 +82,14 @@ func andFrames(a, b *lepton3.Frame) *lepton3.Frame {
 	return out
 }
 
-func hasMovement(f *lepton3.Frame) bool {
-	count := 0
+func hasMovement(f *lepton3.Frame, d *movementDetector) bool {
+	var count uint16 = 0
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			if f[y][x] > movementDeltaThresh {
+			if f[y][x] > d.movementDeltaThresh {
 				count++
 			}
-			if count >= movementCountThresh {
+			if count >= d.movementCountThresh {
 				return true
 			}
 		}
