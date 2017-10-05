@@ -47,14 +47,24 @@ func runMain() error {
 		return err
 	}
 
-	camera := lepton3.New(conf.SPISpeed)
-	err = camera.Open()
-	if err != nil {
-		return err
-	}
-	defer camera.Close()
-	camera.SetLogFunc(func(t string) { log.Printf(t) })
+	for {
+		camera := lepton3.New(conf.SPISpeed)
+		err = camera.Open()
+		if err != nil {
+			return err
+		}
+		defer camera.Close()
+		camera.SetLogFunc(func(t string) { log.Printf(t) })
 
+		runRecordings(conf, camera)
+		camera.Close()
+		cameraPowerOffOn(conf.PowerPin)
+	}
+
+	return nil
+}
+
+func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 	movement := NewMovementDetector(conf.Movement.DeltaThresh,
 		conf.Movement.CountThresh, conf.Movement.TempThresh)
 
@@ -80,6 +90,7 @@ func runMain() error {
 		// Start or stop recording if required.
 		if recordingCount > 0 && writer == nil {
 			filename := filepath.Join(conf.OutputDir, newRecordingTempName())
+			defer os.Remove(filename)
 			log.Printf("recording started: %s", filename)
 			writer, err = output.NewFileWriter(filename)
 			if err != nil {
@@ -116,8 +127,6 @@ func runMain() error {
 
 		frame, prevFrame = prevFrame, frame
 	}
-
-	return nil
 }
 
 func newRecordingTempName() string {
@@ -137,6 +146,20 @@ var reTempName = regexp.MustCompile(`(.+)\.temp$`)
 
 func recordingFinalName(filename string) string {
 	return reTempName.ReplaceAllString(filename, `$1`)
+}
+
+func cameraPowerOffOn(pin string) error {
+	log.Println("Turning camera off then on.")
+	powerPin := gpioreg.ByName(pin)
+	if err := powerPin.Out(gpio.Low); err != nil {
+		return fmt.Errorf("failed to set camera power pin low: %v", err)
+	}
+	time.Sleep(2000 * time.Millisecond)
+	if err := powerPin.Out(gpio.High); err != nil {
+		return fmt.Errorf("failed to set camera power pin high: %v", err)
+	}
+	time.Sleep(6000 * time.Millisecond)
+	return nil
 }
 
 func powerupCamera(pin string) error {
