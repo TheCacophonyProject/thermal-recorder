@@ -121,7 +121,7 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 
 		// If motion detected, allow minFrames more frames.
 		if motion.Detect(frame) {
-			lastFrame = min(lastFrame+minFrames, maxFrames)
+			lastFrame = min(numFrames+minFrames, maxFrames)
 		}
 
 		// Start or stop recording if required.
