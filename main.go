@@ -81,8 +81,11 @@ func runMain() error {
 }
 
 func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
-	movement := NewMovementDetector(conf.Movement.DeltaThresh,
-		conf.Movement.CountThresh, conf.Movement.TempThresh)
+	motion := NewMotionDetector(
+		conf.Motion.DeltaThresh,
+		conf.Motion.CountThresh,
+		conf.Motion.TempThresh,
+	)
 
 	prevFrame := new(lepton3.Frame)
 	frame := new(lepton3.Frame)
@@ -105,8 +108,8 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			return &nextFrameErr{err}
 		}
 
-		// If movement detected, allow minFrames more frames.
-		if movement.Detect(frame) {
+		// If motion detected, allow minFrames more frames.
+		if motion.Detect(frame) {
 			lastFrame = min(lastFrame+minFrames, maxFrames)
 		}
 

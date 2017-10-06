@@ -17,10 +17,10 @@ type Config struct {
 	OutputDir string `toml:"output-dir"`
 	MinSecs   int    `toml:"min-secs"`
 	MaxSecs   int    `toml:"max-secs"`
-	Movement movement
+	Motion    Motion `toml:"motion"`
 }
 
-type movement struct {
+type Motion struct {
 	DeltaThresh uint16 `toml:"delta-thresh"`
 	CountThresh uint16 `toml:"count-thresh"`
 	TempThresh  uint16 `toml:"temp-thresh"`
@@ -32,7 +32,7 @@ var defaultConfig = Config{
 	OutputDir: ".",
 	MinSecs:   10,
 	MaxSecs:   600,
-	Movement:  movement{
+	Motion: Motion{
 		DeltaThresh: 20,
 		CountThresh: 10,
 		TempThresh:  8000,
