@@ -56,11 +56,7 @@ func runMain() error {
 	}
 
 	var camera *lepton3.Lepton3
-	defer func() {
-		if camera != nil {
-			camera.Close()
-		}
-	}()
+	defer camera.Close()
 
 	for {
 		camera = lepton3.New(conf.SPISpeed)
@@ -70,7 +66,6 @@ func runMain() error {
 		}
 		camera.SetLogFunc(func(t string) { log.Printf(t) })
 
-		runRecordings(conf, camera)
 		err := runRecordings(conf, camera)
 		if err != nil {
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
