@@ -1,29 +1,26 @@
 package main
 
-// XXX
-
 import (
 	"github.com/TheCacophonyProject/lepton3"
 )
 
-type movementDetector struct {
-	frames [3]*lepton3.Frame
-	count  uint64
-	movementDeltaThresh uint16
-	movementCountThresh uint16
-	tempThresh uint16
+type motionDetector struct {
+	frames      [3]*lepton3.Frame
+	count       uint64
+	deltaThresh uint16
+	countThresh uint16
+	tempThresh  uint16
 }
 
-func NewMovementDetector(movementDeltaThresh, movementCountThresh,
-		tempThresh uint16) *movementDetector {
-	d := new(movementDetector)
-	d.movementDeltaThresh = movementDeltaThresh
-	d.movementCountThresh = movementCountThresh
+func NewMotionDetector(deltaThresh, countThresh, tempThresh uint16) *motionDetector {
+	d := new(motionDetector)
+	d.deltaThresh = deltaThresh
+	d.countThresh = countThresh
 	d.tempThresh = tempThresh
 	return d
 }
 
-func (d *movementDetector) Detect(frame *lepton3.Frame) bool {
+func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 	d.count++
 	d.frames[2] = d.frames[1]
 	d.frames[1] = d.frames[0]
@@ -36,10 +33,10 @@ func (d *movementDetector) Detect(frame *lepton3.Frame) bool {
 	d1 := absDiffFrames(d.frames[0], d.frames[1])
 	d2 := absDiffFrames(d.frames[1], d.frames[2])
 	m := andFrames(d1, d2)
-	return d.hasMovement(m)
+	return d.hasMotion(m)
 }
 
-func (d *movementDetector) stripLow(f *lepton3.Frame) *lepton3.Frame {
+func (d *motionDetector) stripLow(f *lepton3.Frame) *lepton3.Frame {
 	out := new(lepton3.Frame)
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
@@ -52,6 +49,21 @@ func (d *movementDetector) stripLow(f *lepton3.Frame) *lepton3.Frame {
 		}
 	}
 	return out
+}
+
+func (d *motionDetector) hasMotion(f *lepton3.Frame) bool {
+	var count uint16 = 0
+	for y := 0; y < lepton3.FrameRows; y++ {
+		for x := 0; x < lepton3.FrameCols; x++ {
+			if f[y][x] > d.deltaThresh {
+				count++
+			}
+			if count >= d.countThresh {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func absDiffFrames(a, b *lepton3.Frame) *lepton3.Frame {
@@ -80,19 +92,4 @@ func andFrames(a, b *lepton3.Frame) *lepton3.Frame {
 		}
 	}
 	return out
-}
-
-func (d *movementDetector) hasMovement(f *lepton3.Frame) bool {
-	var count uint16 = 0
-	for y := 0; y < lepton3.FrameRows; y++ {
-		for x := 0; x < lepton3.FrameCols; x++ {
-			if f[y][x] > d.movementDeltaThresh {
-				count++
-			}
-			if count >= d.movementCountThresh {
-				return true
-			}
-		}
-	}
-	return false
 }

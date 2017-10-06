@@ -21,8 +21,6 @@ import (
 	"github.com/TheCacophonyProject/thermal-recorder/output"
 )
 
-// XXX restarting camera if NextFrame dies
-
 const framesHz = 9 // approx
 
 type nextFrameErr struct {
@@ -85,8 +83,11 @@ func runMain() error {
 }
 
 func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
-	movement := NewMovementDetector(conf.Movement.DeltaThresh,
-		conf.Movement.CountThresh, conf.Movement.TempThresh)
+	motion := NewMotionDetector(
+		conf.Motion.DeltaThresh,
+		conf.Motion.CountThresh,
+		conf.Motion.TempThresh,
+	)
 
 	prevFrame := new(lepton3.Frame)
 	frame := new(lepton3.Frame)
@@ -98,23 +99,33 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			os.Remove(writer.Name())
 		}
 	}()
-	framesRecorded := 0
-	maxFramesRecorded := conf.MaxSecs * framesHz
-	recordingCount := 0
-	minRecordingCount := conf.MinSecs * framesHz
+
+	log.Println("reading frames")
+
+	totalFrames := 0
+	const frameLogInterval = 15 * framesHz
+
+	minFrames := conf.MinSecs * framesHz
+	maxFrames := conf.MaxSecs * framesHz
+	numFrames := 0
+	lastFrame := 0
 	for {
 		err := camera.NextFrame(frame)
 		if err != nil {
 			return &nextFrameErr{err}
 		}
+		totalFrames++
+		if totalFrames%frameLogInterval == 0 {
+			log.Printf("%d frames seen", totalFrames)
+		}
 
-		// If movement detected, bump the recording counter.
-		if movement.Detect(frame) {
-			recordingCount = minRecordingCount
+		// If motion detected, allow minFrames more frames.
+		if motion.Detect(frame) {
+			lastFrame = min(lastFrame+minFrames, maxFrames)
 		}
 
 		// Start or stop recording if required.
-		if recordingCount > 0 && writer == nil {
+		if lastFrame > 0 && writer == nil {
 			filename := filepath.Join(conf.OutputDir, newRecordingTempName())
 			log.Printf("recording started: %s", filename)
 			writer, err = output.NewFileWriter(filename)
@@ -127,8 +138,7 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			}
 			// Start with an empty previous frame for a new recording.
 			prevFrame = new(lepton3.Frame)
-		} else if recordingCount == 0 && writer != nil ||
-				framesRecorded > maxFramesRecorded {
+		} else if writer != nil && numFrames > lastFrame {
 			writer.Close()
 			finalName, err := renameTempRecording(writer.Name())
 			if err != nil {
@@ -136,8 +146,8 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			}
 			log.Printf("recording stopped: %s\n", finalName)
 			writer = nil
-			framesRecorded = 0
-			recordingCount = 0
+			numFrames = 0
+			lastFrame = 0
 		}
 
 		// If recording, write the frame.
@@ -146,12 +156,18 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			if err != nil {
 				return err
 			}
-			recordingCount--
-			framesRecorded++
+			numFrames++
 		}
 
 		frame, prevFrame = prevFrame, frame
 	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func newRecordingTempName() string {
@@ -188,7 +204,6 @@ func cameraPowerOffOn(pin string) error {
 }
 
 func powerupCamera(pin string) error {
-	// XXX can we detect if the camera was already powered up? If it was off sleep for a few seconds.
 	powerPin := gpioreg.ByName(pin)
 	if powerPin == nil {
 		return errors.New("unable to load power pin")
