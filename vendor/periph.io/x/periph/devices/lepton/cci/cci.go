@@ -311,6 +311,31 @@ func (d *Dev) RunFFC() error {
 	return d.c.run(sysFCCRunNormalization)
 }
 
+// GetRadiometry returns true if radiometry mode (temperature
+// compensation) is enabled. This is only supported for the Lepton
+// with Radiometry and Lepton 3 models.
+func (d *Dev) GetRadiometry() (bool, error) {
+	var flag internal.Flag
+	err := d.c.get(radEnable, &flag)
+	if err != nil {
+		return false, err
+	}
+	if flag == internal.Enabled {
+		return true, nil
+	}
+	return false, nil
+}
+
+// SetRadiometry enables or disables radiometry mode. This is only
+// supported for the Lepton with Radiometry and Lepton 3 models.
+func (d *Dev) SetRadiometry(enabled bool) error {
+	flag := internal.Enabled
+	if !enabled {
+		flag = internal.Disabled
+	}
+	return d.c.set(radEnable, flag)
+}
+
 //
 
 // conn is the low level connection.
@@ -528,6 +553,7 @@ const (
 	oemTemporalFilter         command = 0x4870 // 2   GET/SET
 	oemColumnNoiseFilter      command = 0x4874 // 2   GET/SET
 	oemPixelNoiseFilter       command = 0x4878 // 2   GET/SET
+	radEnable                 command = 0x4E10 // 2   GET/SET
 	sysPing                   command = 0x0200 // 0   RUN
 	sysStatus                 command = 0x0204 // 4   GET
 	sysSerialNumber           command = 0x0208 // 4   GET

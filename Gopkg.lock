@@ -11,7 +11,7 @@
   branch = "master"
   name = "github.com/TheCacophonyProject/lepton3"
   packages = ["."]
-  revision = "d2353be5f2f46222f5c55d1417bd69a27fcb5416"
+  revision = "6072007c52aa6487766f1a5c66eb3221a8d881e0"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -44,14 +44,15 @@
   revision = "d5d1b5820637886def9eef33e03a27a9f166942c"
 
 [[projects]]
+  branch = "v2"
   name = "periph.io/x/periph"
-  packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
-  revision = "687bb43ba5ad417371dc0d1a1f7189119aafcede"
-  version = "v2.0.0"
+  packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
+  revision = "a5370d2227a0b687c67b5e751eef053908b20f59"
+  source = "https://github.com/TheCacophonyProject/periph.git"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0e493af747dd662c6e725ee737418618008ed6d17ac47374a9c787044bc51570"
+  inputs-digest = "13e9ec19cd252544fddb322e165a33094255e7d4d16c625de19b5737a5befc63"
   solver-name = "gps-cdcl"
   solver-version = 1

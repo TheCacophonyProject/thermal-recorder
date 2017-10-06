@@ -60,8 +60,10 @@ func runMain() error {
 
 	for {
 		camera = lepton3.New(conf.SPISpeed)
-		err = camera.Open()
-		if err != nil {
+		if err := camera.Open(); err != nil {
+			return err
+		}
+		if err := camera.SetRadiometry(true); err != nil {
 			return err
 		}
 		camera.SetLogFunc(func(t string) { log.Printf(t) })
