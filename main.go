@@ -25,6 +25,14 @@ import (
 
 const framesHz = 9 // approx
 
+type nextFrameErr struct {
+	cause error
+}
+
+func (e *nextFrameErr) Error() string {
+	return e.cause.Error()
+}
+
 func main() {
 	err := runMain()
 	if err != nil {
@@ -47,14 +55,34 @@ func runMain() error {
 		return err
 	}
 
-	camera := lepton3.New(conf.SPISpeed)
-	err = camera.Open()
-	if err != nil {
-		return err
-	}
+	var camera *lepton3.Lepton3
 	defer camera.Close()
-	camera.SetLogFunc(func(t string) { log.Printf(t) })
 
+	for {
+		camera = lepton3.New(conf.SPISpeed)
+		err = camera.Open()
+		if err != nil {
+			return err
+		}
+		camera.SetLogFunc(func(t string) { log.Printf(t) })
+
+		err := runRecordings(conf, camera)
+		if err != nil {
+			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
+				return err
+			}
+		}
+		camera.Close()
+		err = cameraPowerOffOn(conf.PowerPin)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 	movement := NewMovementDetector(conf.Movement.DeltaThresh,
 		conf.Movement.CountThresh, conf.Movement.TempThresh)
 
@@ -62,6 +90,12 @@ func runMain() error {
 	frame := new(lepton3.Frame)
 
 	var writer *output.FileWriter
+	defer func() {
+		if writer != nil {
+			writer.Close()
+			os.Remove(writer.Name())
+		}
+	}()
 	framesRecorded := 0
 	maxFramesRecorded := conf.MaxSecs * framesHz
 	recordingCount := 0
@@ -69,7 +103,7 @@ func runMain() error {
 	for {
 		err := camera.NextFrame(frame)
 		if err != nil {
-			return err
+			return &nextFrameErr{err}
 		}
 
 		// If movement detected, bump the recording counter.
@@ -116,8 +150,6 @@ func runMain() error {
 
 		frame, prevFrame = prevFrame, frame
 	}
-
-	return nil
 }
 
 func newRecordingTempName() string {
@@ -137,6 +169,20 @@ var reTempName = regexp.MustCompile(`(.+)\.temp$`)
 
 func recordingFinalName(filename string) string {
 	return reTempName.ReplaceAllString(filename, `$1`)
+}
+
+func cameraPowerOffOn(pin string) error {
+	log.Println("cycling camera power.")
+	powerPin := gpioreg.ByName(pin)
+	if err := powerPin.Out(gpio.Low); err != nil {
+		return fmt.Errorf("failed to set camera power pin low: %v", err)
+	}
+	time.Sleep(2 * time.Second)
+	if err := powerPin.Out(gpio.High); err != nil {
+		return fmt.Errorf("failed to set camera power pin high: %v", err)
+	}
+	time.Sleep(6 * time.Second)
+	return nil
 }
 
 func powerupCamera(pin string) error {
