@@ -94,23 +94,24 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			os.Remove(writer.Name())
 		}
 	}()
-	framesRecorded := 0
-	maxFramesRecorded := conf.MaxSecs * framesHz
-	recordingCount := 0
-	minRecordingCount := conf.MinSecs * framesHz
+
+	minFrames := conf.MinSecs * framesHz
+	maxFrames := conf.MaxSecs * framesHz
+	numFrames := 0
+	lastFrame := 0
 	for {
 		err := camera.NextFrame(frame)
 		if err != nil {
 			return &nextFrameErr{err}
 		}
 
-		// If movement detected, bump the recording counter.
+		// If movement detected, allow minFrames more frames.
 		if movement.Detect(frame) {
-			recordingCount = minRecordingCount
+			lastFrame = min(lastFrame+minFrames, maxFrames)
 		}
 
 		// Start or stop recording if required.
-		if recordingCount > 0 && writer == nil {
+		if lastFrame > 0 && writer == nil {
 			filename := filepath.Join(conf.OutputDir, newRecordingTempName())
 			log.Printf("recording started: %s", filename)
 			writer, err = output.NewFileWriter(filename)
@@ -123,8 +124,7 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			}
 			// Start with an empty previous frame for a new recording.
 			prevFrame = new(lepton3.Frame)
-		} else if recordingCount == 0 && writer != nil ||
-				framesRecorded > maxFramesRecorded {
+		} else if writer != nil && numFrames > lastFrame {
 			writer.Close()
 			finalName, err := renameTempRecording(writer.Name())
 			if err != nil {
@@ -132,8 +132,8 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			}
 			log.Printf("recording stopped: %s\n", finalName)
 			writer = nil
-			framesRecorded = 0
-			recordingCount = 0
+			numFrames = 0
+			lastFrame = 0
 		}
 
 		// If recording, write the frame.
@@ -142,12 +142,18 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			if err != nil {
 				return err
 			}
-			recordingCount--
-			framesRecorded++
+			numFrames++
 		}
 
 		frame, prevFrame = prevFrame, frame
 	}
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
 
 func newRecordingTempName() string {
