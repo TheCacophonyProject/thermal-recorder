@@ -21,8 +21,6 @@ import (
 	"github.com/TheCacophonyProject/thermal-recorder/output"
 )
 
-// XXX restarting camera if NextFrame dies
-
 const framesHz = 9 // approx
 
 type nextFrameErr struct {
@@ -186,7 +184,6 @@ func cameraPowerOffOn(pin string) error {
 }
 
 func powerupCamera(pin string) error {
-	// XXX can we detect if the camera was already powered up? If it was off sleep for a few seconds.
 	powerPin := gpioreg.ByName(pin)
 	if powerPin == nil {
 		return errors.New("unable to load power pin")
