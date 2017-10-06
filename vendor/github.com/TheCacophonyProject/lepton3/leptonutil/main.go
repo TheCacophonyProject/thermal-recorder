@@ -67,6 +67,10 @@ func runMain() error {
 	}
 
 	camera := lepton3.New(opts.Speed)
+	if err := camera.SetRadiometry(true); err != nil {
+		return err
+	}
+
 	err = camera.Open()
 	if err != nil {
 		return err

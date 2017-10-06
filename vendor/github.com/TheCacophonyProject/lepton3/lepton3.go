@@ -12,8 +12,10 @@ import (
 	"time"
 
 	tomb "gopkg.in/tomb.v2"
+	"periph.io/x/periph/conn/i2c/i2creg"
 	"periph.io/x/periph/conn/spi"
 	"periph.io/x/periph/conn/spi/spireg"
+	"periph.io/x/periph/devices/lepton/cci"
 )
 
 const (
@@ -79,6 +81,31 @@ type Lepton3 struct {
 
 func (d *Lepton3) SetLogFunc(log func(string)) {
 	d.log = log
+}
+
+func (d *Lepton3) SetRadiometry(enable bool) error {
+	i2cBus, err := i2creg.Open("")
+	if err != nil {
+		return err
+	}
+	defer i2cBus.Close()
+
+	cciDev, err := cci.New(i2cBus)
+	if err != nil {
+		return fmt.Errorf("cci.New: %v", err)
+	}
+	if err := cciDev.SetRadiometry(enable); err != nil {
+		return fmt.Errorf("SetRadiometry: %v", err)
+	}
+
+	value, err := cciDev.GetRadiometry()
+	if err != nil {
+		return fmt.Errorf("GetRadiometry: %v", err)
+	}
+	if value != enable {
+		return fmt.Errorf("radiometry state failed to change")
+	}
+	return nil
 }
 
 // Open initialises the SPI connection and starts streaming packets

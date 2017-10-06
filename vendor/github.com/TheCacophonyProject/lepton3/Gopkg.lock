@@ -26,14 +26,15 @@
   revision = "d5d1b5820637886def9eef33e03a27a9f166942c"
 
 [[projects]]
+  branch = "v2"
   name = "periph.io/x/periph"
-  packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
-  revision = "687bb43ba5ad417371dc0d1a1f7189119aafcede"
-  version = "v2.0.0"
+  packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
+  revision = "a5370d2227a0b687c67b5e751eef053908b20f59"
+  source = "https://github.com/TheCacophonyProject/periph.git"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "7f445f299578b67b188a7e1fdc2db5dade44ceaa20a9ebada1d325f8f47eda2c"
+  inputs-digest = "3c99f7ac31716a99dae2fab16b89050f1ea65d13c577fee161daf0d5cc2ac8d2"
   solver-name = "gps-cdcl"
   solver-version = 1
