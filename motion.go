@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/TheCacophonyProject/lepton3"
 )
 
@@ -21,6 +23,7 @@ func NewMotionDetector(deltaThresh, countThresh, tempThresh uint16) *motionDetec
 }
 
 func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
+	//analyse(frame)
 	d.count++
 	d.frames[2] = d.frames[1]
 	d.frames[1] = d.frames[0]
@@ -92,4 +95,21 @@ func andFrames(a, b *lepton3.Frame) *lepton3.Frame {
 		}
 	}
 	return out
+}
+
+func analyse(f *lepton3.Frame) {
+	var max uint16
+	var min uint16 = (1 << 16) - 1
+	for y := 0; y < lepton3.FrameRows; y++ {
+		for x := 0; x < lepton3.FrameCols; x++ {
+			v := f[y][x]
+			if v < min {
+				min = v
+			}
+			if v > max {
+				max = v
+			}
+		}
+	}
+	fmt.Println(min, max)
 }

@@ -61,9 +61,15 @@ func runMain() error {
 		if err := camera.Open(); err != nil {
 			return err
 		}
+
 		if err := camera.SetRadiometry(true); err != nil {
 			return err
 		}
+		// There's a small delay while the camera switches to
+		// radiometric mode - before then you end up with frames with
+		// unadjusted numbers. So we wait.
+		time.Sleep(time.Second)
+
 		camera.SetLogFunc(func(t string) { log.Printf(t) })
 
 		err := runRecordings(conf, camera)
