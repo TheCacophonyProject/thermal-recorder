@@ -1,0 +1,11 @@
+[Unit]
+Description=Cacophony Project Thermal Video Recorder
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/thermal-recorder
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
