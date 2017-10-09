@@ -5,7 +5,6 @@
 package main
 
 import (
-	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -26,6 +25,7 @@ const framesHz = 9 // approx
 
 type Args struct {
 	ConfigFile string `arg:"-c,--config" help:"path to configuration file"`
+	Quick      bool   `arg:"-q,--quick" help:"don't cycle camera power on startup"`
 }
 
 func procArgs() Args {
@@ -63,17 +63,18 @@ func runMain() error {
 		return err
 	}
 
-	log.Println("powering up camera")
-	if err := powerupCamera(conf.PowerPin); err != nil {
-		return err
+	if !args.Quick {
+		if err := cycleCameraPower(conf.PowerPin); err != nil {
+			return err
+		}
 	}
 
 	var camera *lepton3.Lepton3
 	defer camera.Close()
-
 	for {
-		log.Println("opening camera")
 		camera = lepton3.New(conf.SPISpeed)
+		camera.SetLogFunc(func(t string) { log.Printf(t) })
+		log.Println("opening camera")
 		if err := camera.Open(); err != nil {
 			return err
 		}
@@ -81,8 +82,6 @@ func runMain() error {
 		if err := camera.SetRadiometry(true); err != nil {
 			return err
 		}
-		camera.SetLogFunc(func(t string) { log.Printf(t) })
-
 		err := runRecordings(conf, camera)
 		if err != nil {
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
@@ -92,8 +91,7 @@ func runMain() error {
 		log.Println("closing camera")
 		camera.Close()
 
-		log.Println("cycling camera power")
-		err = cameraPowerOffOn(conf.PowerPin)
+		err = cycleCameraPower(conf.PowerPin)
 		if err != nil {
 			return err
 		}
@@ -209,7 +207,13 @@ func recordingFinalName(filename string) string {
 	return reTempName.ReplaceAllString(filename, `$1`)
 }
 
-func cameraPowerOffOn(pin string) error {
+func cycleCameraPower(pin string) error {
+	if pin == "" {
+		return nil
+	}
+
+	log.Println("cycling camera power")
+
 	powerPin := gpioreg.ByName(pin)
 	if err := powerPin.Out(gpio.Low); err != nil {
 		return fmt.Errorf("failed to set camera power pin low: %v", err)
@@ -219,16 +223,7 @@ func cameraPowerOffOn(pin string) error {
 		return fmt.Errorf("failed to set camera power pin high: %v", err)
 	}
 	time.Sleep(6 * time.Second)
-	return nil
-}
 
-func powerupCamera(pin string) error {
-	powerPin := gpioreg.ByName(pin)
-	if powerPin == nil {
-		return errors.New("unable to load power pin")
-	}
-	if err := powerPin.Out(gpio.High); err != nil {
-		return fmt.Errorf("failed to set camera power pin: %v", err)
-	}
+	log.Println("camera should be ready")
 	return nil
 }
