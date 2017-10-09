@@ -58,10 +58,12 @@ func runMain() error {
 	}
 	log.Printf("config: %+v", *conf)
 
+	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {
 		return err
 	}
 
+	log.Println("powering up camera")
 	if err := powerupCamera(conf.PowerPin); err != nil {
 		return err
 	}
@@ -70,10 +72,12 @@ func runMain() error {
 	defer camera.Close()
 
 	for {
+		log.Println("opening camera")
 		camera = lepton3.New(conf.SPISpeed)
 		if err := camera.Open(); err != nil {
 			return err
 		}
+		log.Println("enabling radiometry")
 		if err := camera.SetRadiometry(true); err != nil {
 			return err
 		}
@@ -85,7 +89,10 @@ func runMain() error {
 				return err
 			}
 		}
+		log.Println("closing camera")
 		camera.Close()
+
+		log.Println("cycling camera power")
 		err = cameraPowerOffOn(conf.PowerPin)
 		if err != nil {
 			return err
@@ -203,7 +210,6 @@ func recordingFinalName(filename string) string {
 }
 
 func cameraPowerOffOn(pin string) error {
-	log.Println("cycling camera power.")
 	powerPin := gpioreg.ByName(pin)
 	if err := powerPin.Out(gpio.Low); err != nil {
 		return fmt.Errorf("failed to set camera power pin low: %v", err)
