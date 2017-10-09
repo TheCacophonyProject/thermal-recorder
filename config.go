@@ -29,7 +29,7 @@ type Motion struct {
 var defaultConfig = Config{
 	SPISpeed:  30000000,
 	PowerPin:  "GPIO23",
-	OutputDir: ".",
+	OutputDir: "/var/spool/cptv",
 	MinSecs:   10,
 	MaxSecs:   600,
 	Motion: Motion{
