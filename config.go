@@ -35,7 +35,7 @@ var defaultConfig = Config{
 	Motion: Motion{
 		DeltaThresh: 20,
 		CountThresh: 10,
-		TempThresh:  8000,
+		TempThresh:  3200,
 	},
 }
 
