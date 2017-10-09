@@ -1,0 +1,32 @@
+#
+# Default values are shown. Edit/remove as appropriate.
+#
+
+# SPI bus speed (in Hz)
+spi-speed: 30000000
+
+# GPIO pin to control power to camera.
+power-pin: "GPIO23"
+
+# Directory to place CPTV output files.
+output-dir: "/var/spool/cptv"
+
+# Minimum length to keep recording after motion is detected.
+min-secs: 10
+
+# Maximum total video length.
+max-secs: 600
+
+# Motion detection parameters
+motion:
+    # Movement below raw temperatures of this value will not activate
+    # motion detection.
+    temp-thresh: 3200
+
+    # Minimum raw temperature difference between recent frames to
+    # trigger motion detection.
+    delta-thresh: 20
+
+    # Number of pixels which must show delta-thresh change before
+    # motion detection event will be triggered.
+    count-thresh: 10

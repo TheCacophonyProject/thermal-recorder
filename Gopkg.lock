@@ -2,12 +2,6 @@
 
 
 [[projects]]
-  name = "github.com/BurntSushi/toml"
-  packages = ["."]
-  revision = "b26d9c308763d68093482582cea63d69be07a0f0"
-  version = "v0.3.0"
-
-[[projects]]
   branch = "master"
   name = "github.com/TheCacophonyProject/lepton3"
   packages = ["."]
@@ -57,6 +51,12 @@
 
 [[projects]]
   branch = "v2"
+  name = "gopkg.in/yaml.v2"
+  packages = ["."]
+  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
+
+[[projects]]
+  branch = "v2"
   name = "periph.io/x/periph"
   packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
   revision = "a5370d2227a0b687c67b5e751eef053908b20f59"
@@ -65,6 +65,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d65afcbfb469141e1ad512aafacb366e23a44d9aa1d791a37e3d1278ff55717c"
+  inputs-digest = "d75475a7544b5d95f1e309285dd8af733bf3269368db916cc57bb66f8e53b867"
   solver-name = "gps-cdcl"
   solver-version = 1

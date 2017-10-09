@@ -30,7 +30,7 @@ type Args struct {
 
 func procArgs() Args {
 	var args Args
-	args.ConfigFile = "/etc/thermal-recorder.toml"
+	args.ConfigFile = "/etc/thermal-recorder.yaml"
 	arg.MustParse(&args)
 	return args
 }
@@ -52,7 +52,7 @@ func main() {
 
 func runMain() error {
 	args := procArgs()
-	conf, err := ConfigFromFile(args.ConfigFile)
+	conf, err := ParseConfigFile(args.ConfigFile)
 	if err != nil {
 		return err
 	}

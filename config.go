@@ -5,25 +5,32 @@
 package main
 
 import (
-	"io"
-	"os"
+	"errors"
+	"io/ioutil"
 
-	"github.com/BurntSushi/toml"
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Config struct {
-	SPISpeed  int64  `toml:"spi-speed"`
-	PowerPin  string `toml:"power-pin"`
-	OutputDir string `toml:"output-dir"`
-	MinSecs   int    `toml:"min-secs"`
-	MaxSecs   int    `toml:"max-secs"`
-	Motion    Motion `toml:"motion"`
+	SPISpeed  int64  `yaml:"spi-speed"`
+	PowerPin  string `yaml:"power-pin"`
+	OutputDir string `yaml:"output-dir"`
+	MinSecs   int    `yaml:"min-secs"`
+	MaxSecs   int    `yaml:"max-secs"`
+	Motion    Motion `yaml:"motion"`
 }
 
 type Motion struct {
-	DeltaThresh uint16 `toml:"delta-thresh"`
-	CountThresh uint16 `toml:"count-thresh"`
-	TempThresh  uint16 `toml:"temp-thresh"`
+	DeltaThresh uint16 `yaml:"delta-thresh"`
+	CountThresh uint16 `yaml:"count-thresh"`
+	TempThresh  uint16 `yaml:"temp-thresh"`
+}
+
+func (conf *Config) Validate() error {
+	if conf.MaxSecs < conf.MinSecs {
+		return errors.New("max-secs should be larger than min-secs")
+	}
+	return nil
 }
 
 var defaultConfig = Config{
@@ -39,18 +46,20 @@ var defaultConfig = Config{
 	},
 }
 
-func ConfigFromFile(filename string) (*Config, error) {
-	f, err := os.Open(filename)
+func ParseConfigFile(filename string) (*Config, error) {
+	buf, err := ioutil.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	defer f.Close()
-	return ConfigFromReader(f)
+	return ParseConfig(buf)
 }
 
-func ConfigFromReader(r io.Reader) (*Config, error) {
+func ParseConfig(buf []byte) (*Config, error) {
 	conf := defaultConfig
-	if _, err := toml.DecodeReader(r, &conf); err != nil {
+	if err := yaml.Unmarshal(buf, &conf); err != nil {
+		return nil, err
+	}
+	if err := conf.Validate(); err != nil {
 		return nil, err
 	}
 	return &conf, nil
