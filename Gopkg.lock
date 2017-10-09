@@ -14,6 +14,18 @@
   revision = "6072007c52aa6487766f1a5c66eb3221a8d881e0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/alexflint/go-arg"
+  packages = ["."]
+  revision = "59fccacb2679dde66e0b20ed65bd26178fcbf54e"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/alexflint/go-scalar"
+  packages = ["."]
+  revision = "e80c3b7ed292b052c7083b6fd7154a8422c33f65"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
@@ -53,6 +65,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "13e9ec19cd252544fddb322e165a33094255e7d4d16c625de19b5737a5befc63"
+  inputs-digest = "d65afcbfb469141e1ad512aafacb366e23a44d9aa1d791a37e3d1278ff55717c"
   solver-name = "gps-cdcl"
   solver-version = 1

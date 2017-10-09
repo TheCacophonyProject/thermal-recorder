@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
+	arg "github.com/alexflint/go-arg"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
@@ -22,6 +23,17 @@ import (
 )
 
 const framesHz = 9 // approx
+
+type Args struct {
+	ConfigFile string `arg:"-c,--config" help:"path to configuration file"`
+}
+
+func procArgs() Args {
+	var args Args
+	args.ConfigFile = "/etc/thermal-recorder.toml"
+	arg.MustParse(&args)
+	return args
+}
 
 type nextFrameErr struct {
 	cause error
@@ -39,7 +51,8 @@ func main() {
 }
 
 func runMain() error {
-	conf, err := ConfigFromFile("thermal-recorder.toml")
+	args := procArgs()
+	conf, err := ConfigFromFile(args.ConfigFile)
 	if err != nil {
 		return err
 	}
