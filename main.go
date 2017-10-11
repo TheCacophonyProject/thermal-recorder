@@ -18,7 +18,7 @@ import (
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
 
-	"github.com/TheCacophonyProject/thermal-recorder/output"
+	cptv "github.com/TheCacophonyProject/go-cptv"
 )
 
 const framesHz = 9 // approx
@@ -110,7 +110,7 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 	prevFrame := new(lepton3.Frame)
 	frame := new(lepton3.Frame)
 
-	var writer *output.FileWriter
+	var writer *cptv.FileWriter
 	defer func() {
 		if writer != nil {
 			writer.Close()
@@ -146,7 +146,7 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 		if lastFrame > 0 && writer == nil {
 			filename := filepath.Join(conf.OutputDir, newRecordingTempName())
 			log.Printf("recording started: %s", filename)
-			writer, err = output.NewFileWriter(filename)
+			writer, err = cptv.NewFileWriter(filename)
 			if err != nil {
 				return err
 			}

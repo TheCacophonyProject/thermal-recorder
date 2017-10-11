@@ -3,6 +3,12 @@
 
 [[projects]]
   branch = "master"
+  name = "github.com/TheCacophonyProject/go-cptv"
+  packages = ["."]
+  revision = "1c46f1b86aa474833885988bad51f33ba49ac664"
+
+[[projects]]
+  branch = "master"
   name = "github.com/TheCacophonyProject/lepton3"
   packages = ["."]
   revision = "6072007c52aa6487766f1a5c66eb3221a8d881e0"
@@ -18,24 +24,6 @@
   name = "github.com/alexflint/go-scalar"
   packages = ["."]
   revision = "e80c3b7ed292b052c7083b6fd7154a8422c33f65"
-
-[[projects]]
-  name = "github.com/davecgh/go-spew"
-  packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
-
-[[projects]]
-  name = "github.com/pmezard/go-difflib"
-  packages = ["difflib"]
-  revision = "792786c7400a136282c1664665ae0a8db921c6c2"
-  version = "v1.0.0"
-
-[[projects]]
-  name = "github.com/stretchr/testify"
-  packages = ["assert"]
-  revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
-  version = "v1.1.4"
 
 [[projects]]
   branch = "master"
@@ -65,6 +53,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "d75475a7544b5d95f1e309285dd8af733bf3269368db916cc57bb66f8e53b867"
+  inputs-digest = "53f16313e89609fb6f9280febdf4d4a0c4ca874dccf3b63b760b3082fe39bb40"
   solver-name = "gps-cdcl"
   solver-version = 1
