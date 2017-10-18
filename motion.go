@@ -4,27 +4,30 @@ import (
 	"github.com/TheCacophonyProject/lepton3"
 )
 
-type motionDetector struct {
-	frames      [3]*lepton3.Frame
-	count       uint64
-	deltaThresh uint16
-	countThresh uint16
-	tempThresh  uint16
+func NewMotionDetector(args MotionConfig) *motionDetector {
+	d := new(motionDetector)
+	d.deltaThresh = args.DeltaThresh
+	d.countThresh = args.CountThresh
+	d.tempThresh = args.TempThresh
+	totalPixels := lepton3.FrameRows * lepton3.FrameCols
+	d.nonzeroLimit = totalPixels * args.NonzeroMaxPercent / 100
+	return d
 }
 
-func NewMotionDetector(deltaThresh, countThresh, tempThresh uint16) *motionDetector {
-	d := new(motionDetector)
-	d.deltaThresh = deltaThresh
-	d.countThresh = countThresh
-	d.tempThresh = tempThresh
-	return d
+type motionDetector struct {
+	frames       [3]*lepton3.Frame
+	count        uint64
+	tempThresh   uint16
+	deltaThresh  uint16
+	countThresh  int
+	nonzeroLimit int
 }
 
 func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 	d.count++
 	d.frames[2] = d.frames[1]
 	d.frames[1] = d.frames[0]
-	d.frames[0] = d.stripLow(frame)
+	d.frames[0] = d.setFloor(frame)
 	if d.count < 3 {
 		return false
 	}
@@ -36,7 +39,7 @@ func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 	return d.hasMotion(m)
 }
 
-func (d *motionDetector) stripLow(f *lepton3.Frame) *lepton3.Frame {
+func (d *motionDetector) setFloor(f *lepton3.Frame) *lepton3.Frame {
 	out := new(lepton3.Frame)
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
@@ -51,19 +54,25 @@ func (d *motionDetector) stripLow(f *lepton3.Frame) *lepton3.Frame {
 	return out
 }
 
-func (d *motionDetector) hasMotion(f *lepton3.Frame) bool {
-	var count uint16 = 0
+func (d *motionDetector) hasMotion(m *lepton3.Frame) bool {
+	var nonzeroCount int
+	var deltaCount int
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			if f[y][x] > d.deltaThresh {
-				count++
-			}
-			if count >= d.countThresh {
-				return true
+			v := m[y][x]
+			if v > 0 {
+				nonzeroCount++
+				if v > d.deltaThresh {
+					deltaCount++
+				}
 			}
 		}
 	}
-	return false
+	// Motion detection is suppressed when over nonzeroLimit motion
+	// pixels are nonzero. This is to deal with sudden jumps in the
+	// readings as the camera recalibrates due to rapid temperature
+	// change.
+	return deltaCount >= d.countThresh && nonzeroCount <= d.nonzeroLimit
 }
 
 func absDiffFrames(a, b *lepton3.Frame) *lepton3.Frame {

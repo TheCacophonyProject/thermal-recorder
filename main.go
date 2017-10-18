@@ -87,6 +87,7 @@ func runMain() error {
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
 				return err
 			}
+			log.Printf("recording error: %v", err)
 		}
 		log.Println("closing camera")
 		camera.Close()
@@ -101,11 +102,7 @@ func runMain() error {
 }
 
 func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
-	motion := NewMotionDetector(
-		conf.Motion.DeltaThresh,
-		conf.Motion.CountThresh,
-		conf.Motion.TempThresh,
-	)
+	motion := NewMotionDetector(conf.Motion)
 
 	prevFrame := new(lepton3.Frame)
 	frame := new(lepton3.Frame)
