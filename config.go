@@ -12,37 +12,49 @@ import (
 )
 
 type Config struct {
-	SPISpeed  int64  `yaml:"spi-speed"`
-	PowerPin  string `yaml:"power-pin"`
-	OutputDir string `yaml:"output-dir"`
-	MinSecs   int    `yaml:"min-secs"`
-	MaxSecs   int    `yaml:"max-secs"`
-	Motion    Motion `yaml:"motion"`
+	SPISpeed  int64        `yaml:"spi-speed"`
+	PowerPin  string       `yaml:"power-pin"`
+	OutputDir string       `yaml:"output-dir"`
+	MinSecs   int          `yaml:"min-secs"`
+	MaxSecs   int          `yaml:"max-secs"`
+	Motion    MotionConfig `yaml:"motion"`
 }
 
-type Motion struct {
-	DeltaThresh uint16 `yaml:"delta-thresh"`
-	CountThresh uint16 `yaml:"count-thresh"`
-	TempThresh  uint16 `yaml:"temp-thresh"`
+type MotionConfig struct {
+	TempThresh        uint16 `yaml:"temp-thresh"`
+	DeltaThresh       uint16 `yaml:"delta-thresh"`
+	CountThresh       int    `yaml:"count-thresh"`
+	NonzeroMaxPercent int    `yaml:"nonzero-max-percent"`
 }
 
 func (conf *Config) Validate() error {
 	if conf.MaxSecs < conf.MinSecs {
 		return errors.New("max-secs should be larger than min-secs")
 	}
+	if err := conf.Motion.Validate(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (conf *MotionConfig) Validate() error {
+	if conf.NonzeroMaxPercent < 1 || conf.NonzeroMaxPercent > 100 {
+		return errors.New("nonzero-max-percent should be in range 1 - 100")
+	}
 	return nil
 }
 
 var defaultConfig = Config{
-	SPISpeed:  30000000,
+	SPISpeed:  25000000,
 	PowerPin:  "GPIO23",
 	OutputDir: "/var/spool/cptv",
 	MinSecs:   10,
 	MaxSecs:   600,
-	Motion: Motion{
-		DeltaThresh: 20,
-		CountThresh: 10,
-		TempThresh:  3200,
+	Motion: MotionConfig{
+		TempThresh:        3000,
+		DeltaThresh:       30,
+		CountThresh:       5,
+		NonzeroMaxPercent: 50,
 	},
 }
 
