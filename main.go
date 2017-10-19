@@ -70,18 +70,25 @@ func runMain() error {
 	}
 
 	var camera *lepton3.Lepton3
-	defer camera.Close()
+	defer func() {
+		if camera != nil {
+			camera.Close()
+		}
+	}()
 	for {
 		camera = lepton3.New(conf.SPISpeed)
 		camera.SetLogFunc(func(t string) { log.Printf(t) })
+
 		log.Println("opening camera")
 		if err := camera.Open(); err != nil {
 			return err
 		}
+
 		log.Println("enabling radiometry")
 		if err := camera.SetRadiometry(true); err != nil {
 			return err
 		}
+
 		err := runRecordings(conf, camera)
 		if err != nil {
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
@@ -89,6 +96,7 @@ func runMain() error {
 			}
 			log.Printf("recording error: %v", err)
 		}
+
 		log.Println("closing camera")
 		camera.Close()
 
@@ -204,23 +212,26 @@ func recordingFinalName(filename string) string {
 	return reTempName.ReplaceAllString(filename, `$1`)
 }
 
-func cycleCameraPower(pin string) error {
-	if pin == "" {
+func cycleCameraPower(pinName string) error {
+	if pinName == "" {
 		return nil
 	}
 
-	log.Println("cycling camera power")
+	pin := gpioreg.ByName(pinName)
 
-	powerPin := gpioreg.ByName(pin)
-	if err := powerPin.Out(gpio.Low); err != nil {
+	log.Println("turning camera power off")
+	if err := pin.Out(gpio.Low); err != nil {
 		return fmt.Errorf("failed to set camera power pin low: %v", err)
 	}
 	time.Sleep(2 * time.Second)
-	if err := powerPin.Out(gpio.High); err != nil {
+
+	log.Println("turning camera power on")
+	if err := pin.Out(gpio.High); err != nil {
 		return fmt.Errorf("failed to set camera power pin high: %v", err)
 	}
-	time.Sleep(6 * time.Second)
 
+	log.Println("waiting for camera startup")
+	time.Sleep(8 * time.Second)
 	log.Println("camera should be ready")
 	return nil
 }

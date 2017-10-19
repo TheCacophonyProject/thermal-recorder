@@ -47,7 +47,7 @@
   branch = "v2"
   name = "periph.io/x/periph"
   packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
-  revision = "a5370d2227a0b687c67b5e751eef053908b20f59"
+  revision = "4abd9a80f539d5ad53cbee700a57b4492c04dd03"
   source = "https://github.com/TheCacophonyProject/periph.git"
 
 [solve-meta]
