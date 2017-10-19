@@ -154,21 +154,29 @@ type Dev struct {
 	serial uint64
 }
 
+const bootTimeout = 5 * time.Second
+
 // New returns a driver for the FLIR Lepton CCI protocol.
 func New(i i2c.Bus) (*Dev, error) {
 	d := &Dev{
 		c: conn{r: mmr.Dev16{Conn: &i2c.Dev{Bus: i, Addr: 0x2A}, Order: internal.Big16}},
 	}
 	// Wait for the device to be booted.
+
+	timeout := time.After(bootTimeout)
 	for {
 		if status, err := d.c.waitIdle(); err != nil {
 			return nil, err
 		} else if status == StatusBootNormal|StatusBooted {
 			return d, nil
 		}
-		//log.Printf("lepton not yet booted: 0x%02x", status)
+
 		// Polling rocks.
-		time.Sleep(5 * time.Millisecond)
+		select {
+		case <-time.After(5 * time.Millisecond):
+		case <-timeout:
+			return nil, errors.New("timed out waiting for device to boot")
+		}
 	}
 }
 
