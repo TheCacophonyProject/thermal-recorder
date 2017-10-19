@@ -3,7 +3,7 @@
 #
 
 # SPI bus speed (in Hz)
-spi-speed: 30000000
+spi-speed: 25000000
 
 # GPIO pin to control power to camera.
 power-pin: "GPIO23"
@@ -21,12 +21,17 @@ max-secs: 600
 motion:
     # Movement below raw temperatures of this value will not activate
     # motion detection.
-    temp-thresh: 3200
+    temp-thresh: 3000
 
     # Minimum raw temperature difference between recent frames to
     # trigger motion detection.
-    delta-thresh: 20
+    delta-thresh: 30
 
     # Number of pixels which must show delta-thresh change before
     # motion detection event will be triggered.
-    count-thresh: 10
+    count-thresh: 5
+
+    # Suppress motion detection if more than this percentage of the
+    # frame appears to change. This helps avoid false positives when
+    # the camera is recalibrating.
+    nonzero-max-percent: 50
