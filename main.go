@@ -70,18 +70,25 @@ func runMain() error {
 	}
 
 	var camera *lepton3.Lepton3
-	defer camera.Close()
+	defer func() {
+		if camera != nil {
+			camera.Close()
+		}
+	}()
 	for {
 		camera = lepton3.New(conf.SPISpeed)
 		camera.SetLogFunc(func(t string) { log.Printf(t) })
+
 		log.Println("opening camera")
 		if err := camera.Open(); err != nil {
 			return err
 		}
+
 		log.Println("enabling radiometry")
 		if err := camera.SetRadiometry(true); err != nil {
 			return err
 		}
+
 		err := runRecordings(conf, camera)
 		if err != nil {
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
