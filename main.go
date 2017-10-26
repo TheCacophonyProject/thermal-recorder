@@ -22,6 +22,7 @@ import (
 )
 
 const framesHz = 9 // approx
+const cptvTempGlob = "*.cptv.temp"
 
 type Args struct {
 	ConfigFile string `arg:"-c,--config" help:"path to configuration file"`
@@ -57,6 +58,10 @@ func runMain() error {
 		return err
 	}
 	log.Printf("config: %+v", *conf)
+
+	if err := deleteTempFiles(conf.OutputDir); err != nil {
+		return err
+	}
 
 	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {
@@ -235,5 +240,15 @@ func cycleCameraPower(pinName string) error {
 	log.Println("waiting for camera startup")
 	time.Sleep(8 * time.Second)
 	log.Println("camera should be ready")
+	return nil
+}
+
+func deleteTempFiles(directory string) error {
+	matches, _ := filepath.Glob(filepath.Join(directory, cptvTempGlob))
+	for _, filename := range matches {
+		if err := os.Remove(filename); err != nil {
+			return err
+		}
+	}
 	return nil
 }
