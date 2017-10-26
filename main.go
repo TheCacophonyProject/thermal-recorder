@@ -126,7 +126,8 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 	log.Println("reading frames")
 
 	totalFrames := 0
-	const frameLogInterval = 15 * framesHz
+	const frameLogIntervalFirstMin = 15 * framesHz
+	const frameLogInterval = 60 * 5 * framesHz
 
 	minFrames := conf.MinSecs * framesHz
 	maxFrames := conf.MaxSecs * framesHz
@@ -138,7 +139,8 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			return &nextFrameErr{err}
 		}
 		totalFrames++
-		if totalFrames%frameLogInterval == 0 {
+		if totalFrames%frameLogIntervalFirstMin == 0 &&
+			totalFrames <= 60 * framesHz || totalFrames%frameLogInterval == 0 {
 			log.Printf("%d frames seen", totalFrames)
 		}
 
