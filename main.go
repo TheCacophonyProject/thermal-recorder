@@ -22,6 +22,7 @@ import (
 )
 
 const framesHz = 9 // approx
+const cptvTempExt = "cptv.temp"
 
 type Args struct {
 	ConfigFile string `arg:"-c,--config" help:"path to configuration file"`
@@ -57,6 +58,11 @@ func runMain() error {
 		return err
 	}
 	log.Printf("config: %+v", *conf)
+
+	log.Println("Deleting temp files.")
+	if err := deleteTempFiles(conf.OutputDir); err != nil {
+		return err
+	}
 
 	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {
@@ -196,7 +202,7 @@ func min(a, b int) int {
 }
 
 func newRecordingTempName() string {
-	return time.Now().Format("20060102.150405.000.cptv.temp")
+	return time.Now().Format("20060102.150405.000."+cptvTempExt)
 }
 
 func renameTempRecording(tempName string) (string, error) {
@@ -235,5 +241,15 @@ func cycleCameraPower(pinName string) error {
 	log.Println("waiting for camera startup")
 	time.Sleep(8 * time.Second)
 	log.Println("camera should be ready")
+	return nil
+}
+
+func deleteTempFiles(directory string) error {
+	matches, _ := filepath.Glob(filepath.Join(directory, "*."+cptvTempExt))
+	for _, filename := range matches {
+		if err := os.Remove(filename); err != nil {
+			return err
+		}
+	}
 	return nil
 }
