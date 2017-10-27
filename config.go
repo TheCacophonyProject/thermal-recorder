@@ -18,6 +18,7 @@ type Config struct {
 	MinSecs   int          `yaml:"min-secs"`
 	MaxSecs   int          `yaml:"max-secs"`
 	Motion    MotionConfig `yaml:"motion"`
+	LEDs      LEDsConfig   `yaml:"leds"`
 }
 
 type MotionConfig struct {
@@ -25,6 +26,11 @@ type MotionConfig struct {
 	DeltaThresh       uint16 `yaml:"delta-thresh"`
 	CountThresh       int    `yaml:"count-thresh"`
 	NonzeroMaxPercent int    `yaml:"nonzero-max-percent"`
+}
+
+type LEDsConfig struct {
+	Recording string `yaml:"recording"`
+	Power     string `yaml:"power"`
 }
 
 func (conf *Config) Validate() error {
@@ -55,6 +61,10 @@ var defaultConfig = Config{
 		DeltaThresh:       30,
 		CountThresh:       5,
 		NonzeroMaxPercent: 50,
+	},
+	LEDs: LEDsConfig{
+		Recording: "GPIO20",
+		Power:     "GPIO21",
 	},
 }
 

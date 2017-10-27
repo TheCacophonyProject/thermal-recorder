@@ -69,6 +69,14 @@ func runMain() error {
 		return err
 	}
 
+	powerLed := gpioreg.ByName(conf.LEDs.Power)
+	if err := powerLed.Out(gpio.High); err != nil {
+		return fmt.Errorf("failed to set power led on: %v", err)
+	}
+	defer func() {
+		powerLed.Out(gpio.Low)
+	}()
+
 	if !args.Quick {
 		if err := cycleCameraPower(conf.PowerPin); err != nil {
 			return err
@@ -139,6 +147,14 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 	maxFrames := conf.MaxSecs * framesHz
 	numFrames := 0
 	lastFrame := 0
+
+	recordingLed := gpioreg.ByName(conf.LEDs.Recording)
+	if err := recordingLed.Out(gpio.Low); err != nil {
+		return fmt.Errorf("failed to set recording LED off: %v", err)
+	}
+	defer func() {
+		recordingLed.Out(gpio.Low)
+	}()
 	for {
 		err := camera.NextFrame(frame)
 		if err != nil {
@@ -159,6 +175,9 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 		if lastFrame > 0 && writer == nil {
 			filename := filepath.Join(conf.OutputDir, newRecordingTempName())
 			log.Printf("recording started: %s", filename)
+			if err := recordingLed.Out(gpio.High); err != nil {
+				return fmt.Errorf("failed to set recording LED on: %v", err)
+			}
 			writer, err = cptv.NewFileWriter(filename)
 			if err != nil {
 				return err
@@ -176,6 +195,9 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 				return err
 			}
 			log.Printf("recording stopped: %s\n", finalName)
+			if err := recordingLed.Out(gpio.Low); err != nil {
+				return fmt.Errorf("failed to set recording LED off: %v", err)
+			}
 			writer = nil
 			numFrames = 0
 			lastFrame = 0
