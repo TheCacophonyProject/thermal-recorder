@@ -30,7 +30,7 @@ type MotionConfig struct {
 
 type LEDsConfig struct {
 	Recording string `yaml:"recording"`
-	Power     string `yaml:"power"`
+	Running   string `yaml:"running"`
 }
 
 func (conf *Config) Validate() error {
@@ -64,7 +64,7 @@ var defaultConfig = Config{
 	},
 	LEDs: LEDsConfig{
 		Recording: "GPIO20",
-		Power:     "GPIO21",
+		Running:   "GPIO21",
 	},
 }
 

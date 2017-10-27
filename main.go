@@ -69,13 +69,14 @@ func runMain() error {
 		return err
 	}
 
-	powerLed := gpioreg.ByName(conf.LEDs.Power)
-	if err := powerLed.Out(gpio.High); err != nil {
-		return fmt.Errorf("failed to set power led on: %v", err)
+	runningLed := gpioreg.ByName(conf.LEDs.Running)
+	if runningLed == nil {
+		return fmt.Errorf("failed to load pin: %s", conf.LEDs.Running)
 	}
-	defer func() {
-		powerLed.Out(gpio.Low)
-	}()
+	if err := runningLed.Out(gpio.High); err != nil {
+		return fmt.Errorf("failed to set running led on: %v", err)
+	}
+	defer runningLed.Out(gpio.Low)
 
 	if !args.Quick {
 		if err := cycleCameraPower(conf.PowerPin); err != nil {
@@ -149,12 +150,13 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 	lastFrame := 0
 
 	recordingLed := gpioreg.ByName(conf.LEDs.Recording)
+	if recordingLed == nil {
+		return fmt.Errorf("failed to load pin: %s", conf.LEDs.Recording)
+	}
 	if err := recordingLed.Out(gpio.Low); err != nil {
 		return fmt.Errorf("failed to set recording LED off: %v", err)
 	}
-	defer func() {
-		recordingLed.Out(gpio.Low)
-	}()
+	defer recordingLed.Out(gpio.Low)
 	for {
 		err := camera.NextFrame(frame)
 		if err != nil {
