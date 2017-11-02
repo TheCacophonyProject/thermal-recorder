@@ -59,7 +59,7 @@ func runMain() error {
 	}
 	log.Printf("config: %+v", *conf)
 
-	log.Println("Deleting temp files.")
+	log.Println("deleting temp files")
 	if err := deleteTempFiles(conf.OutputDir); err != nil {
 		return err
 	}
@@ -129,11 +129,15 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 		}
 	}()
 
+	window := NewWindow(conf.WindowStart, conf.WindowEnd)
+
 	log.Println("reading frames")
 
 	totalFrames := 0
 	const frameLogIntervalFirstMin = 15 * framesHz
 	const frameLogInterval = 60 * 5 * framesHz
+
+	motionLogFrame := -999
 
 	minFrames := conf.MinSecs * framesHz
 	maxFrames := conf.MaxSecs * framesHz
@@ -146,13 +150,18 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 		}
 		totalFrames++
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
-			totalFrames <= 60 * framesHz || totalFrames%frameLogInterval == 0 {
+			totalFrames <= 60*framesHz || totalFrames%frameLogInterval == 0 {
 			log.Printf("%d frames seen", totalFrames)
 		}
 
 		// If motion detected, allow minFrames more frames.
 		if motion.Detect(frame) {
-			lastFrame = min(numFrames+minFrames, maxFrames)
+			if window.Active() {
+				lastFrame = min(numFrames+minFrames, maxFrames)
+			} else if motionLogFrame <= totalFrames-(10*framesHz) {
+				motionLogFrame = totalFrames
+				log.Print("motion detected but outside of recording window")
+			}
 		}
 
 		// Start or stop recording if required.
@@ -202,7 +211,7 @@ func min(a, b int) int {
 }
 
 func newRecordingTempName() string {
-	return time.Now().Format("20060102.150405.000."+cptvTempExt)
+	return time.Now().Format("20060102.150405.000." + cptvTempExt)
 }
 
 func renameTempRecording(tempName string) (string, error) {
