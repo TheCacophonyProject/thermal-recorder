@@ -57,9 +57,9 @@ func runMain() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("config: %+v", *conf)
+	logConfig(conf)
 
-	log.Println("Deleting temp files.")
+	log.Println("deleting temp files")
 	if err := deleteTempFiles(conf.OutputDir); err != nil {
 		return err
 	}
@@ -129,11 +129,15 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 		}
 	}()
 
+	window := NewWindow(conf.WindowStart, conf.WindowEnd)
+
 	log.Println("reading frames")
 
 	totalFrames := 0
 	const frameLogIntervalFirstMin = 15 * framesHz
 	const frameLogInterval = 60 * 5 * framesHz
+
+	motionLogFrame := -999
 
 	minFrames := conf.MinSecs * framesHz
 	maxFrames := conf.MaxSecs * framesHz
@@ -146,13 +150,18 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 		}
 		totalFrames++
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
-			totalFrames <= 60 * framesHz || totalFrames%frameLogInterval == 0 {
+			totalFrames <= 60*framesHz || totalFrames%frameLogInterval == 0 {
 			log.Printf("%d frames seen", totalFrames)
 		}
 
 		// If motion detected, allow minFrames more frames.
 		if motion.Detect(frame) {
-			lastFrame = min(numFrames+minFrames, maxFrames)
+			if window.Active() {
+				lastFrame = min(numFrames+minFrames, maxFrames)
+			} else if motionLogFrame <= totalFrames-(10*framesHz) {
+				motionLogFrame = totalFrames
+				log.Print("motion detected but outside of recording window")
+			}
 		}
 
 		// Start or stop recording if required.
@@ -194,6 +203,19 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 	}
 }
 
+func logConfig(conf *Config) {
+	log.Printf("SPI speed: %d", conf.SPISpeed)
+	log.Printf("power pin: %s", conf.PowerPin)
+	log.Printf("output dir: %s", conf.OutputDir)
+	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)
+	log.Printf("motion: %+v", conf.Motion)
+	if !conf.WindowStart.IsZero() {
+		log.Printf("recording window: %02d:%02d to %02d:%02d",
+			conf.WindowStart.Hour(), conf.WindowStart.Minute(),
+			conf.WindowEnd.Hour(), conf.WindowEnd.Minute())
+	}
+}
+
 func min(a, b int) int {
 	if a < b {
 		return a
@@ -202,7 +224,7 @@ func min(a, b int) int {
 }
 
 func newRecordingTempName() string {
-	return time.Now().Format("20060102.150405.000."+cptvTempExt)
+	return time.Now().Format("20060102.150405.000." + cptvTempExt)
 }
 
 func renameTempRecording(tempName string) (string, error) {
