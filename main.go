@@ -57,7 +57,7 @@ func runMain() error {
 	if err != nil {
 		return err
 	}
-	log.Printf("config: %+v", *conf)
+	logConfig(conf)
 
 	log.Println("deleting temp files")
 	if err := deleteTempFiles(conf.OutputDir); err != nil {
@@ -200,6 +200,19 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 		}
 
 		frame, prevFrame = prevFrame, frame
+	}
+}
+
+func logConfig(conf *Config) {
+	log.Printf("SPI speed: %d", conf.SPISpeed)
+	log.Printf("power pin: %s", conf.PowerPin)
+	log.Printf("output dir: %s", conf.OutputDir)
+	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)
+	log.Printf("motion: %+v", conf.Motion)
+	if !conf.WindowStart.IsZero() {
+		log.Printf("recording window: %02d:%02d to %02d:%02d",
+			conf.WindowStart.Hour(), conf.WindowStart.Minute(),
+			conf.WindowEnd.Hour(), conf.WindowEnd.Minute())
 	}
 }
 
