@@ -25,6 +25,10 @@ func TestAllDefaults(t *testing.T) {
 			CountThresh:       5,
 			NonzeroMaxPercent: 50,
 		},
+		LEDs: LEDsConfig{
+			Recording: "GPIO20",
+			Running:   "GPIO21",
+		},
 	}, *conf)
 }
 
@@ -43,6 +47,9 @@ motion:
     delta-thresh: 20
     count-thresh: 1
     nonzero-max-percent: 20
+leds:
+    recording: "RecordingPIN"
+    running: "RunningPIN"
 `)
 
 	conf, err := ParseConfig(config)
@@ -62,6 +69,10 @@ motion:
 			DeltaThresh:       20,
 			CountThresh:       1,
 			NonzeroMaxPercent: 20,
+		},
+		LEDs: LEDsConfig{
+			Recording: "RecordingPIN",
+			Running:   "RunningPIN",
 		},
 	}, *conf)
 }
