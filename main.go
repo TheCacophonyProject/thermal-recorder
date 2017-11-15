@@ -69,6 +69,15 @@ func runMain() error {
 		return err
 	}
 
+	runningLed := gpioreg.ByName(conf.LEDs.Running)
+	if runningLed == nil {
+		return fmt.Errorf("failed to load pin: %s", conf.LEDs.Running)
+	}
+	if err := runningLed.Out(gpio.High); err != nil {
+		return fmt.Errorf("failed to set running led on: %v", err)
+	}
+	defer runningLed.Out(gpio.Low)
+
 	if !args.Quick {
 		if err := cycleCameraPower(conf.PowerPin); err != nil {
 			return err
@@ -143,6 +152,15 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 	maxFrames := conf.MaxSecs * framesHz
 	numFrames := 0
 	lastFrame := 0
+
+	recordingLed := gpioreg.ByName(conf.LEDs.Recording)
+	if recordingLed == nil {
+		return fmt.Errorf("failed to load pin: %s", conf.LEDs.Recording)
+	}
+	if err := recordingLed.Out(gpio.Low); err != nil {
+		return fmt.Errorf("failed to set recording LED off: %v", err)
+	}
+	defer recordingLed.Out(gpio.Low)
 	for {
 		err := camera.NextFrame(frame)
 		if err != nil {
@@ -168,6 +186,9 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 		if lastFrame > 0 && writer == nil {
 			filename := filepath.Join(conf.OutputDir, newRecordingTempName())
 			log.Printf("recording started: %s", filename)
+			if err := recordingLed.Out(gpio.High); err != nil {
+				return fmt.Errorf("failed to set recording LED on: %v", err)
+			}
 			writer, err = cptv.NewFileWriter(filename)
 			if err != nil {
 				return err
@@ -185,6 +206,9 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 				return err
 			}
 			log.Printf("recording stopped: %s\n", finalName)
+			if err := recordingLed.Out(gpio.Low); err != nil {
+				return fmt.Errorf("failed to set recording LED off: %v", err)
+			}
 			writer = nil
 			numFrames = 0
 			lastFrame = 0
@@ -209,6 +233,7 @@ func logConfig(conf *Config) {
 	log.Printf("output dir: %s", conf.OutputDir)
 	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)
 	log.Printf("motion: %+v", conf.Motion)
+	log.Printf("leds: %+v", conf.LEDs)
 	if !conf.WindowStart.IsZero() {
 		log.Printf("recording window: %02d:%02d to %02d:%02d",
 			conf.WindowStart.Hour(), conf.WindowStart.Minute(),

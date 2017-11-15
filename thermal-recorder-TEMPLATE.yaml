@@ -41,3 +41,11 @@ motion:
     # frame appears to change. This helps avoid false positives when
     # the camera is recalibrating.
     nonzero-max-percent: 50
+
+# GPIO pins for the LEDs
+leds:
+    # Pin of the blue LED, indicating that the device is recording.
+    recording: "GPIO20"
+
+    # Pin of the green LED, indicating that thermal-recording is running.
+    running: "GPIO21"

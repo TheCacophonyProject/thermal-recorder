@@ -21,6 +21,12 @@ type Config struct {
 	WindowStart time.Time
 	WindowEnd   time.Time
 	Motion      MotionConfig
+	LEDs        LEDsConfig
+}
+
+type LEDsConfig struct {
+	Recording string `yaml:"recording"`
+	Running   string `yaml:"running"`
 }
 
 func (conf *Config) Validate() error {
@@ -62,6 +68,7 @@ type rawConfig struct {
 	WindowStart string       `yaml:"window-start"`
 	WindowEnd   string       `yaml:"window-end"`
 	Motion      MotionConfig `yaml:"motion"`
+	LEDs        LEDsConfig   `yaml:"leds"`
 }
 
 var defaultConfig = rawConfig{
@@ -75,6 +82,10 @@ var defaultConfig = rawConfig{
 		DeltaThresh:       30,
 		CountThresh:       5,
 		NonzeroMaxPercent: 50,
+	},
+	LEDs: LEDsConfig{
+		Recording: "GPIO20",
+		Running:   "GPIO21",
 	},
 }
 
@@ -99,6 +110,7 @@ func ParseConfig(buf []byte) (*Config, error) {
 		MinSecs:   raw.MinSecs,
 		MaxSecs:   raw.MaxSecs,
 		Motion:    raw.Motion,
+		LEDs:      raw.LEDs,
 	}
 
 	const timeOnly = "15:04"
