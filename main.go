@@ -53,6 +53,8 @@ func main() {
 }
 
 func runMain() error {
+	log.SetFlags(0) // Removes default timestamp flag
+
 	args := procArgs()
 	conf, err := ParseConfigFile(args.ConfigFile)
 	if err != nil {
