@@ -14,11 +14,12 @@ func TestAllDefaults(t *testing.T) {
 	require.NoError(t, conf.Validate())
 
 	assert.Equal(t, Config{
-		SPISpeed:  2500000,
-		PowerPin:  "GPIO23",
-		OutputDir: "/var/spool/cptv",
-		MinSecs:   10,
-		MaxSecs:   600,
+		SPISpeed:     2500000,
+		PowerPin:     "GPIO23",
+		OutputDir:    "/var/spool/cptv",
+		MinSecs:      10,
+		MaxSecs:      600,
+		MinDiskSpace: 200,
 		Motion: MotionConfig{
 			TempThresh:        3000,
 			DeltaThresh:       30,
@@ -42,6 +43,7 @@ min-secs: 2
 max-secs: 10
 window-start: 17:10
 window-end: 07:20
+min-disk-space: 321
 motion:
     temp-thresh: 2000
     delta-thresh: 20
@@ -57,13 +59,14 @@ leds:
 	require.NoError(t, conf.Validate())
 
 	assert.Equal(t, Config{
-		SPISpeed:    123,
-		PowerPin:    "PIN",
-		OutputDir:   "/some/where",
-		MinSecs:     2,
-		MaxSecs:     10,
-		WindowStart: time.Date(0, 1, 1, 17, 10, 0, 0, time.UTC),
-		WindowEnd:   time.Date(0, 1, 1, 07, 20, 0, 0, time.UTC),
+		SPISpeed:     123,
+		PowerPin:     "PIN",
+		OutputDir:    "/some/where",
+		MinSecs:      2,
+		MaxSecs:      10,
+		WindowStart:  time.Date(0, 1, 1, 17, 10, 0, 0, time.UTC),
+		WindowEnd:    time.Date(0, 1, 1, 07, 20, 0, 0, time.UTC),
+		MinDiskSpace: 321,
 		Motion: MotionConfig{
 			TempThresh:        2000,
 			DeltaThresh:       20,

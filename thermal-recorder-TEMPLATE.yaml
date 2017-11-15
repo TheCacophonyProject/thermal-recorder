@@ -17,6 +17,9 @@ min-secs: 10
 # Maximum total video length.
 max-secs: 600
 
+# Mininum disk space required to record, in MB
+min-disk-space: 200
+
 # Start time for recording window (optional)
 # window-start: 17:00
 

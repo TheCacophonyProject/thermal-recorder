@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"syscall"
 	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
@@ -62,6 +63,14 @@ func runMain() error {
 	log.Println("deleting temp files")
 	if err := deleteTempFiles(conf.OutputDir); err != nil {
 		return err
+	}
+
+	log.Println("checking if there is enough room on disk to record")
+	if enoughDiskSpace, err := diskSpaceCheck(conf.MinDiskSpace); err != nil || !enoughDiskSpace {
+		if err != nil {
+			return err
+		}
+		log.Printf("not enough room on disk to start recording")
 	}
 
 	log.Println("host initialisation")
@@ -174,11 +183,21 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 
 		// If motion detected, allow minFrames more frames.
 		if motion.Detect(frame) {
-			if window.Active() {
+			writeLog := motionLogFrame <= totalFrames-(10*framesHz)
+			if !window.Active() {
+				if writeLog {
+					motionLogFrame = totalFrames
+					log.Print("motion detected but outside of recording window")
+				}
+			} else if enoughSpace, err := diskSpaceCheck(conf.MinDiskSpace); !enoughSpace || err != nil {
+				if err != nil {
+					return err
+				} else if writeLog {
+					motionLogFrame = totalFrames
+					log.Print("motion detected but not enough space on disk to start recording")
+				}
+			} else {
 				lastFrame = min(numFrames+minFrames, maxFrames)
-			} else if motionLogFrame <= totalFrames-(10*framesHz) {
-				motionLogFrame = totalFrames
-				log.Print("motion detected but outside of recording window")
 			}
 		}
 
@@ -232,6 +251,7 @@ func logConfig(conf *Config) {
 	log.Printf("power pin: %s", conf.PowerPin)
 	log.Printf("output dir: %s", conf.OutputDir)
 	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)
+	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
 	log.Printf("leds: %+v", conf.LEDs)
 	if !conf.WindowStart.IsZero() {
@@ -299,4 +319,12 @@ func deleteTempFiles(directory string) error {
 		}
 	}
 	return nil
+}
+
+func diskSpaceCheck(mb uint64) (bool, error) {
+	var fs syscall.Statfs_t
+	if err := syscall.Statfs("/", &fs); err != nil {
+		return false, err
+	}
+	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
 }
