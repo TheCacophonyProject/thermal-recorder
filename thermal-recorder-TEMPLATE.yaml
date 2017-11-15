@@ -17,6 +17,12 @@ min-secs: 10
 # Maximum total video length.
 max-secs: 600
 
+# Start time for recording window (optional)
+# window-start: 17:00
+
+# End time for recording window (optional)
+# window-end: 07:00
+
 # Motion detection parameters
 motion:
     # Movement below raw temperatures of this value will not activate
