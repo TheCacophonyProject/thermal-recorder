@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"syscall"
 	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
@@ -52,6 +53,8 @@ func main() {
 }
 
 func runMain() error {
+	log.SetFlags(0) // Removes default timestamp flag
+
 	args := procArgs()
 	conf, err := ParseConfigFile(args.ConfigFile)
 	if err != nil {
@@ -62,6 +65,13 @@ func runMain() error {
 	log.Println("deleting temp files")
 	if err := deleteTempFiles(conf.OutputDir); err != nil {
 		return err
+	}
+
+	log.Println("checking if there is enough free disk space for recording")
+	if ok, err := checkDiskSpace(conf.MinDiskSpace, conf.OutputDir); err != nil {
+		return err
+	} else if !ok {
+		log.Printf("not enough free disk space for recording")
 	}
 
 	log.Println("host initialisation")
@@ -174,11 +184,22 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 
 		// If motion detected, allow minFrames more frames.
 		if motion.Detect(frame) {
-			if window.Active() {
-				lastFrame = min(numFrames+minFrames, maxFrames)
-			} else if motionLogFrame <= totalFrames-(10*framesHz) {
+			shouldLogMotion := motionLogFrame <= totalFrames-(10*framesHz)
+			if shouldLogMotion {
 				motionLogFrame = totalFrames
-				log.Print("motion detected but outside of recording window")
+			}
+			if !window.Active() {
+				if shouldLogMotion {
+					log.Print("motion detected but outside of recording window")
+				}
+			} else if enoughSpace, err := checkDiskSpace(conf.MinDiskSpace, conf.OutputDir); err != nil {
+				return err
+			} else if !enoughSpace {
+				if shouldLogMotion {
+					log.Print("motion detected but not enough free disk space to start recording")
+				}
+			} else {
+				lastFrame = min(numFrames+minFrames, maxFrames)
 			}
 		}
 
@@ -232,6 +253,7 @@ func logConfig(conf *Config) {
 	log.Printf("power pin: %s", conf.PowerPin)
 	log.Printf("output dir: %s", conf.OutputDir)
 	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)
+	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
 	log.Printf("leds: %+v", conf.LEDs)
 	if !conf.WindowStart.IsZero() {
@@ -299,4 +321,12 @@ func deleteTempFiles(directory string) error {
 		}
 	}
 	return nil
+}
+
+func checkDiskSpace(mb uint64, dir string) (bool, error) {
+	var fs syscall.Statfs_t
+	if err := syscall.Statfs(dir, &fs); err != nil {
+		return false, err
+	}
+	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
 }

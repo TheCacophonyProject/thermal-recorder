@@ -13,15 +13,16 @@ import (
 )
 
 type Config struct {
-	SPISpeed    int64
-	PowerPin    string
-	OutputDir   string
-	MinSecs     int
-	MaxSecs     int
-	WindowStart time.Time
-	WindowEnd   time.Time
-	Motion      MotionConfig
-	LEDs        LEDsConfig
+	SPISpeed     int64
+	PowerPin     string
+	OutputDir    string
+	MinSecs      int
+	MaxSecs      int
+	WindowStart  time.Time
+	WindowEnd    time.Time
+	MinDiskSpace uint64
+	Motion       MotionConfig
+	LEDs         LEDsConfig
 }
 
 type LEDsConfig struct {
@@ -60,23 +61,25 @@ func (conf *MotionConfig) Validate() error {
 }
 
 type rawConfig struct {
-	SPISpeed    int64        `yaml:"spi-speed"`
-	PowerPin    string       `yaml:"power-pin"`
-	OutputDir   string       `yaml:"output-dir"`
-	MinSecs     int          `yaml:"min-secs"`
-	MaxSecs     int          `yaml:"max-secs"`
-	WindowStart string       `yaml:"window-start"`
-	WindowEnd   string       `yaml:"window-end"`
-	Motion      MotionConfig `yaml:"motion"`
-	LEDs        LEDsConfig   `yaml:"leds"`
+	SPISpeed     int64        `yaml:"spi-speed"`
+	PowerPin     string       `yaml:"power-pin"`
+	OutputDir    string       `yaml:"output-dir"`
+	MinSecs      int          `yaml:"min-secs"`
+	MaxSecs      int          `yaml:"max-secs"`
+	WindowStart  string       `yaml:"window-start"`
+	WindowEnd    string       `yaml:"window-end"`
+	MinDiskSpace uint64       `yaml:"min-disk-space"`
+	Motion       MotionConfig `yaml:"motion"`
+	LEDs         LEDsConfig   `yaml:"leds"`
 }
 
 var defaultConfig = rawConfig{
-	SPISpeed:  2500000,
-	PowerPin:  "GPIO23",
-	OutputDir: "/var/spool/cptv",
-	MinSecs:   10,
-	MaxSecs:   600,
+	SPISpeed:     2500000,
+	PowerPin:     "GPIO23",
+	OutputDir:    "/var/spool/cptv",
+	MinSecs:      10,
+	MaxSecs:      600,
+	MinDiskSpace: 200,
 	Motion: MotionConfig{
 		TempThresh:        3000,
 		DeltaThresh:       30,
@@ -104,13 +107,14 @@ func ParseConfig(buf []byte) (*Config, error) {
 	}
 
 	conf := &Config{
-		SPISpeed:  raw.SPISpeed,
-		PowerPin:  raw.PowerPin,
-		OutputDir: raw.OutputDir,
-		MinSecs:   raw.MinSecs,
-		MaxSecs:   raw.MaxSecs,
-		Motion:    raw.Motion,
-		LEDs:      raw.LEDs,
+		SPISpeed:     raw.SPISpeed,
+		PowerPin:     raw.PowerPin,
+		OutputDir:    raw.OutputDir,
+		MinSecs:      raw.MinSecs,
+		MaxSecs:      raw.MaxSecs,
+		MinDiskSpace: raw.MinDiskSpace,
+		Motion:       raw.Motion,
+		LEDs:         raw.LEDs,
 	}
 
 	const timeOnly = "15:04"
