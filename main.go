@@ -67,12 +67,11 @@ func runMain() error {
 		return err
 	}
 
-	log.Println("checking if there is enough room on disk to record")
-	if enoughDiskSpace, err := diskSpaceCheck(conf.MinDiskSpace); err != nil || !enoughDiskSpace {
-		if err != nil {
-			return err
-		}
-		log.Printf("not enough room on disk to start recording")
+	log.Println("checking if there is enough free disk space for recording")
+	if ok, err := checkDiskSpace(conf.MinDiskSpace, conf.OutputDir); err != nil {
+		return err
+	} else if !ok {
+		log.Printf("not enough free disk space for recording")
 	}
 
 	log.Println("host initialisation")
@@ -185,18 +184,19 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 
 		// If motion detected, allow minFrames more frames.
 		if motion.Detect(frame) {
-			writeLog := motionLogFrame <= totalFrames-(10*framesHz)
+			shouldLogMotion := motionLogFrame <= totalFrames-(10*framesHz)
+			if shouldLogMotion {
+				motionLogFrame = totalFrames
+			}
 			if !window.Active() {
-				if writeLog {
-					motionLogFrame = totalFrames
+				if shouldLogMotion {
 					log.Print("motion detected but outside of recording window")
 				}
-			} else if enoughSpace, err := diskSpaceCheck(conf.MinDiskSpace); !enoughSpace || err != nil {
-				if err != nil {
-					return err
-				} else if writeLog {
-					motionLogFrame = totalFrames
-					log.Print("motion detected but not enough space on disk to start recording")
+			} else if enoughSpace, err := checkDiskSpace(conf.MinDiskSpace, conf.OutputDir); err != nil {
+				return err
+			} else if !enoughSpace {
+				if shouldLogMotion {
+					log.Print("motion detected but not enough free disk space to start recording")
 				}
 			} else {
 				lastFrame = min(numFrames+minFrames, maxFrames)
@@ -323,9 +323,9 @@ func deleteTempFiles(directory string) error {
 	return nil
 }
 
-func diskSpaceCheck(mb uint64) (bool, error) {
+func checkDiskSpace(mb uint64, dir string) (bool, error) {
 	var fs syscall.Statfs_t
-	if err := syscall.Statfs("/", &fs); err != nil {
+	if err := syscall.Statfs(dir, &fs); err != nil {
 		return false, err
 	}
 	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
