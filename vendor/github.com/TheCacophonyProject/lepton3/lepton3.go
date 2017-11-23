@@ -84,20 +84,25 @@ func (d *Lepton3) SetLogFunc(log func(string)) {
 }
 
 func (d *Lepton3) SetRadiometry(enable bool) error {
+	d.log("opening I2C bus")
 	i2cBus, err := i2creg.Open("")
 	if err != nil {
 		return err
 	}
 	defer i2cBus.Close()
 
+	d.log("opening CCI")
 	cciDev, err := cci.New(i2cBus)
 	if err != nil {
 		return fmt.Errorf("cci.New: %v", err)
 	}
+
+	d.log(fmt.Sprintf("setting radiometry to %v", enable))
 	if err := cciDev.SetRadiometry(enable); err != nil {
 		return fmt.Errorf("SetRadiometry: %v", err)
 	}
 
+	d.log("checking radiometry setting is correct")
 	value, err := cciDev.GetRadiometry()
 	if err != nil {
 		return fmt.Errorf("GetRadiometry: %v", err)
@@ -167,8 +172,7 @@ func (d *Lepton3) NextFrame(outFrame *Frame) error {
 
 		packetNum, err := validatePacket(packet)
 		if err != nil {
-			d.log(err.Error())
-			if err := d.resync(); err != nil {
+			if err := d.resync(err); err != nil {
 				return err
 			}
 			continue
@@ -178,8 +182,7 @@ func (d *Lepton3) NextFrame(outFrame *Frame) error {
 
 		complete, err := d.frame.nextPacket(packetNum, packet)
 		if err != nil {
-			d.log(err.Error())
-			if err := d.resync(); err != nil {
+			if err := d.resync(err); err != nil {
 				return err
 			}
 		} else if complete {
@@ -203,8 +206,8 @@ func (d *Lepton3) Snapshot() (*Frame, error) {
 	return frame, nil
 }
 
-func (d *Lepton3) resync() error {
-	d.log("resync!")
+func (d *Lepton3) resync(reason error) error {
+	d.log(fmt.Sprintf("resync! %v", reason))
 	d.Close()
 	d.frame.reset()
 	time.Sleep(300 * time.Millisecond)
