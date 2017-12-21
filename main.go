@@ -25,9 +25,12 @@ import (
 const framesHz = 9 // approx
 const cptvTempExt = "cptv.temp"
 
+var version = "No version provided"
+
 type Args struct {
 	ConfigFile string `arg:"-c,--config" help:"path to configuration file"`
 	Quick      bool   `arg:"-q,--quick" help:"don't cycle camera power on startup"`
+	Version    bool   `arg:"-v,--version" help:"Version number"`
 }
 
 func procArgs() Args {
@@ -56,6 +59,10 @@ func runMain() error {
 	log.SetFlags(0) // Removes default timestamp flag
 
 	args := procArgs()
+	if args.Version {
+		log.Println(version)
+		return nil
+	}
 	conf, err := ParseConfigFile(args.ConfigFile)
 	if err != nil {
 		return err
