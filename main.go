@@ -62,7 +62,7 @@ func runMain() error {
 	log.SetFlags(0) // Removes default timestamp flag
 
 	args := procArgs()
-	log.Printf("Running version: %s", version)
+	log.Printf("running version: %s", version)
 	conf, err := ParseConfigFile(args.ConfigFile)
 	if err != nil {
 		return err
