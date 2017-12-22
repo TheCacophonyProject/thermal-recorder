@@ -30,7 +30,10 @@ var version = "No version provided"
 type Args struct {
 	ConfigFile string `arg:"-c,--config" help:"path to configuration file"`
 	Quick      bool   `arg:"-q,--quick" help:"don't cycle camera power on startup"`
-	Version    bool   `arg:"-v,--version" help:"Version number"`
+}
+
+func (Args) Version() string {
+	return version
 }
 
 func procArgs() Args {
@@ -59,10 +62,7 @@ func runMain() error {
 	log.SetFlags(0) // Removes default timestamp flag
 
 	args := procArgs()
-	if args.Version {
-		log.Println(version)
-		return nil
-	}
+	log.Printf("Running version: %s", version)
 	conf, err := ParseConfigFile(args.ConfigFile)
 	if err != nil {
 		return err
