@@ -1,0 +1,25 @@
+project_name: thermal-recorder
+release:
+  github:
+    owner: TheCacophonyProject
+    name: thermal-recorder
+  name_template: '{{.Tag}}'
+builds:
+- goos:
+  - linux
+  goarch:
+  - arm
+  goarm:
+  - "7"
+  main: .
+  ldflags: -s -w -X main.version={{.Version}}
+  binary: thermal-recorder
+archive:
+  name_template: '{{ .ProjectName }}_{{ .Version }}'
+  format: tar.gz
+  files:
+  - thermal-recorder.service
+  - thermal-recorder-TEMPLATE.yaml
+checksum:
+  name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
+dist: dist
