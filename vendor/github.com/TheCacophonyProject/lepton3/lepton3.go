@@ -244,9 +244,11 @@ func (d *Lepton3) startStream() error {
 }
 
 func (d *Lepton3) stopStream() {
-	d.tomb.Kill(nil)
-	d.tomb.Wait()
-	d.tomb = nil
+	if d.tomb != nil {
+		d.tomb.Kill(nil)
+		d.tomb.Wait()
+		d.tomb = nil
+	}
 }
 
 func validatePacket(packet []byte) (int, error) {
