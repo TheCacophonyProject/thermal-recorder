@@ -26,6 +26,12 @@
   revision = "e80c3b7ed292b052c7083b6fd7154a8422c33f65"
 
 [[projects]]
+  name = "github.com/coreos/go-systemd"
+  packages = ["daemon"]
+  revision = "d2196463941895ee908e13531a23a39feb9e1243"
+  version = "v15"
+
+[[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
@@ -39,10 +45,7 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = [
-    "assert",
-    "require"
-  ]
+  packages = ["assert","require"]
   revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
   version = "v1.1.4"
 
@@ -67,41 +70,13 @@
 [[projects]]
   branch = "v2"
   name = "periph.io/x/periph"
-  packages = [
-    ".",
-    "conn",
-    "conn/gpio",
-    "conn/gpio/gpioreg",
-    "conn/i2c",
-    "conn/i2c/i2creg",
-    "conn/mmr",
-    "conn/pin",
-    "conn/pin/pinreg",
-    "conn/spi",
-    "conn/spi/spireg",
-    "devices",
-    "devices/lepton/cci",
-    "devices/lepton/internal",
-    "host",
-    "host/allwinner",
-    "host/bcm283x",
-    "host/chip",
-    "host/cpu",
-    "host/distro",
-    "host/fs",
-    "host/odroidc1",
-    "host/pine64",
-    "host/pmem",
-    "host/rpi",
-    "host/sysfs",
-    "host/videocore"
-  ]
+  packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
   revision = "d06ef89e37e829cc301f5babee628e6c6e36d7c5"
   source = "https://github.com/TheCacophonyProject/periph.git"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "cd4307d1ec352393abe0c2019d0b7c37c92e6f1ead1040644215d042de3e8b0c"
+  inputs-digest = "6f3bd2d4f89a0125995ffea8500209afd587d29ab9f27aef1af43116485fa96c"
   solver-name = "gps-cdcl"
   solver-version = 1

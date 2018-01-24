@@ -15,6 +15,7 @@ import (
 
 	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
+	"github.com/coreos/go-systemd/daemon"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
@@ -184,6 +185,9 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 			return &nextFrameErr{err}
 		}
 		totalFrames++
+		if totalFrames%5*framesHz == 0 {
+			daemon.SdNotify(false, "WATCHDOG=1")
+		}
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
 			totalFrames <= 60*framesHz || totalFrames%frameLogInterval == 0 {
 			log.Printf("%d frames seen", totalFrames)
