@@ -70,6 +70,9 @@ func runMain() error {
 	}
 	logConfig(conf)
 
+	turret := NewTurretController(conf.Turret)
+	go turret.Start()
+
 	log.Println("deleting temp files")
 	if err := deleteTempFiles(conf.OutputDir); err != nil {
 		return err
@@ -122,7 +125,7 @@ func runMain() error {
 			return err
 		}
 
-		err := runRecordings(conf, camera)
+		err := runRecordings(conf, camera, turret)
 		if err != nil {
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
 				return err
@@ -142,7 +145,7 @@ func runMain() error {
 	return nil
 }
 
-func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
+func runRecordings(conf *Config, camera *lepton3.Lepton3, turret *TurretController) error {
 	motion := NewMotionDetector(conf.Motion)
 
 	prevFrame := new(lepton3.Frame)
@@ -195,6 +198,7 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3) error {
 
 		// If motion detected, allow minFrames more frames.
 		if motion.Detect(frame) {
+			turret.Update(motion)
 			shouldLogMotion := motionLogFrame <= totalFrames-(10*framesHz)
 			if shouldLogMotion {
 				motionLogFrame = totalFrames
@@ -271,6 +275,12 @@ func logConfig(conf *Config) {
 		log.Printf("recording window: %02d:%02d to %02d:%02d",
 			conf.WindowStart.Hour(), conf.WindowStart.Minute(),
 			conf.WindowEnd.Hour(), conf.WindowEnd.Minute())
+	}
+	if conf.Turret.Active {
+		log.Printf("Turret active")
+		log.Printf("\tPID: %v", conf.Turret.PID)
+		log.Printf("\tServoX: %+v", conf.Turret.ServoX)
+		log.Printf("\tServoY: %+v", conf.Turret.ServoY)
 	}
 }
 

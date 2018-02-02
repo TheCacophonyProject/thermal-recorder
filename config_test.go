@@ -30,6 +30,24 @@ func TestAllDefaults(t *testing.T) {
 			Recording: "GPIO20",
 			Running:   "GPIO21",
 		},
+		Turret: TurretConfig{
+			Active: false,
+			PID:    []float64{0.05, 0, 0},
+			ServoX: ServoConfig{
+				Active:   false,
+				Pin:      "17",
+				MaxAng:   160,
+				MinAng:   20,
+				StartAng: 90,
+			},
+			ServoY: ServoConfig{
+				Active:   false,
+				Pin:      "18",
+				MaxAng:   160,
+				MinAng:   20,
+				StartAng: 90,
+			},
+		},
 	}, *conf)
 }
 
@@ -52,6 +70,24 @@ motion:
 leds:
     recording: "RecordingPIN"
     running: "RunningPIN"
+turret:
+    active: true
+    pid:
+      - 1
+      - 2
+      - 3
+    servo-x:
+      active: false
+      pin: "pin"
+      min-ang: 0
+      max-ang: 180
+      start-ang: 30
+    servo-y:
+      active: true
+      pin: "pin"
+      min-ang: 0
+      max-ang: 180
+      start-ang: 30
 `)
 
 	conf, err := ParseConfig(config)
@@ -76,6 +112,24 @@ leds:
 		LEDs: LEDsConfig{
 			Recording: "RecordingPIN",
 			Running:   "RunningPIN",
+		},
+		Turret: TurretConfig{
+			Active: true,
+			PID:    []float64{1, 2, 3},
+			ServoX: ServoConfig{
+				Active:   false,
+				Pin:      "pin",
+				MaxAng:   180,
+				MinAng:   0,
+				StartAng: 30,
+			},
+			ServoY: ServoConfig{
+				Active:   true,
+				Pin:      "pin",
+				MaxAng:   180,
+				MinAng:   0,
+				StartAng: 30,
+			},
 		},
 	}, *conf)
 }
