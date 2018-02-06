@@ -23,6 +23,22 @@ type Config struct {
 	MinDiskSpace uint64
 	Motion       MotionConfig
 	LEDs         LEDsConfig
+	Turret       TurretConfig
+}
+
+type ServoConfig struct {
+	Active   bool    `yaml:"active"`
+	MinAng   float64 `yaml:"min-ang"`
+	MaxAng   float64 `yaml:"max-ang"`
+	StartAng float64 `yaml:"start-ang"`
+	Pin      string  `yaml:"pin"`
+}
+
+type TurretConfig struct {
+	Active bool        `yaml:"active"`
+	PID    []float64   `yaml:"pid"`
+	ServoX ServoConfig `yaml:"servo-x"`
+	ServoY ServoConfig `yaml:"servo-y"`
 }
 
 type LEDsConfig struct {
@@ -71,6 +87,7 @@ type rawConfig struct {
 	MinDiskSpace uint64       `yaml:"min-disk-space"`
 	Motion       MotionConfig `yaml:"motion"`
 	LEDs         LEDsConfig   `yaml:"leds"`
+	Turret       TurretConfig `yaml:"turret"`
 }
 
 var defaultConfig = rawConfig{
@@ -89,6 +106,24 @@ var defaultConfig = rawConfig{
 	LEDs: LEDsConfig{
 		Recording: "GPIO20",
 		Running:   "GPIO21",
+	},
+	Turret: TurretConfig{
+		Active: false,
+		PID:    []float64{0.05, 0, 0},
+		ServoX: ServoConfig{
+			Active:   false,
+			Pin:      "17",
+			MaxAng:   160,
+			MinAng:   20,
+			StartAng: 90,
+		},
+		ServoY: ServoConfig{
+			Active:   false,
+			Pin:      "18",
+			MaxAng:   160,
+			MinAng:   20,
+			StartAng: 90,
+		},
 	},
 }
 
@@ -115,6 +150,7 @@ func ParseConfig(buf []byte) (*Config, error) {
 		MinDiskSpace: raw.MinDiskSpace,
 		Motion:       raw.Motion,
 		LEDs:         raw.LEDs,
+		Turret:       raw.Turret,
 	}
 
 	const timeOnly = "15:04"
