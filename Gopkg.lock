@@ -38,6 +38,12 @@
   version = "v1.1.0"
 
 [[projects]]
+  branch = "master"
+  name = "github.com/felixge/pidctrl"
+  packages = ["."]
+  revision = "7b13bcae7243fe17bbeb7dd5cd8b26675c8db048"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -77,6 +83,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6f3bd2d4f89a0125995ffea8500209afd587d29ab9f27aef1af43116485fa96c"
+  inputs-digest = "6ae815a61314ab4e49d601eb7d8c6c113e0e72bfabfcc31caf2b97a65124b120"
   solver-name = "gps-cdcl"
   solver-version = 1
