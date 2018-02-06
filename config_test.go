@@ -84,10 +84,10 @@ turret:
       start-ang: 30
     servo-y:
       active: true
-      pin: "pin"
-      min-ang: 0
-      max-ang: 180
-      start-ang: 30
+      pin: "pin1"
+      min-ang: 10
+      max-ang: 190
+      start-ang: 40
 `)
 
 	conf, err := ParseConfig(config)
@@ -125,10 +125,10 @@ turret:
 			},
 			ServoY: ServoConfig{
 				Active:   true,
-				Pin:      "pin",
-				MaxAng:   180,
-				MinAng:   0,
-				StartAng: 30,
+				Pin:      "pin1",
+				MaxAng:   190,
+				MinAng:   10,
+				StartAng: 40,
 			},
 		},
 	}, *conf)
