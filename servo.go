@@ -67,8 +67,8 @@ func (t *TurretController) Update(motion *motionDetector) {
 	if !t.Active {
 		return
 	}
-	t.ServoX.updateTargetAng((float64(motion.tarX-80) * 56 / 160))
-	t.ServoY.updateTargetAng((float64(motion.tarY-60) * 56 / 160))
+	t.ServoX.updateTargetAng((float64(motion.targetX-80) * 56 / 160))
+	t.ServoY.updateTargetAng((float64(motion.targetY-60) * 56 / 160))
 }
 
 // updates the angle to the target as seen by the camera

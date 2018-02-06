@@ -21,8 +21,8 @@ type motionDetector struct {
 	deltaThresh  uint16
 	countThresh  int
 	nonzeroLimit int
-	tarX         int
-	tarY         int
+	targetX      int
+	targetY      int
 }
 
 func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
@@ -59,8 +59,8 @@ func (d *motionDetector) setFloor(f *lepton3.Frame) *lepton3.Frame {
 func (d *motionDetector) hasMotion(m *lepton3.Frame) bool {
 	var nonzeroCount int
 	var deltaCount int
-	var tarXTotal int
-	var tarYTotal int
+	var targetXTotal int
+	var targetYTotal int
 	var tarCount int
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
@@ -69,16 +69,16 @@ func (d *motionDetector) hasMotion(m *lepton3.Frame) bool {
 				nonzeroCount++
 				if v > d.deltaThresh {
 					deltaCount++
-					tarXTotal += x
-					tarYTotal += y
+					targetXTotal += x
+					targetYTotal += y
 					tarCount++
 				}
 			}
 		}
 	}
 	if tarCount >= 1 {
-		d.tarX = tarXTotal / tarCount
-		d.tarY = tarYTotal / tarCount
+		d.targetX = targetXTotal / tarCount
+		d.targetY = targetYTotal / tarCount
 	}
 	// Motion detection is suppressed when over nonzeroLimit motion
 	// pixels are nonzero. This is to deal with sudden jumps in the
