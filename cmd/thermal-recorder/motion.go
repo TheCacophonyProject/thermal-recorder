@@ -2,9 +2,11 @@ package main
 
 import (
 	"github.com/TheCacophonyProject/lepton3"
+
+	"github.com/TheCacophonyProject/thermal-recorder/config"
 )
 
-func NewMotionDetector(args MotionConfig) *motionDetector {
+func NewMotionDetector(args config.MotionConfig) *motionDetector {
 	d := new(motionDetector)
 	d.deltaThresh = args.DeltaThresh
 	d.countThresh = args.CountThresh

@@ -13,6 +13,7 @@ import (
 	"syscall"
 	"time"
 
+	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
 	"github.com/coreos/go-systemd/daemon"
@@ -20,7 +21,7 @@ import (
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
 
-	cptv "github.com/TheCacophonyProject/go-cptv"
+	"github.com/TheCacophonyProject/thermal-recorder/config"
 )
 
 const framesHz = 9 // approx
@@ -64,7 +65,7 @@ func runMain() error {
 
 	args := procArgs()
 	log.Printf("running version: %s", version)
-	conf, err := ParseConfigFile(args.ConfigFile)
+	conf, err := config.ParseConfigFile(args.ConfigFile)
 	if err != nil {
 		return err
 	}
@@ -141,11 +142,9 @@ func runMain() error {
 			return err
 		}
 	}
-
-	return nil
 }
 
-func runRecordings(conf *Config, camera *lepton3.Lepton3, turret *TurretController) error {
+func runRecordings(conf *config.Config, camera *lepton3.Lepton3, turret *TurretController) error {
 	motion := NewMotionDetector(conf.Motion)
 
 	prevFrame := new(lepton3.Frame)
@@ -263,7 +262,7 @@ func runRecordings(conf *Config, camera *lepton3.Lepton3, turret *TurretControll
 	}
 }
 
-func logConfig(conf *Config) {
+func logConfig(conf *config.Config) {
 	log.Printf("SPI speed: %d", conf.SPISpeed)
 	log.Printf("power pin: %s", conf.PowerPin)
 	log.Printf("output dir: %s", conf.OutputDir)

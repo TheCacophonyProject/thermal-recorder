@@ -5,15 +5,15 @@ release:
     name: thermal-recorder
   name_template: '{{.Tag}}'
 builds:
-- goos:
-  - linux
+- binary: thermal-recorder
+  main: ./cmd/thermal-recorder
+  goos:
+    - linux
   goarch:
-  - arm
+    - arm
   goarm:
-  - "7"
-  main: .
+    - "7"
   ldflags: -s -w -X main.version={{.Version}}
-  binary: thermal-recorder
 archive:
   name_template: '{{ .ProjectName }}_{{ .Version }}'
   format: tar.gz
