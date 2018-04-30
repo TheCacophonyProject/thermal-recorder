@@ -4,9 +4,9 @@ After=multi-user.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/thermal-recorder
+ExecStart=/usr/bin/thermal-recorder
 Restart=on-failure
-WatchdogSec=30s
+RestartSec=3s
 
 [Install]
 WantedBy=multi-user.target

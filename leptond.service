@@ -1,0 +1,17 @@
+[Unit]
+Description=FLIR Lepton 3 Interface Daemon
+After=multi-user.target thermal-recorder.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/leptond
+Restart=on-failure
+RestartSec=5s
+WatchdogSec=30s
+
+# Give real-time priority
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=99
+
+[Install]
+WantedBy=multi-user.target

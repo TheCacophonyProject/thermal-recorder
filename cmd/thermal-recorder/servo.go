@@ -7,8 +7,6 @@ import (
 	"time"
 
 	"github.com/felixge/pidctrl"
-
-	"github.com/TheCacophonyProject/thermal-recorder/config"
 )
 
 const pwmFreq = 50
@@ -37,7 +35,7 @@ type TurretController struct {
 	ServoY ServoController
 }
 
-func NewTurretController(conf config.TurretConfig) *TurretController {
+func NewTurretController(conf TurretConfig) *TurretController {
 	t := &TurretController{
 		Active: conf.Active,
 		PID:    conf.PID,
@@ -48,7 +46,7 @@ func NewTurretController(conf config.TurretConfig) *TurretController {
 }
 
 // NewServoController used for controlling an individual servo
-func NewServoController(conf config.ServoConfig) *ServoController {
+func NewServoController(conf ServoConfig) *ServoController {
 	s := &ServoController{
 		active:    conf.Active,
 		pin:       conf.Pin,

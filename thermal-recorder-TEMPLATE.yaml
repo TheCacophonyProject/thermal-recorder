@@ -2,11 +2,8 @@
 # Default values are shown. Edit/remove as appropriate.
 #
 
-# SPI bus speed (in Hz)
-spi-speed: 25000000
-
-# GPIO pin to control power to camera.
-power-pin: "GPIO23"
+# Socket where thermal camera frames will be received from.
+frame-input: "/var/run/lepton-frames"
 
 # Directory to place CPTV output files.
 output-dir: "/var/spool/cptv"

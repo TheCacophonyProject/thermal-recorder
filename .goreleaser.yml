@@ -1,9 +1,12 @@
 project_name: thermal-recorder
+dist: dist
+
 release:
   github:
     owner: TheCacophonyProject
     name: thermal-recorder
   name_template: '{{.Tag}}'
+
 builds:
 - binary: thermal-recorder
   main: ./cmd/thermal-recorder
@@ -14,12 +17,29 @@ builds:
   goarm:
     - "7"
   ldflags: -s -w -X main.version={{.Version}}
-archive:
-  name_template: '{{ .ProjectName }}_{{ .Version }}'
-  format: tar.gz
+- binary: leptond
+  main: ./cmd/leptond
+  goos:
+    - linux
+  goarch:
+    - arm
+  goarm:
+    - "7"
+  ldflags: -s -w -X main.version={{.Version}}
+
+nfpm:
+  vendor: The Cacophony Project
+  homepage: http://cacophony.org.nz/
+  maintainer: Menno Finlay-Smits <menno@cacophony.org.nz>
+  description: Record thermal video footage from FLIR Lepton 3 camera
+  license: GPL v3.0
+  name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}"
+  formats:
+    - deb
+  bindir: /usr/bin
   files:
-  - thermal-recorder.service
-  - thermal-recorder-TEMPLATE.yaml
+    "thermal-recorder.service": "/etc/systemd/system/thermal-recorder.service"
+    "leptond.service": "/etc/systemd/system/leptond.service"
+
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
-dist: dist

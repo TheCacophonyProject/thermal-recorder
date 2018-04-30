@@ -7,6 +7,7 @@ package main
 import (
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -16,22 +17,24 @@ import (
 	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
-	"github.com/coreos/go-systemd/daemon"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
-
-	"github.com/TheCacophonyProject/thermal-recorder/config"
 )
 
-const framesHz = 9 // approx
-const cptvTempExt = "cptv.temp"
+const (
+	framesHz    = 9 // approx
+	cptvTempExt = "cptv.temp"
 
-var version = "No version provided"
+	frameLogIntervalFirstMin = 15 * framesHz
+	frameLogInterval         = 60 * 5 * framesHz
+)
+
+var version = "<not set>"
 
 type Args struct {
 	ConfigFile string `arg:"-c,--config" help:"path to configuration file"`
-	Quick      bool   `arg:"-q,--quick" help:"don't cycle camera power on startup"`
+	Timestamps bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
 }
 
 func (Args) Version() string {
@@ -45,14 +48,6 @@ func procArgs() Args {
 	return args
 }
 
-type nextFrameErr struct {
-	cause error
-}
-
-func (e *nextFrameErr) Error() string {
-	return e.cause.Error()
-}
-
 func main() {
 	err := runMain()
 	if err != nil {
@@ -61,33 +56,28 @@ func main() {
 }
 
 func runMain() error {
-	log.SetFlags(0) // Removes default timestamp flag
-
 	args := procArgs()
+	if !args.Timestamps {
+		log.SetFlags(0) // Removes default timestamp flag
+	}
+
 	log.Printf("running version: %s", version)
-	conf, err := config.ParseConfigFile(args.ConfigFile)
+	conf, err := ParseConfigFile(args.ConfigFile)
 	if err != nil {
 		return err
 	}
 	logConfig(conf)
+
+	log.Println("host initialisation")
+	if _, err := host.Init(); err != nil {
+		return err
+	}
 
 	turret := NewTurretController(conf.Turret)
 	go turret.Start()
 
 	log.Println("deleting temp files")
 	if err := deleteTempFiles(conf.OutputDir); err != nil {
-		return err
-	}
-
-	log.Println("checking if there is enough free disk space for recording")
-	if ok, err := checkDiskSpace(conf.MinDiskSpace, conf.OutputDir); err != nil {
-		return err
-	} else if !ok {
-		log.Printf("not enough free disk space for recording")
-	}
-
-	log.Println("host initialisation")
-	if _, err := host.Init(); err != nil {
 		return err
 	}
 
@@ -100,55 +90,51 @@ func runMain() error {
 	}
 	defer runningLed.Out(gpio.Low)
 
-	if !args.Quick {
-		if err := cycleCameraPower(conf.PowerPin); err != nil {
-			return err
-		}
+	recordingLed := gpioreg.ByName(conf.LEDs.Recording)
+	if recordingLed == nil {
+		return fmt.Errorf("failed to load pin: %s", conf.LEDs.Recording)
+	}
+	if err := recordingLed.Out(gpio.Low); err != nil {
+		return fmt.Errorf("failed to set recording LED off: %v", err)
 	}
 
-	var camera *lepton3.Lepton3
-	defer func() {
-		if camera != nil {
-			camera.Close()
-		}
-	}()
 	for {
-		camera = lepton3.New(conf.SPISpeed)
-		camera.SetLogFunc(func(t string) { log.Printf(t) })
-
-		log.Println("opening camera")
-		if err := camera.Open(); err != nil {
-			return err
-		}
-
-		log.Println("enabling radiometry")
-		if err := camera.SetRadiometry(true); err != nil {
-			return err
-		}
-
-		err := runRecordings(conf, camera, turret)
-		if err != nil {
-			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
-				return err
-			}
-			log.Printf("recording error: %v", err)
-		}
-
-		log.Println("closing camera")
-		camera.Close()
-
-		err = cycleCameraPower(conf.PowerPin)
+		// Set up listener for frames sent by leptond.
+		os.Remove(conf.FrameInput)
+		listener, err := net.Listen("unixpacket", conf.FrameInput)
 		if err != nil {
 			return err
 		}
+		log.Print("waiting for camera connection")
+
+		conn, err := listener.Accept()
+		if err != nil {
+			log.Printf("socket accept failed: %v", err)
+			continue
+		}
+
+		// Prevent concurrent connections.
+		listener.Close()
+
+		err = handleConn(conn, conf, turret, recordingLed)
+		log.Printf("camera connection ended with: %v", err)
 	}
 }
 
-func runRecordings(conf *config.Config, camera *lepton3.Lepton3, turret *TurretController) error {
-	motion := NewMotionDetector(conf.Motion)
+func handleConn(conn net.Conn, conf *Config, turret *TurretController, recordingLed gpio.PinIO) error {
+	defer recordingLed.Out(gpio.Low)
 
-	prevFrame := new(lepton3.Frame)
-	frame := new(lepton3.Frame)
+	totalFrames := 0
+
+	motionLogFrame := -999
+
+	minFrames := conf.MinSecs * framesHz
+	maxFrames := conf.MaxSecs * framesHz
+	numFrames := 0
+	lastFrame := 0
+
+	motion := NewMotionDetector(conf.Motion)
+	window := NewWindow(conf.WindowStart, conf.WindowEnd)
 
 	var writer *cptv.FileWriter
 	defer func() {
@@ -158,41 +144,23 @@ func runRecordings(conf *config.Config, camera *lepton3.Lepton3, turret *TurretC
 		}
 	}()
 
-	window := NewWindow(conf.WindowStart, conf.WindowEnd)
+	rawFrame := new(lepton3.RawFrame)
+	frame := new(lepton3.Frame)
+	prevFrame := new(lepton3.Frame)
 
-	log.Println("reading frames")
+	log.Print("new camera connection, reading frames")
 
-	totalFrames := 0
-	const frameLogIntervalFirstMin = 15 * framesHz
-	const frameLogInterval = 60 * 5 * framesHz
-
-	motionLogFrame := -999
-
-	minFrames := conf.MinSecs * framesHz
-	maxFrames := conf.MaxSecs * framesHz
-	numFrames := 0
-	lastFrame := 0
-
-	recordingLed := gpioreg.ByName(conf.LEDs.Recording)
-	if recordingLed == nil {
-		return fmt.Errorf("failed to load pin: %s", conf.LEDs.Recording)
-	}
-	if err := recordingLed.Out(gpio.Low); err != nil {
-		return fmt.Errorf("failed to set recording LED off: %v", err)
-	}
-	defer recordingLed.Out(gpio.Low)
 	for {
-		err := camera.NextFrame(frame)
+		_, err := conn.Read(rawFrame[:])
 		if err != nil {
-			return &nextFrameErr{err}
+			return err
 		}
+		rawFrame.ToFrame(frame)
 		totalFrames++
-		if totalFrames%5*framesHz == 0 {
-			daemon.SdNotify(false, "WATCHDOG=1")
-		}
+
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
 			totalFrames <= 60*framesHz || totalFrames%frameLogInterval == 0 {
-			log.Printf("%d frames seen", totalFrames)
+			log.Printf("%d frames for this connection", totalFrames)
 		}
 
 		// If motion detected, allow minFrames more frames.
@@ -262,9 +230,8 @@ func runRecordings(conf *config.Config, camera *lepton3.Lepton3, turret *TurretC
 	}
 }
 
-func logConfig(conf *config.Config) {
-	log.Printf("SPI speed: %d", conf.SPISpeed)
-	log.Printf("power pin: %s", conf.PowerPin)
+func logConfig(conf *Config) {
+	log.Printf("frame input: %s", conf.FrameInput)
 	log.Printf("output dir: %s", conf.OutputDir)
 	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)
 	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
@@ -307,30 +274,6 @@ var reTempName = regexp.MustCompile(`(.+)\.temp$`)
 
 func recordingFinalName(filename string) string {
 	return reTempName.ReplaceAllString(filename, `$1`)
-}
-
-func cycleCameraPower(pinName string) error {
-	if pinName == "" {
-		return nil
-	}
-
-	pin := gpioreg.ByName(pinName)
-
-	log.Println("turning camera power off")
-	if err := pin.Out(gpio.Low); err != nil {
-		return fmt.Errorf("failed to set camera power pin low: %v", err)
-	}
-	time.Sleep(2 * time.Second)
-
-	log.Println("turning camera power on")
-	if err := pin.Out(gpio.High); err != nil {
-		return fmt.Errorf("failed to set camera power pin high: %v", err)
-	}
-
-	log.Println("waiting for camera startup")
-	time.Sleep(8 * time.Second)
-	log.Println("camera should be ready")
-	return nil
 }
 
 func deleteTempFiles(directory string) error {
