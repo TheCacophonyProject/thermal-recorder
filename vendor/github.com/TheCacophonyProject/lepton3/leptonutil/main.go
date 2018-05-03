@@ -81,16 +81,19 @@ func runMain() error {
 		log.Printf(t)
 	})
 
+	rawFrame := new(lepton3.RawFrame)
 	frame := new(lepton3.Frame)
 	i := 0
 	for {
-		err := camera.NextFrame(frame)
+		err := camera.NextFrame(rawFrame)
 		if err != nil {
 			return err
 		}
 		fmt.Printf(".")
 
 		if opts.Output == "png" {
+			rawFrame.ToFrame(frame)
+
 			filename := filepath.Join(opts.Directory, fmt.Sprintf("%05d.png", i))
 			err := dumpToPNG(filename, frame)
 			if err != nil {

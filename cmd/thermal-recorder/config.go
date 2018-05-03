@@ -1,4 +1,4 @@
-// Copyright 2017 The Cacophony Project. All rights reserved.
+// Copyright 2018 The Cacophony Project. All rights reserved.
 // Use of this source code is governed by the Apache License Version 2.0;
 // see the LICENSE file for further details.
 
@@ -13,8 +13,7 @@ import (
 )
 
 type Config struct {
-	SPISpeed     int64
-	PowerPin     string
+	FrameInput   string
 	OutputDir    string
 	MinSecs      int
 	MaxSecs      int
@@ -77,8 +76,7 @@ func (conf *MotionConfig) Validate() error {
 }
 
 type rawConfig struct {
-	SPISpeed     int64        `yaml:"spi-speed"`
-	PowerPin     string       `yaml:"power-pin"`
+	FrameInput   string       `yaml:"frame-input"`
 	OutputDir    string       `yaml:"output-dir"`
 	MinSecs      int          `yaml:"min-secs"`
 	MaxSecs      int          `yaml:"max-secs"`
@@ -91,8 +89,7 @@ type rawConfig struct {
 }
 
 var defaultConfig = rawConfig{
-	SPISpeed:     2500000,
-	PowerPin:     "GPIO23",
+	FrameInput:   "/var/run/lepton-frames",
 	OutputDir:    "/var/spool/cptv",
 	MinSecs:      10,
 	MaxSecs:      600,
@@ -142,8 +139,7 @@ func ParseConfig(buf []byte) (*Config, error) {
 	}
 
 	conf := &Config{
-		SPISpeed:     raw.SPISpeed,
-		PowerPin:     raw.PowerPin,
+		FrameInput:   raw.FrameInput,
 		OutputDir:    raw.OutputDir,
 		MinSecs:      raw.MinSecs,
 		MaxSecs:      raw.MaxSecs,

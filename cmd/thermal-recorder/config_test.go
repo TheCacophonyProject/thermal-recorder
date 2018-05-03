@@ -1,3 +1,7 @@
+// Copyright 2018 The Cacophony Project. All rights reserved.
+// Use of this source code is governed by the Apache License Version 2.0;
+// see the LICENSE file for further details.
+
 package main
 
 import (
@@ -14,8 +18,7 @@ func TestAllDefaults(t *testing.T) {
 	require.NoError(t, conf.Validate())
 
 	assert.Equal(t, Config{
-		SPISpeed:     2500000,
-		PowerPin:     "GPIO23",
+		FrameInput:   "/var/run/lepton-frames",
 		OutputDir:    "/var/spool/cptv",
 		MinSecs:      10,
 		MaxSecs:      600,
@@ -54,8 +57,7 @@ func TestAllDefaults(t *testing.T) {
 func TestAllSet(t *testing.T) {
 	// All config set at non-default values.
 	config := []byte(`
-spi-speed: 123
-power-pin: "PIN"
+frame-input: "/some/sock"
 output-dir: "/some/where"
 min-secs: 2
 max-secs: 10
@@ -95,8 +97,7 @@ turret:
 	require.NoError(t, conf.Validate())
 
 	assert.Equal(t, Config{
-		SPISpeed:     123,
-		PowerPin:     "PIN",
+		FrameInput:   "/some/sock",
 		OutputDir:    "/some/where",
 		MinSecs:      2,
 		MaxSecs:      10,
