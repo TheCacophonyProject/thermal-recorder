@@ -1,0 +1,14 @@
+[Unit]
+Description=Adjust thermal-recorder to use USB drive if present
+RequiresMountsFor=/media/cp
+DefaultDependencies=no
+
+[Service]
+Type=simple
+Restart=no
+RemainAfterExit=true
+ExecStart=/home/pi/set-thermal-recorder-output mount /media/cp
+ExecStop=/home/pi/set-thermal-recorder-output umount
+
+[Install]
+WantedBy=media-cp.mount

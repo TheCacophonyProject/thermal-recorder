@@ -1,0 +1,86 @@
+#!/usr/bin/python3
+
+import glob
+import os
+import shutil
+import sys
+from os import path
+
+USAGE = """\
+usage: set-thermal-recorder-output <mode> [args...]
+
+where mode is one of:
+
+   mount <mount point>
+   umount
+"""
+
+DEFAULT_OUTPUT = '/var/spool/cptv'
+
+
+def main():
+    mode = arg(0)
+
+    if mode == "mount":
+        handle_mount(arg(1))
+    elif mode == "umount":
+        handle_umount()
+    else:
+        usage()
+
+
+def arg(index):
+    try:
+        return sys.argv[index + 1]
+    except IndexError:
+        usage()
+
+
+def usage():
+    print(USAGE)
+    sys.exit(1)
+
+
+def handle_mount(mount_point):
+    set_output_dir(mount_point)
+    kill_recorder()
+    move_cptv_files(DEFAULT_OUTPUT, mount_point)
+
+
+def handle_umount():
+    set_output_dir(DEFAULT_OUTPUT)
+    kill_recorder()
+
+
+def set_output_dir(directory):
+    print('setting output to "{}"'.format(directory))
+
+    out_line = 'output-dir: "{}"\n'.format(directory)
+    lines = []
+    updated = False
+    with open("/etc/thermal-recorder.yaml") as f:
+        for line in f:
+            if line.startswith('output-dir:'):
+                lines.append(out_line)
+                updated = True
+            else:
+                lines.append(line)
+
+    if not updated:
+        lines.append(out_line)
+
+    with open("/etc/thermal-recorder.yaml", "wt") as f:
+        f.write(''.join(lines))
+
+
+def kill_recorder():
+    os.system('pkill -f bin/thermal-recorder')
+
+
+def move_cptv_files(src_dir, dst_dir):
+    for filename in glob.glob(path.join(src_dir, '*.cptv')):
+        shutil.move(filename, dst_dir)
+
+
+if __name__ == '__main__':
+    main()
