@@ -78,8 +78,10 @@ def kill_recorder():
 
 
 def move_cptv_files(src_dir, dst_dir):
+    print("moving CPTV files to external drive")
     for filename in glob.glob(path.join(src_dir, '*.cptv')):
         shutil.move(filename, dst_dir)
+    print("done moving CPTV files to external drive")
 
 
 if __name__ == '__main__':
