@@ -5,7 +5,7 @@ After=multi-user.target
 [Service]
 Type=simple
 ExecStart=/usr/bin/thermal-recorder
-Restart=on-failure
+Restart=always
 RestartSec=3s
 
 [Install]
