@@ -196,7 +196,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 			if err != nil {
 				return err
 			}
-			err = writer.WriteHeader()
+			err = writer.WriteHeader(conf.DeviceName)
 			if err != nil {
 				return err
 			}
@@ -231,6 +231,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 }
 
 func logConfig(conf *Config) {
+	log.Printf("device name: %s", conf.DeviceName)
 	log.Printf("frame input: %s", conf.FrameInput)
 	log.Printf("output dir: %s", conf.OutputDir)
 	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)

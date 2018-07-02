@@ -13,6 +13,7 @@ import (
 )
 
 type Config struct {
+	DeviceName   string
 	FrameInput   string
 	OutputDir    string
 	MinSecs      int
@@ -76,6 +77,7 @@ func (conf *MotionConfig) Validate() error {
 }
 
 type rawConfig struct {
+	DeviceName   string       `yaml:"device-name"`
 	FrameInput   string       `yaml:"frame-input"`
 	OutputDir    string       `yaml:"output-dir"`
 	MinSecs      int          `yaml:"min-secs"`
@@ -89,6 +91,7 @@ type rawConfig struct {
 }
 
 var defaultConfig = rawConfig{
+	DeviceName:   "NotSet",
 	FrameInput:   "/var/run/lepton-frames",
 	OutputDir:    "/var/spool/cptv",
 	MinSecs:      10,
@@ -139,6 +142,7 @@ func ParseConfig(buf []byte) (*Config, error) {
 	}
 
 	conf := &Config{
+		DeviceName:   raw.DeviceName,
 		FrameInput:   raw.FrameInput,
 		OutputDir:    raw.OutputDir,
 		MinSecs:      raw.MinSecs,

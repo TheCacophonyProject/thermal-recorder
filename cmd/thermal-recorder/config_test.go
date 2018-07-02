@@ -18,6 +18,7 @@ func TestAllDefaults(t *testing.T) {
 	require.NoError(t, conf.Validate())
 
 	assert.Equal(t, Config{
+		DeviceName:   "NotSet",
 		FrameInput:   "/var/run/lepton-frames",
 		OutputDir:    "/var/spool/cptv",
 		MinSecs:      10,
@@ -57,6 +58,7 @@ func TestAllDefaults(t *testing.T) {
 func TestAllSet(t *testing.T) {
 	// All config set at non-default values.
 	config := []byte(`
+device-name: "aDeviceName"
 frame-input: "/some/sock"
 output-dir: "/some/where"
 min-secs: 2
@@ -97,6 +99,7 @@ turret:
 	require.NoError(t, conf.Validate())
 
 	assert.Equal(t, Config{
+		DeviceName:   "aDeviceName",
 		FrameInput:   "/some/sock",
 		OutputDir:    "/some/where",
 		MinSecs:      2,
