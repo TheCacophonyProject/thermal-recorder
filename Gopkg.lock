@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/TheCacophonyProject/go-cptv"
   packages = ["."]
-  revision = "1c46f1b86aa474833885988bad51f33ba49ac664"
+  revision = "b4d729fdf16ecafb016b9d9151fff8fbe10a6e5b"
 
 [[projects]]
   branch = "master"
@@ -17,7 +17,7 @@
   branch = "master"
   name = "github.com/alexflint/go-arg"
   packages = ["."]
-  revision = "59fccacb2679dde66e0b20ed65bd26178fcbf54e"
+  revision = "f7c0423bd11ee80ab81d25c6d46f492998af8547"
 
 [[projects]]
   branch = "master"
@@ -28,8 +28,8 @@
 [[projects]]
   name = "github.com/coreos/go-systemd"
   packages = ["daemon"]
-  revision = "d2196463941895ee908e13531a23a39feb9e1243"
-  version = "v15"
+  revision = "39ca1b05acc7ad1220e09f133283b8859a8b71ab"
+  version = "v17"
 
 [[projects]]
   name = "github.com/davecgh/go-spew"
@@ -51,18 +51,15 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = [
-    "assert",
-    "require"
-  ]
-  revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
-  version = "v1.1.4"
+  packages = ["assert","require"]
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "0744d001aa8470aaa53df28d32e5ceeb8af9bd70"
+  revision = "4cb1c02c05b0e749b0365f61ae859a8e0cfceed9"
 
 [[projects]]
   branch = "v2"
@@ -71,43 +68,15 @@
   revision = "d5d1b5820637886def9eef33e03a27a9f166942c"
 
 [[projects]]
-  branch = "v2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
-  revision = "eb3733d160e74a9c7e442f435eb3bea458e1d19f"
+  revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
+  version = "v2.2.1"
 
 [[projects]]
   branch = "v2"
   name = "periph.io/x/periph"
-  packages = [
-    ".",
-    "conn",
-    "conn/gpio",
-    "conn/gpio/gpioreg",
-    "conn/i2c",
-    "conn/i2c/i2creg",
-    "conn/mmr",
-    "conn/pin",
-    "conn/pin/pinreg",
-    "conn/spi",
-    "conn/spi/spireg",
-    "devices",
-    "devices/lepton/cci",
-    "devices/lepton/internal",
-    "host",
-    "host/allwinner",
-    "host/bcm283x",
-    "host/chip",
-    "host/cpu",
-    "host/distro",
-    "host/fs",
-    "host/odroidc1",
-    "host/pine64",
-    "host/pmem",
-    "host/rpi",
-    "host/sysfs",
-    "host/videocore"
-  ]
+  packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
   revision = "d06ef89e37e829cc301f5babee628e6c6e36d7c5"
   source = "https://github.com/TheCacophonyProject/periph.git"
 

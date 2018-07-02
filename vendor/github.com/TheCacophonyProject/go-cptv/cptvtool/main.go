@@ -40,6 +40,7 @@ func runMain() error {
 	fmt.Println(fields.Uint32(cptv.XResolution))
 	fmt.Println(fields.Uint32(cptv.YResolution))
 	fmt.Println(fields.Uint8(cptv.Compression))
+	fmt.Println(fields.String(cptv.DeviceName))
 
 	frames := 0
 	for {
