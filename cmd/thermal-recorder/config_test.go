@@ -13,7 +13,7 @@ import (
 )
 
 func TestAllDefaults(t *testing.T) {
-	conf, err := ParseConfig([]byte(""))
+	conf, err := ParseConfig([]byte(""), []byte(""))
 	require.NoError(t, err)
 	require.NoError(t, conf.Validate())
 
@@ -58,7 +58,6 @@ func TestAllDefaults(t *testing.T) {
 func TestAllSet(t *testing.T) {
 	// All config set at non-default values.
 	config := []byte(`
-device-name: "aDeviceName"
 frame-input: "/some/sock"
 output-dir: "/some/where"
 min-secs: 2
@@ -94,7 +93,11 @@ turret:
       start-ang: 40
 `)
 
-	conf, err := ParseConfig(config)
+	uploaderConfig := []byte(`
+device-name: "aDeviceName"
+`)
+
+	conf, err := ParseConfig(config, uploaderConfig)
 	require.NoError(t, err)
 	require.NoError(t, conf.Validate())
 
@@ -139,25 +142,25 @@ turret:
 }
 
 func TestInvalidWindowStart(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-start: 25:10"))
+	conf, err := ParseConfig([]byte("window-start: 25:10"), []byte(""))
 	assert.Nil(t, conf)
 	assert.EqualError(t, err, "invalid window-start")
 }
 
 func TestInvalidWindowEnd(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-end: 25:10"))
+	conf, err := ParseConfig([]byte("window-end: 25:10"), []byte(""))
 	assert.Nil(t, conf)
 	assert.EqualError(t, err, "invalid window-end")
 }
 
 func TestWindowEndWithoutStart(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-end: 09:10"))
+	conf, err := ParseConfig([]byte("window-end: 09:10"), []byte(""))
 	assert.Nil(t, conf)
 	assert.EqualError(t, err, "window-end is set but window-start isn't")
 }
 
 func TestWindowStartWithoutEnd(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-start: 09:10"))
+	conf, err := ParseConfig([]byte("window-start: 09:10"), []byte(""))
 	assert.Nil(t, conf)
 	assert.EqualError(t, err, "window-start is set but window-end isn't")
 }

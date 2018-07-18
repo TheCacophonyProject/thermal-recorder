@@ -46,6 +46,10 @@ type LEDsConfig struct {
 	Running   string `yaml:"running"`
 }
 
+type UploaderConfig struct {
+	DeviceName string
+}
+
 func (conf *Config) Validate() error {
 	if conf.MaxSecs < conf.MinSecs {
 		return errors.New("max-secs should be larger than min-secs")
@@ -76,6 +80,10 @@ func (conf *MotionConfig) Validate() error {
 	return nil
 }
 
+type rawUploaderConfig struct {
+	DeviceName string `yaml:"device-name"`
+}
+
 type rawConfig struct {
 	DeviceName   string       `yaml:"device-name"`
 	FrameInput   string       `yaml:"frame-input"`
@@ -88,6 +96,10 @@ type rawConfig struct {
 	Motion       MotionConfig `yaml:"motion"`
 	LEDs         LEDsConfig   `yaml:"leds"`
 	Turret       TurretConfig `yaml:"turret"`
+}
+
+var defaultUploaderConfig = rawUploaderConfig{
+	DeviceName: "NotSet",
 }
 
 var defaultConfig = rawConfig{
@@ -127,22 +139,30 @@ var defaultConfig = rawConfig{
 	},
 }
 
-func ParseConfigFile(filename string) (*Config, error) {
-	buf, err := ioutil.ReadFile(filename)
+func ParseConfigFiles(recorderFilename, uploaderFilename string) (*Config, error) {
+	buf, err := ioutil.ReadFile(recorderFilename)
 	if err != nil {
 		return nil, err
 	}
-	return ParseConfig(buf)
+	uploaderBuf, err := ioutil.ReadFile(uploaderFilename)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConfig(buf, uploaderBuf)
 }
 
-func ParseConfig(buf []byte) (*Config, error) {
+func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 	raw := defaultConfig
 	if err := yaml.Unmarshal(buf, &raw); err != nil {
 		return nil, err
 	}
+	rawUploader := defaultUploaderConfig
+	if err := yaml.Unmarshal(uploaderBuf, &rawUploader); err != nil {
+		return nil, err
+	}
 
 	conf := &Config{
-		DeviceName:   raw.DeviceName,
+		DeviceName:   rawUploader.DeviceName,
 		FrameInput:   raw.FrameInput,
 		OutputDir:    raw.OutputDir,
 		MinSecs:      raw.MinSecs,
