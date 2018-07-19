@@ -18,7 +18,7 @@ func TestAllDefaults(t *testing.T) {
 	require.NoError(t, conf.Validate())
 
 	assert.Equal(t, Config{
-		DeviceName:   "NotSet",
+		DeviceName:   "",
 		FrameInput:   "/var/run/lepton-frames",
 		OutputDir:    "/var/spool/cptv",
 		MinSecs:      10,

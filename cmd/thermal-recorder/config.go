@@ -46,8 +46,8 @@ type LEDsConfig struct {
 	Running   string `yaml:"running"`
 }
 
-type UploaderConfig struct {
-	DeviceName string
+type uploaderConfig struct {
+	DeviceName string `yaml:"device-name"`
 }
 
 func (conf *Config) Validate() error {
@@ -80,10 +80,6 @@ func (conf *MotionConfig) Validate() error {
 	return nil
 }
 
-type rawUploaderConfig struct {
-	DeviceName string `yaml:"device-name"`
-}
-
 type rawConfig struct {
 	DeviceName   string       `yaml:"device-name"`
 	FrameInput   string       `yaml:"frame-input"`
@@ -98,8 +94,8 @@ type rawConfig struct {
 	Turret       TurretConfig `yaml:"turret"`
 }
 
-var defaultUploaderConfig = rawUploaderConfig{
-	DeviceName: "NotSet",
+var defaultUploaderConfig = uploaderConfig{
+	DeviceName: "",
 }
 
 var defaultConfig = rawConfig{
