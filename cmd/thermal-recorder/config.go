@@ -81,7 +81,6 @@ func (conf *MotionConfig) Validate() error {
 }
 
 type rawConfig struct {
-	DeviceName   string       `yaml:"device-name"`
 	FrameInput   string       `yaml:"frame-input"`
 	OutputDir    string       `yaml:"output-dir"`
 	MinSecs      int          `yaml:"min-secs"`
@@ -99,7 +98,6 @@ var defaultUploaderConfig = uploaderConfig{
 }
 
 var defaultConfig = rawConfig{
-	DeviceName:   "NotSet",
 	FrameInput:   "/var/run/lepton-frames",
 	OutputDir:    "/var/spool/cptv",
 	MinSecs:      10,
