@@ -21,13 +21,22 @@ type Writer struct {
 	t0   time.Time
 }
 
-func (w *Writer) WriteHeader() error {
+func (w *Writer) WriteHeader(deviceName string) error {
 	w.t0 = time.Now()
 	fields := NewFieldWriter()
 	fields.Timestamp(Timestamp, w.t0)
 	fields.Uint32(XResolution, lepton3.FrameCols)
 	fields.Uint32(YResolution, lepton3.FrameRows)
 	fields.Uint8(Compression, 1)
+
+	// Optional device name field
+	if len(deviceName) > 0 {
+		err := fields.String(DeviceName, deviceName)
+		if err != nil {
+			return err
+		}
+	}
+
 	return w.bldr.WriteHeader(fields)
 }
 

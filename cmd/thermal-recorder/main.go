@@ -33,8 +33,9 @@ const (
 var version = "<not set>"
 
 type Args struct {
-	ConfigFile string `arg:"-c,--config" help:"path to configuration file"`
-	Timestamps bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
+	ConfigFile         string `arg:"-c,--config" help:"path to configuration file"`
+	UploaderConfigFile string `arg:"-u,--uploader-config" help:"path to uploader config file"`
+	Timestamps         bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
 }
 
 func (Args) Version() string {
@@ -44,6 +45,7 @@ func (Args) Version() string {
 func procArgs() Args {
 	var args Args
 	args.ConfigFile = "/etc/thermal-recorder.yaml"
+	args.UploaderConfigFile = "/etc/thermal-uploader.yaml"
 	arg.MustParse(&args)
 	return args
 }
@@ -62,7 +64,7 @@ func runMain() error {
 	}
 
 	log.Printf("running version: %s", version)
-	conf, err := ParseConfigFile(args.ConfigFile)
+	conf, err := ParseConfigFiles(args.ConfigFile, args.UploaderConfigFile)
 	if err != nil {
 		return err
 	}
@@ -196,7 +198,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 			if err != nil {
 				return err
 			}
-			err = writer.WriteHeader()
+			err = writer.WriteHeader(conf.DeviceName)
 			if err != nil {
 				return err
 			}
@@ -231,6 +233,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 }
 
 func logConfig(conf *Config) {
+	log.Printf("device name: %s", conf.DeviceName)
 	log.Printf("frame input: %s", conf.FrameInput)
 	log.Printf("output dir: %s", conf.OutputDir)
 	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)

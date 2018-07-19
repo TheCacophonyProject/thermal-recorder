@@ -13,6 +13,7 @@ import (
 )
 
 type Config struct {
+	DeviceName   string
 	FrameInput   string
 	OutputDir    string
 	MinSecs      int
@@ -43,6 +44,10 @@ type TurretConfig struct {
 type LEDsConfig struct {
 	Recording string `yaml:"recording"`
 	Running   string `yaml:"running"`
+}
+
+type uploaderConfig struct {
+	DeviceName string `yaml:"device-name"`
 }
 
 func (conf *Config) Validate() error {
@@ -88,6 +93,10 @@ type rawConfig struct {
 	Turret       TurretConfig `yaml:"turret"`
 }
 
+var defaultUploaderConfig = uploaderConfig{
+	DeviceName: "",
+}
+
 var defaultConfig = rawConfig{
 	FrameInput:   "/var/run/lepton-frames",
 	OutputDir:    "/var/spool/cptv",
@@ -124,21 +133,30 @@ var defaultConfig = rawConfig{
 	},
 }
 
-func ParseConfigFile(filename string) (*Config, error) {
-	buf, err := ioutil.ReadFile(filename)
+func ParseConfigFiles(recorderFilename, uploaderFilename string) (*Config, error) {
+	buf, err := ioutil.ReadFile(recorderFilename)
 	if err != nil {
 		return nil, err
 	}
-	return ParseConfig(buf)
+	uploaderBuf, err := ioutil.ReadFile(uploaderFilename)
+	if err != nil {
+		return nil, err
+	}
+	return ParseConfig(buf, uploaderBuf)
 }
 
-func ParseConfig(buf []byte) (*Config, error) {
+func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 	raw := defaultConfig
 	if err := yaml.Unmarshal(buf, &raw); err != nil {
 		return nil, err
 	}
+	uploaderConf := defaultUploaderConfig
+	if err := yaml.Unmarshal(uploaderBuf, &uploaderConf); err != nil {
+		return nil, err
+	}
 
 	conf := &Config{
+		DeviceName:   uploaderConf.DeviceName,
 		FrameInput:   raw.FrameInput,
 		OutputDir:    raw.OutputDir,
 		MinSecs:      raw.MinSecs,

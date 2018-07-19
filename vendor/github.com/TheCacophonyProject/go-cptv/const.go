@@ -12,6 +12,7 @@ const (
 	XResolution byte = 'X'
 	YResolution byte = 'Y'
 	Compression byte = 'C'
+	DeviceName  byte = 'D'
 
 	// Frame field keys
 	Offset    byte = 't'
