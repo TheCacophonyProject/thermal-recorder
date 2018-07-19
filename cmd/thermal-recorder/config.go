@@ -150,13 +150,13 @@ func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 	if err := yaml.Unmarshal(buf, &raw); err != nil {
 		return nil, err
 	}
-	rawUploader := defaultUploaderConfig
-	if err := yaml.Unmarshal(uploaderBuf, &rawUploader); err != nil {
+	uploaderConf := defaultUploaderConfig
+	if err := yaml.Unmarshal(uploaderBuf, &uploaderConf); err != nil {
 		return nil, err
 	}
 
 	conf := &Config{
-		DeviceName:   rawUploader.DeviceName,
+		DeviceName:   uploaderConf.DeviceName,
 		FrameInput:   raw.FrameInput,
 		OutputDir:    raw.OutputDir,
 		MinSecs:      raw.MinSecs,
