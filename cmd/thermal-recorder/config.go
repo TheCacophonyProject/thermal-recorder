@@ -111,7 +111,7 @@ var defaultConfig = rawConfig{
 	},
 	LEDs: LEDsConfig{
 		Recording: "GPIO20",
-		Running:   "GPIO21",
+		Running:   "GPIO25",
 	},
 	Turret: TurretConfig{
 		Active: false,
