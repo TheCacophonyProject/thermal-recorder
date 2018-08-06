@@ -132,11 +132,17 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 
 	minFrames := conf.MinSecs * framesHz
 	maxFrames := conf.MaxSecs * framesHz
-	numFrames := 0
+	framesWritten := 0
 	lastFrame := 0
 
 	motion := NewMotionDetector(conf.Motion)
 	window := NewWindow(conf.WindowStart, conf.WindowEnd)
+
+	const LOOP_FRAMES = 27
+	frameLoop := NewFrameLoop(LOOP_FRAMES)
+
+	frame := frameLoop.CurrentFrame()
+	prevFrame := frame
 
 	var writer *cptv.FileWriter
 	defer func() {
@@ -147,8 +153,6 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 	}()
 
 	rawFrame := new(lepton3.RawFrame)
-	frame := new(lepton3.Frame)
-	prevFrame := new(lepton3.Frame)
 
 	log.Print("new camera connection, reading frames")
 
@@ -183,7 +187,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 					log.Print("motion detected but not enough free disk space to start recording")
 				}
 			} else {
-				lastFrame = min(numFrames+minFrames, maxFrames)
+				lastFrame = min(framesWritten+minFrames, maxFrames)
 			}
 		}
 
@@ -202,9 +206,12 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 			if err != nil {
 				return err
 			}
-			// Start with an empty previous frame for a new recording.
-			prevFrame = new(lepton3.Frame)
-		} else if writer != nil && numFrames > lastFrame {
+
+			if err = frameLoop.WriteToFile(writer); err != nil {
+				return err
+			}
+
+		} else if writer != nil && framesWritten > lastFrame {
 			writer.Close()
 			finalName, err := renameTempRecording(writer.Name())
 			if err != nil {
@@ -215,7 +222,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 				return fmt.Errorf("failed to set recording LED off: %v", err)
 			}
 			writer = nil
-			numFrames = 0
+			framesWritten = 0
 			lastFrame = 0
 		}
 
@@ -225,10 +232,10 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 			if err != nil {
 				return err
 			}
-			numFrames++
+			framesWritten++
 		}
 
-		frame, prevFrame = prevFrame, frame
+		frame, prevFrame = frameLoop.MoveToNextFrame(), frame
 	}
 }
 
