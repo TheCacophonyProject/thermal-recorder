@@ -8,15 +8,20 @@ import (
 	"github.com/TheCacophonyProject/lepton3"
 )
 
-type CptvWriter interface {
+type LeptonFrameWriter interface {
 	WriteFrame(prevFrame, frame *lepton3.Frame) error
 }
 
 func NewFrameLoop(size int) *FrameLoop {
+	frames := make([]*lepton3.Frame, size)
+	for i := range frames {
+		frames[i] = new(lepton3.Frame)
+	}
+
 	return &FrameLoop{
 		size:         size,
 		currentIndex: 0,
-		frames:       make([]*lepton3.Frame, size)}
+		frames:       frames}
 }
 
 // FileWriter wraps a Writer and provides a convenient way of writing
@@ -28,15 +33,19 @@ type FrameLoop struct {
 }
 
 func (fl *FrameLoop) nextFrameFrom(index int) int {
-	return index + 1%fl.size
+	return (index + 1) % fl.size
 }
 
 func (fl *FrameLoop) MoveToNextFrame() *lepton3.Frame {
 	fl.currentIndex = fl.nextFrameFrom(fl.currentIndex)
+	return fl.CurrentFrame()
+}
+
+func (fl *FrameLoop) CurrentFrame() *lepton3.Frame {
 	return fl.frames[fl.currentIndex]
 }
 
-func (fl *FrameLoop) WriteToFile(writer CptvWriter) error {
+func (fl *FrameLoop) WriteToFile(writer LeptonFrameWriter) error {
 
 	// start with the oldest frame
 	firstIndex := fl.nextFrameFrom(fl.currentIndex)
@@ -54,6 +63,7 @@ func (fl *FrameLoop) WriteToFile(writer CptvWriter) error {
 
 	writeIndex := fl.nextFrameFrom(firstIndex)
 
+	// it never writes the current frame as this will be written as part of the program!!
 	for writeIndex != fl.currentIndex {
 		prevFrame, frame = frame, fl.frames[writeIndex]
 		if err := writer.WriteFrame(prevFrame, frame); err != nil {
