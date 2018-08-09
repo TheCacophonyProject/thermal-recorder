@@ -29,6 +29,8 @@ func TestAllDefaults(t *testing.T) {
 			DeltaThresh:       30,
 			CountThresh:       5,
 			NonzeroMaxPercent: 50,
+			FrameCompareGap:   27,
+			UseOneFrameOnly:   false,
 		},
 		LEDs: LEDsConfig{
 			Recording: "GPIO20",
@@ -70,6 +72,7 @@ motion:
     delta-thresh: 20
     count-thresh: 1
     nonzero-max-percent: 20
+    frame-compare-gap: 9
 leds:
     recording: "RecordingPIN"
     running: "RunningPIN"
@@ -115,6 +118,7 @@ device-name: "aDeviceName"
 			DeltaThresh:       20,
 			CountThresh:       1,
 			NonzeroMaxPercent: 20,
+			FrameCompareGap:   9,
 		},
 		LEDs: LEDsConfig{
 			Recording: "RecordingPIN",

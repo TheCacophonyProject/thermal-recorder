@@ -71,6 +71,8 @@ type MotionConfig struct {
 	DeltaThresh       uint16 `yaml:"delta-thresh"`
 	CountThresh       int    `yaml:"count-thresh"`
 	NonzeroMaxPercent int    `yaml:"nonzero-max-percent"`
+	FrameCompareGap   int    `yaml:"frame-compare-gap"`
+	UseOneFrameOnly   bool
 }
 
 func (conf *MotionConfig) Validate() error {
@@ -108,6 +110,7 @@ var defaultConfig = rawConfig{
 		DeltaThresh:       30,
 		CountThresh:       5,
 		NonzeroMaxPercent: 50,
+		FrameCompareGap:   27,
 	},
 	LEDs: LEDsConfig{
 		Recording: "GPIO20",
