@@ -130,13 +130,13 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 
 	motionLogFrame := -999
 
-	minFrames := conf.MinSecs * framesHz
+	minFrames := 1 * framesHz
 	maxFrames := conf.MaxSecs * framesHz
 	framesWritten := 0
 	lastFrame := 0
 
 	motion := NewMotionDetector(conf.Motion)
-	window := NewWindow(conf.WindowStart, conf.WindowEnd)
+	//	window := NewWindow(conf.WindowStart, conf.WindowEnd)
 
 	const LOOP_FRAMES = 27
 	frameLoop := NewFrameLoop(LOOP_FRAMES)
@@ -176,11 +176,12 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 			if shouldLogMotion {
 				motionLogFrame = totalFrames
 			}
-			if !window.Active() {
-				if shouldLogMotion {
-					log.Print("motion detected but outside of recording window")
-				}
-			} else if enoughSpace, err := checkDiskSpace(conf.MinDiskSpace, conf.OutputDir); err != nil {
+			// if !window.Active() {
+			// 	if shouldLogMotion {
+			// 		log.Print("motion detected but outside of recording window")
+			// 	}
+			// } else
+			if enoughSpace, err := checkDiskSpace(conf.MinDiskSpace, conf.OutputDir); err != nil {
 				return err
 			} else if !enoughSpace {
 				if shouldLogMotion {

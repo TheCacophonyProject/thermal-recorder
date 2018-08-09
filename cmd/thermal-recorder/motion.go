@@ -93,7 +93,7 @@ func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, 
 			if f2 != nil {
 				v1 := f1[y][x]
 				v2 := f2[y][x]
-				if (v1 > 0) && (v2 > 0) {
+				if (v1 > 0) || (v2 > 0) {
 					nonzeroCount++
 					if (v1 > d.deltaThresh) && (v2 > d.deltaThresh) {
 						deltaCount++
