@@ -23,6 +23,7 @@ func TestAllDefaults(t *testing.T) {
 		OutputDir:    "/var/spool/cptv",
 		MinSecs:      10,
 		MaxSecs:      600,
+		PreviewSecs:  3,
 		MinDiskSpace: 200,
 		Motion: MotionConfig{
 			TempThresh:        3000,
@@ -62,6 +63,7 @@ frame-input: "/some/sock"
 output-dir: "/some/where"
 min-secs: 2
 max-secs: 10
+preview-secs: 5
 window-start: 17:10
 window-end: 07:20
 min-disk-space: 321
@@ -107,6 +109,7 @@ device-name: "aDeviceName"
 		OutputDir:    "/some/where",
 		MinSecs:      2,
 		MaxSecs:      10,
+		PreviewSecs:  5,
 		WindowStart:  time.Date(0, 1, 1, 17, 10, 0, 0, time.UTC),
 		WindowEnd:    time.Date(0, 1, 1, 07, 20, 0, 0, time.UTC),
 		MinDiskSpace: 321,
