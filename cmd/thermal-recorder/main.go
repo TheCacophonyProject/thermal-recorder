@@ -207,7 +207,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 				return err
 			}
 
-			if err = writeInitalFramesToFile(writer, frameLoop.GetHistory(), &zeroFrame); err != nil {
+			if err = writeInitialFramesToFile(writer, frameLoop.GetHistory(), &zeroFrame); err != nil {
 				return err
 			}
 
@@ -305,7 +305,7 @@ func checkDiskSpace(mb uint64, dir string) (bool, error) {
 	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
 }
 
-func writeInitalFramesToFile(writer *cptv.FileWriter, frames []*lepton3.Frame, firstFrame *lepton3.Frame) error {
+func writeInitialFramesToFile(writer *cptv.FileWriter, frames []*lepton3.Frame, firstFrame *lepton3.Frame) error {
 	prevFrame := firstFrame
 	var frame *lepton3.Frame
 	ii := 0
