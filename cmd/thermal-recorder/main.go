@@ -138,8 +138,8 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 	motion := NewMotionDetector(conf.Motion)
 	window := NewWindow(conf.WindowStart, conf.WindowEnd)
 
-	LOOP_FRAMES := conf.PreviewSecs * framesHz
-	frameLoop := NewFrameLoop(LOOP_FRAMES)
+	loopFrames := conf.PreviewSecs * framesHz
+	frameLoop := NewFrameLoop(loopFrames)
 
 	frame := frameLoop.Current()
 	var zeroFrame lepton3.Frame

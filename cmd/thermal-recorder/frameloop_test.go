@@ -53,20 +53,34 @@ func TestFrameLoopLoopsRoundFrames(t *testing.T) {
 	assert.Equal(t, 2, getId(frameLoop.Move()))
 }
 
-func TestFrameLoopHistoryFromStart(t *testing.T) {
+func TestFrameLoopHistoryFromEndFirstTime(t *testing.T) {
 	// test write from start of loop
 	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
-
+	frameLoop.GetHistory()
 	assert.Equal(t, []int{1, 2, 3}, getFrameIds(frameLoop.GetHistory()))
 }
 
+func TestFrameLoopHistoryFromStart(t *testing.T) {
+	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
+	frameLoop.Move()[0][0] = 4
+	assert.Equal(t, []int{2, 3, 4}, getFrameIds(frameLoop.GetHistory()))
+}
+
 func TestFrameLoopHistoryFromMiddleOfLoop(t *testing.T) {
-	// test write from start of loop
 	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
 	frameLoop.Move()[0][0] = 4
 	frameLoop.Move()[0][0] = 5
 
 	assert.Equal(t, []int{3, 4, 5}, getFrameIds(frameLoop.GetHistory()))
+}
+
+func TestFrameLoopHistoryFromEndOfLoop(t *testing.T) {
+	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
+	frameLoop.Move()[0][0] = 4
+	frameLoop.Move()[0][0] = 5
+	frameLoop.Move()[0][0] = 6
+
+	assert.Equal(t, []int{4, 5, 6}, getFrameIds(frameLoop.GetHistory()))
 }
 
 func TestFrameLoopHistoryWhenLoopNotFullDoesNotIncludeZeroFrames(t *testing.T) {
