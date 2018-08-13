@@ -11,63 +11,82 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const SIZE = 3
+const SMALL_SIZE = 3
+const LARGE_SIZE = 6
 
-var writesRecord [SIZE][2]int
-var writes = 0
+func createAndPopulateFrameLoop(size int) *FrameLoop {
+	frameLoop := NewFrameLoop(size)
 
-type TestWriter struct {
-}
-
-func (tw TestWriter) WriteFrame(prevFrame, frame *lepton3.Frame) error {
-	writesRecord[writes][0] = int(prevFrame[0][0])
-	writesRecord[writes][1] = int(frame[0][0])
-	writes++
-	return nil
-}
-
-func createAndPopulateFrameLoop() *FrameLoop {
-	frameLoop := NewFrameLoop(SIZE)
-
-	frameLoop.CurrentFrame()[0][0] = 1
-	frameLoop.MoveToNextFrame()[0][0] = 2
-	frameLoop.MoveToNextFrame()[0][0] = 3
+	frameLoop.Current()[0][0] = 1
+	frameLoop.Move()[0][0] = 2
+	frameLoop.Move()[0][0] = 3
 	return frameLoop
 }
 
-func TestFrameLoopLoopsRoundFrames(t *testing.T) {
-	frameLoop := createAndPopulateFrameLoop()
-	assert.Equal(t, uint16(1), frameLoop.MoveToNextFrame()[0][0])
-	assert.Equal(t, uint16(2), frameLoop.MoveToNextFrame()[0][0])
-	assert.Equal(t, uint16(3), frameLoop.MoveToNextFrame()[0][0])
-	assert.Equal(t, uint16(1), frameLoop.MoveToNextFrame()[0][0])
-	assert.Equal(t, uint16(2), frameLoop.MoveToNextFrame()[0][0])
+func getFrameIds(frames []*lepton3.Frame) []int {
+	ids := make([]int, len(frames))
+	for ii, frame := range frames {
+		ids[ii] = getId(frame)
+	}
+	return ids
 }
 
-func TestFrameLoopWriteFromStart(t *testing.T) {
+func getId(frame *lepton3.Frame) int {
+	return int(frame[0][0])
+}
+
+func TestFrameLoopPrevious(t *testing.T) {
+	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
+
+	assert.Equal(t, 2, getId(frameLoop.Previous()))
+
+	frameLoop.Move()[0][0] = 4
+	assert.Equal(t, 3, getId(frameLoop.Previous()))
+}
+
+func TestFrameLoopLoopsRoundFrames(t *testing.T) {
+	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
+	assert.Equal(t, 1, getId(frameLoop.Move()))
+	assert.Equal(t, 2, getId(frameLoop.Move()))
+	assert.Equal(t, 3, getId(frameLoop.Move()))
+	assert.Equal(t, 1, getId(frameLoop.Move()))
+	assert.Equal(t, 2, getId(frameLoop.Move()))
+}
+
+func TestFrameLoopHistoryFromEndFirstTime(t *testing.T) {
 	// test write from start of loop
-	frameLoop := createAndPopulateFrameLoop()
+	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
+	frameLoop.GetHistory()
+	assert.Equal(t, []int{1, 2, 3}, getFrameIds(frameLoop.GetHistory()))
+}
 
-	frameLoop.WriteToFile(TestWriter{})
-	assert.Equal(t, [2]int{0, 1}, writesRecord[0])
-	assert.Equal(t, [2]int{1, 2}, writesRecord[1])
+func TestFrameLoopHistoryFromStart(t *testing.T) {
+	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
+	frameLoop.Move()[0][0] = 4
+	assert.Equal(t, []int{2, 3, 4}, getFrameIds(frameLoop.GetHistory()))
+}
 
-	// now test from middle of loop
+func TestFrameLoopHistoryFromMiddleOfLoop(t *testing.T) {
+	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
+	frameLoop.Move()[0][0] = 4
+	frameLoop.Move()[0][0] = 5
 
-	writes = 0
-	frameLoop.MoveToNextFrame()[0][0] = 4
-	frameLoop.MoveToNextFrame()[0][0] = 5
+	assert.Equal(t, []int{3, 4, 5}, getFrameIds(frameLoop.GetHistory()))
+}
 
-	frameLoop.WriteToFile(TestWriter{})
-	assert.Equal(t, 2, writes)
-	assert.Equal(t, [2]int{0, 3}, writesRecord[0])
-	assert.Equal(t, [2]int{3, 4}, writesRecord[1])
+func TestFrameLoopHistoryFromEndOfLoop(t *testing.T) {
+	frameLoop := createAndPopulateFrameLoop(SMALL_SIZE)
+	frameLoop.Move()[0][0] = 4
+	frameLoop.Move()[0][0] = 5
+	frameLoop.Move()[0][0] = 6
 
-	// now test from end of loop
-	writes = 0
-	frameLoop.MoveToNextFrame()[0][0] = 6
-	frameLoop.WriteToFile(TestWriter{})
+	assert.Equal(t, []int{4, 5, 6}, getFrameIds(frameLoop.GetHistory()))
+}
 
-	assert.Equal(t, [2]int{0, 4}, writesRecord[0])
-	assert.Equal(t, [2]int{4, 5}, writesRecord[1])
+func TestFrameLoopHistoryWhenLoopNotFullDoesNotIncludeZeroFrames(t *testing.T) {
+	// test write from start of loop
+	frameLoop := createAndPopulateFrameLoop(LARGE_SIZE)
+	frameLoop.Move()[0][0] = 4
+
+	assert.Equal(t, []int{1, 2, 3, 4}, getFrameIds(frameLoop.GetHistory()))
 }

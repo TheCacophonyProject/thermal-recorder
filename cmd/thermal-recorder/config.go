@@ -18,6 +18,7 @@ type Config struct {
 	OutputDir    string
 	MinSecs      int
 	MaxSecs      int
+	PreviewSecs  int
 	WindowStart  time.Time
 	WindowEnd    time.Time
 	MinDiskSpace uint64
@@ -87,6 +88,7 @@ type rawConfig struct {
 	OutputDir    string       `yaml:"output-dir"`
 	MinSecs      int          `yaml:"min-secs"`
 	MaxSecs      int          `yaml:"max-secs"`
+	PreviewSecs  int          `yaml:"preview-secs"`
 	WindowStart  string       `yaml:"window-start"`
 	WindowEnd    string       `yaml:"window-end"`
 	MinDiskSpace uint64       `yaml:"min-disk-space"`
@@ -104,6 +106,7 @@ var defaultConfig = rawConfig{
 	OutputDir:    "/var/spool/cptv",
 	MinSecs:      10,
 	MaxSecs:      600,
+	PreviewSecs:  3,
 	MinDiskSpace: 200,
 	Motion: MotionConfig{
 		TempThresh:        3000,
@@ -164,6 +167,7 @@ func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 		OutputDir:    raw.OutputDir,
 		MinSecs:      raw.MinSecs,
 		MaxSecs:      raw.MaxSecs,
+		PreviewSecs:  raw.PreviewSecs,
 		MinDiskSpace: raw.MinDiskSpace,
 		Motion:       raw.Motion,
 		LEDs:         raw.LEDs,

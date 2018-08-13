@@ -138,11 +138,11 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 	motion := NewMotionDetector(conf.Motion)
 	//	window := NewWindow(conf.WindowStart, conf.WindowEnd)
 
-	const LOOP_FRAMES = 27
-	frameLoop := NewFrameLoop(LOOP_FRAMES)
+	loopFrames := conf.PreviewSecs * framesHz
+	frameLoop := NewFrameLoop(loopFrames)
 
-	frame := frameLoop.CurrentFrame()
-	prevFrame := frame
+	frame := frameLoop.Current()
+	var zeroFrame lepton3.Frame
 
 	var writer *cptv.FileWriter
 	defer func() {
@@ -208,7 +208,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 				return err
 			}
 
-			if err = frameLoop.WriteToFile(writer); err != nil {
+			if err = writeInitialFramesToFile(writer, frameLoop.GetHistory(), &zeroFrame); err != nil {
 				return err
 			}
 
@@ -229,14 +229,14 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 
 		// If recording, write the frame.
 		if writer != nil {
-			err := writer.WriteFrame(prevFrame, frame)
+			err := writer.WriteFrame(frameLoop.Previous(), frame)
 			if err != nil {
 				return err
 			}
 			framesWritten++
 		}
 
-		frame, prevFrame = frameLoop.MoveToNextFrame(), frame
+		frame = frameLoop.Move()
 	}
 }
 
@@ -245,6 +245,7 @@ func logConfig(conf *Config) {
 	log.Printf("frame input: %s", conf.FrameInput)
 	log.Printf("output dir: %s", conf.OutputDir)
 	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)
+	log.Printf("preview seconds: %d", conf.PreviewSecs)
 	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
 	log.Printf("leds: %+v", conf.LEDs)
@@ -303,4 +304,22 @@ func checkDiskSpace(mb uint64, dir string) (bool, error) {
 		return false, err
 	}
 	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
+}
+
+func writeInitialFramesToFile(writer *cptv.FileWriter, frames []*lepton3.Frame, firstFrame *lepton3.Frame) error {
+	prevFrame := firstFrame
+	var frame *lepton3.Frame
+	ii := 0
+
+	// it never writes the current frame as this will be written as part of the program!!
+	for ii < len(frames)-1 {
+		frame = frames[ii]
+		if err := writer.WriteFrame(prevFrame, frame); err != nil {
+			return err
+		}
+		ii++
+		prevFrame = frame
+	}
+
+	return nil
 }

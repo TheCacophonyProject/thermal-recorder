@@ -8,10 +8,6 @@ import (
 	"github.com/TheCacophonyProject/lepton3"
 )
 
-type LeptonFrameWriter interface {
-	WriteFrame(prevFrame, frame *lepton3.Frame) error
-}
-
 func NewFrameLoop(size int) *FrameLoop {
 	frames := make([]*lepton3.Frame, size)
 	for i := range frames {
@@ -19,58 +15,70 @@ func NewFrameLoop(size int) *FrameLoop {
 	}
 
 	return &FrameLoop{
-		size:         size,
-		currentIndex: 0,
-		frames:       frames}
+		size:          size,
+		currentIndex:  0,
+		frames:        frames,
+		orderedFrames: make([]*lepton3.Frame, size),
+		bufferFull:    false,
+	}
 }
 
-// FileWriter wraps a Writer and provides a convenient way of writing
-// a CPTV stream to a disk file.
+// FrameLoop stores the last n frames in a loop that will be overwritten when full.
+// The latest written frame can be anywhere in the list of frames.  Beware: all frames
+// returned by FrameLoop will at some point be over-written.
 type FrameLoop struct {
-	size         int
-	currentIndex int
-	frames       []*lepton3.Frame
+	size          int
+	currentIndex  int
+	frames        []*lepton3.Frame
+	orderedFrames []*lepton3.Frame
+	zeroFrame     lepton3.Frame
+	bufferFull    bool
 }
 
-func (fl *FrameLoop) nextFrameFrom(index int) int {
+func (fl *FrameLoop) nextIndexAfter(index int) int {
 	return (index + 1) % fl.size
 }
 
-func (fl *FrameLoop) MoveToNextFrame() *lepton3.Frame {
-	fl.currentIndex = fl.nextFrameFrom(fl.currentIndex)
-	return fl.CurrentFrame()
+// Move, moves the current frame one forwards and return the new frame.
+// Note: data on all returned frame objects will eventually get overwritten
+func (fl *FrameLoop) Move() *lepton3.Frame {
+	if fl.currentIndex == fl.size-1 {
+		fl.bufferFull = true
+	}
+
+	fl.currentIndex = fl.nextIndexAfter(fl.currentIndex)
+	return fl.Current()
 }
 
-func (fl *FrameLoop) CurrentFrame() *lepton3.Frame {
+// Current returns the current frame.
+// Note: data on all returned frame objects will eventually get overwritten
+func (fl *FrameLoop) Current() *lepton3.Frame {
 	return fl.frames[fl.currentIndex]
 }
 
-func (fl *FrameLoop) WriteToFile(writer LeptonFrameWriter) error {
+// Previous returns the previous frame.
+// Note: data on all returned frame objects will eventually get overwritten
+func (fl *FrameLoop) Previous() *lepton3.Frame {
+	previousIndex := (fl.currentIndex - 1 + fl.size) % fl.size
+	return fl.frames[previousIndex]
+}
 
-	// start with the oldest frame
-	firstIndex := fl.nextFrameFrom(fl.currentIndex)
-
-	// Start with an empty previous frame for a new recording.
-	firstFrame := new(lepton3.Frame)
-
-	frame := fl.frames[firstIndex]
-	prevFrame := frame
-
-	// write first index
-	if err := writer.WriteFrame(firstFrame, frame); err != nil {
-		return err
+// GetHistory returns all the frames recorded in an slice from oldest to newest.
+// Note: The returned slice will be rewritten next time GetHistory is called.
+func (fl *FrameLoop) GetHistory() []*lepton3.Frame {
+	if fl.currentIndex == fl.size-1 {
+		copy(fl.orderedFrames[:], fl.frames[:])
+		return fl.orderedFrames
 	}
 
-	writeIndex := fl.nextFrameFrom(firstIndex)
+	nextIndex := fl.nextIndexAfter(fl.currentIndex)
 
-	// it never writes the current frame as this will be written as part of the program!!
-	for writeIndex != fl.currentIndex {
-		prevFrame, frame = frame, fl.frames[writeIndex]
-		if err := writer.WriteFrame(prevFrame, frame); err != nil {
-			return err
-		}
-		writeIndex = fl.nextFrameFrom(writeIndex)
+	if !fl.bufferFull {
+		copy(fl.orderedFrames, fl.frames[:nextIndex])
+		return fl.orderedFrames[:nextIndex]
 	}
 
-	return nil
+	copy(fl.orderedFrames, fl.frames[nextIndex:])
+	copy(fl.orderedFrames[fl.size-nextIndex:], fl.frames[:nextIndex])
+	return fl.orderedFrames
 }
