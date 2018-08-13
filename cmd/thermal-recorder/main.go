@@ -132,11 +132,17 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 
 	minFrames := conf.MinSecs * framesHz
 	maxFrames := conf.MaxSecs * framesHz
-	numFrames := 0
+	framesWritten := 0
 	lastFrame := 0
 
 	motion := NewMotionDetector(conf.Motion)
 	window := NewWindow(conf.WindowStart, conf.WindowEnd)
+
+	loopFrames := conf.PreviewSecs * framesHz
+	frameLoop := NewFrameLoop(loopFrames)
+
+	frame := frameLoop.Current()
+	var zeroFrame lepton3.Frame
 
 	var writer *cptv.FileWriter
 	defer func() {
@@ -147,8 +153,6 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 	}()
 
 	rawFrame := new(lepton3.RawFrame)
-	frame := new(lepton3.Frame)
-	prevFrame := new(lepton3.Frame)
 
 	log.Print("new camera connection, reading frames")
 
@@ -183,7 +187,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 					log.Print("motion detected but not enough free disk space to start recording")
 				}
 			} else {
-				lastFrame = min(numFrames+minFrames, maxFrames)
+				lastFrame = min(framesWritten+minFrames, maxFrames)
 			}
 		}
 
@@ -202,9 +206,12 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 			if err != nil {
 				return err
 			}
-			// Start with an empty previous frame for a new recording.
-			prevFrame = new(lepton3.Frame)
-		} else if writer != nil && numFrames > lastFrame {
+
+			if err = writeInitialFramesToFile(writer, frameLoop.GetHistory(), &zeroFrame); err != nil {
+				return err
+			}
+
+		} else if writer != nil && framesWritten > lastFrame {
 			writer.Close()
 			finalName, err := renameTempRecording(writer.Name())
 			if err != nil {
@@ -215,20 +222,20 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 				return fmt.Errorf("failed to set recording LED off: %v", err)
 			}
 			writer = nil
-			numFrames = 0
+			framesWritten = 0
 			lastFrame = 0
 		}
 
 		// If recording, write the frame.
 		if writer != nil {
-			err := writer.WriteFrame(prevFrame, frame)
+			err := writer.WriteFrame(frameLoop.Previous(), frame)
 			if err != nil {
 				return err
 			}
-			numFrames++
+			framesWritten++
 		}
 
-		frame, prevFrame = prevFrame, frame
+		frame = frameLoop.Move()
 	}
 }
 
@@ -237,6 +244,7 @@ func logConfig(conf *Config) {
 	log.Printf("frame input: %s", conf.FrameInput)
 	log.Printf("output dir: %s", conf.OutputDir)
 	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)
+	log.Printf("preview seconds: %d", conf.PreviewSecs)
 	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
 	log.Printf("leds: %+v", conf.LEDs)
@@ -295,4 +303,22 @@ func checkDiskSpace(mb uint64, dir string) (bool, error) {
 		return false, err
 	}
 	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
+}
+
+func writeInitialFramesToFile(writer *cptv.FileWriter, frames []*lepton3.Frame, firstFrame *lepton3.Frame) error {
+	prevFrame := firstFrame
+	var frame *lepton3.Frame
+	ii := 0
+
+	// it never writes the current frame as this will be written as part of the program!!
+	for ii < len(frames)-1 {
+		frame = frames[ii]
+		if err := writer.WriteFrame(prevFrame, frame); err != nil {
+			return err
+		}
+		ii++
+		prevFrame = frame
+	}
+
+	return nil
 }
