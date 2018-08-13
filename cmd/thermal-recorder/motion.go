@@ -48,23 +48,23 @@ func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
 	d.count++
 	log.Print("New Frame")
 
-	processedFrame := d.flooredFrames.CurrentFrame()
+	processedFrame := d.flooredFrames.Current()
 	d.setFloor(frame, processedFrame)
 
 	// we will compare with the oldest saved frame.
-	compareFrame := d.flooredFrames.MoveToNextFrame()
+	compareFrame := d.flooredFrames.Move()
 
 	if d.count < d.framesGap+1 {
 		return false, NO_DATA
 	}
 
-	diffFrame := d.diffFrames.CurrentFrame()
+	diffFrame := d.diffFrames.Current()
 	absDiffFrames(processedFrame, compareFrame, diffFrame)
 
 	if d.useOneFrame {
 		return d.hasMotion(diffFrame, nil)
 	} else {
-		prevDiffFrame := d.diffFrames.MoveToNextFrame()
+		prevDiffFrame := d.diffFrames.Move()
 		return d.hasMotion(diffFrame, prevDiffFrame)
 	}
 }
