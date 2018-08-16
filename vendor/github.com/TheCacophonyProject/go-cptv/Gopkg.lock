@@ -21,9 +21,12 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = ["assert"]
-  revision = "69483b4bd14f5845b5a1e55bca19e954e827f1d0"
-  version = "v1.1.4"
+  packages = [
+    "assert",
+    "require"
+  ]
+  revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
+  version = "v1.2.2"
 
 [[projects]]
   branch = "master"
@@ -40,13 +43,25 @@
 [[projects]]
   branch = "v2"
   name = "periph.io/x/periph"
-  packages = ["conn","conn/gpio","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal"]
+  packages = [
+    "conn",
+    "conn/gpio",
+    "conn/i2c",
+    "conn/i2c/i2creg",
+    "conn/mmr",
+    "conn/pin",
+    "conn/spi",
+    "conn/spi/spireg",
+    "devices",
+    "devices/lepton/cci",
+    "devices/lepton/internal"
+  ]
   revision = "a5370d2227a0b687c67b5e751eef053908b20f59"
   source = "https://github.com/TheCacophonyProject/periph.git"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "317923ff3ea3205763e88fef238eb0eac137c2f9f8f4756afeaa874a035f65b4"
+  inputs-digest = "c5a0979833b08c2b4de9758dad26942b147c9e7f4bcbf749cc2950f5e805d8d1"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -17,3 +17,6 @@
   name = "periph.io/x/periph"
   source = "https://github.com/TheCacophonyProject/periph.git"
   branch = "v2"
+
+[[constraint]]
+  name = "github.com/stretchr/testify"

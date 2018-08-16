@@ -53,5 +53,8 @@ func (b *Builder) WriteFrame(f *FieldWriter, frameData []byte) error {
 }
 
 func (b *Builder) Close() error {
+	if err := b.w.Flush(); err != nil {
+		return err
+	}
 	return b.w.Close()
 }

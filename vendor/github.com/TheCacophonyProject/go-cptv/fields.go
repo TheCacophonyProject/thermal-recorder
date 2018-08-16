@@ -107,7 +107,6 @@ func NewFieldWriter() *FieldWriter {
 }
 
 // FieldWriter generates CPTV encoded fields.
-// XXX: merge with Fields
 type FieldWriter struct {
 	data       []byte
 	fieldCount uint8
@@ -144,7 +143,6 @@ func (f *FieldWriter) Timestamp(code byte, t time.Time) {
 }
 
 func (f *FieldWriter) String(code byte, v string) error {
-
 	if len(v) > 255 {
 		return fmt.Errorf("String length %d greater than 255.", len(v))
 	}

@@ -8,7 +8,7 @@ import (
 )
 
 // NewParser returns a new Parser instance, for parsing a gzip
-// compressed CPTV stream using the provided Reader.
+// compressed CPTV stream using the provided io.Reader.
 //
 // Providing a buffered Reader is preferable.
 func NewParser(r io.Reader) (*Parser, error) {
@@ -45,7 +45,7 @@ func (p *Parser) Header() (Fields, error) {
 	return readFieldsN(p.r)
 }
 
-func (p *Parser) Frame() (Fields, []byte, error) {
+func (p *Parser) Frame() (Fields, io.Reader, error) {
 	if err := p.checkByte("section", frameSection); err != nil {
 		return nil, nil, err
 	}
@@ -57,11 +57,14 @@ func (p *Parser) Frame() (Fields, []byte, error) {
 	if err != nil {
 		return nil, nil, err
 	}
-	frameData, err := p.r.ReadN(int(frameSize))
-	if err != nil {
-		return nil, nil, err
+
+	// Return a subreader which is only allows access to the bytes for
+	// the frame.
+	frameReader := &io.LimitedReader{
+		R: p.r.Reader,
+		N: int64(frameSize),
 	}
-	return fields, frameData, nil
+	return fields, frameReader, nil
 }
 
 func (p *Parser) checkByte(label string, expected byte) error {

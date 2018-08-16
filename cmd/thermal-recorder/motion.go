@@ -1,6 +1,8 @@
 package main
 
 import (
+	"log"
+
 	"github.com/TheCacophonyProject/lepton3"
 )
 
@@ -121,6 +123,7 @@ func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, 
 	// change.
 
 	if nonzeroCount > d.nonzeroLimit {
+		log.Printf("Motion detector - too many points changed, probably a recalculation")
 		return false, TOO_MANY_POINTS_CHANGED
 	}
 

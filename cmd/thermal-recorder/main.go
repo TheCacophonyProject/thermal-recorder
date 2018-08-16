@@ -12,9 +12,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"syscall"
-	"time"
 
-	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
 	"periph.io/x/periph/conn/gpio"
@@ -36,6 +34,33 @@ type Args struct {
 	ConfigFile         string `arg:"-c,--config" help:"path to configuration file"`
 	UploaderConfigFile string `arg:"-u,--uploader-config" help:"path to uploader config file"`
 	Timestamps         bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
+	TestCptvFile       string `arg:"-f, --testfile" help:"Run a CPTV file through to see what the results are"`
+}
+
+type HardwareListener struct {
+	recordingLed gpio.PinIO
+}
+
+func NewHardwareListener(led gpio.PinIO) *HardwareListener {
+	return &HardwareListener{
+		recordingLed: led,
+	}
+}
+
+func (hl *HardwareListener) MotionDetected() {
+	//turret.Update(motion)
+}
+
+func (hl *HardwareListener) RecordingStarted() {
+	if err := hl.recordingLed.Out(gpio.High); err != nil {
+		log.Printf("failed to set recording LED on: %v", err)
+	}
+}
+
+func (hl *HardwareListener) RecordingEnded() {
+	if err := hl.recordingLed.Out(gpio.Low); err != nil {
+		log.Printf("failed to set recording LED off: %v", err)
+	}
 }
 
 func (Args) Version() string {
@@ -59,6 +84,7 @@ func main() {
 
 func runMain() error {
 	args := procArgs()
+
 	if !args.Timestamps {
 		log.SetFlags(0) // Removes default timestamp flag
 	}
@@ -69,6 +95,19 @@ func runMain() error {
 		return err
 	}
 	logConfig(conf)
+
+	if args.TestCptvFile != "" {
+		// conf.Motion.UseOneFrameOnly = true
+		// log.Printf("Using one compare frame only")
+		MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
+
+		conf.Motion.FrameCompareGap = 1
+		MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
+
+		conf.Motion.FrameCompareGap = 48
+		MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
+		return nil
+	}
 
 	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {
@@ -124,33 +163,14 @@ func runMain() error {
 }
 
 func handleConn(conn net.Conn, conf *Config, turret *TurretController, recordingLed gpio.PinIO) error {
-	defer recordingLed.Out(gpio.Low)
 
 	totalFrames := 0
 
-	motionLogFrame := -999
+	hardwareListener := NewHardwareListener(recordingLed)
+	defer hardwareListener.RecordingEnded()
 
-	minFrames := 1 * framesHz
-	maxFrames := conf.MaxSecs * framesHz
-	framesWritten := 0
-	lastFrame := 0
-
-	motion := NewMotionDetector(conf.Motion)
-	//	window := NewWindow(conf.WindowStart, conf.WindowEnd)
-
-	loopFrames := conf.PreviewSecs * framesHz
-	frameLoop := NewFrameLoop(loopFrames)
-
-	frame := frameLoop.Current()
-	var zeroFrame lepton3.Frame
-
-	var writer *cptv.FileWriter
-	defer func() {
-		if writer != nil {
-			writer.Close()
-			os.Remove(writer.Name())
-		}
-	}()
+	processor := NewMotionProcessor(conf, hardwareListener)
+	defer processor.Stop()
 
 	rawFrame := new(lepton3.RawFrame)
 
@@ -161,7 +181,6 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 		if err != nil {
 			return err
 		}
-		rawFrame.ToFrame(frame)
 		totalFrames++
 
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
@@ -169,74 +188,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 			log.Printf("%d frames for this connection", totalFrames)
 		}
 
-		// If motion detected, allow minFrames more frames.
-		if motion.Detect(frame) {
-			turret.Update(motion)
-			shouldLogMotion := motionLogFrame <= totalFrames-(10*framesHz)
-			if shouldLogMotion {
-				motionLogFrame = totalFrames
-			}
-			// if !window.Active() {
-			// 	if shouldLogMotion {
-			// 		log.Print("motion detected but outside of recording window")
-			// 	}
-			// } else
-			if enoughSpace, err := checkDiskSpace(conf.MinDiskSpace, conf.OutputDir); err != nil {
-				return err
-			} else if !enoughSpace {
-				if shouldLogMotion {
-					log.Print("motion detected but not enough free disk space to start recording")
-				}
-			} else {
-				lastFrame = min(framesWritten+minFrames, maxFrames)
-			}
-		}
-
-		// Start or stop recording if required.
-		if lastFrame > 0 && writer == nil {
-			filename := filepath.Join(conf.OutputDir, newRecordingTempName())
-			log.Printf("recording started: %s", filename)
-			if err := recordingLed.Out(gpio.High); err != nil {
-				return fmt.Errorf("failed to set recording LED on: %v", err)
-			}
-			writer, err = cptv.NewFileWriter(filename)
-			if err != nil {
-				return err
-			}
-			err = writer.WriteHeader(conf.DeviceName)
-			if err != nil {
-				return err
-			}
-
-			if err = writeInitialFramesToFile(writer, frameLoop.GetHistory(), &zeroFrame); err != nil {
-				return err
-			}
-
-		} else if writer != nil && framesWritten > lastFrame {
-			writer.Close()
-			finalName, err := renameTempRecording(writer.Name())
-			if err != nil {
-				return err
-			}
-			log.Printf("recording stopped: %s\n", finalName)
-			if err := recordingLed.Out(gpio.Low); err != nil {
-				return fmt.Errorf("failed to set recording LED off: %v", err)
-			}
-			writer = nil
-			framesWritten = 0
-			lastFrame = 0
-		}
-
-		// If recording, write the frame.
-		if writer != nil {
-			err := writer.WriteFrame(frameLoop.Previous(), frame)
-			if err != nil {
-				return err
-			}
-			framesWritten++
-		}
-
-		frame = frameLoop.Move()
+		processor.Process(rawFrame)
 	}
 }
 
@@ -260,17 +212,6 @@ func logConfig(conf *Config) {
 		log.Printf("\tServoX: %+v", conf.Turret.ServoX)
 		log.Printf("\tServoY: %+v", conf.Turret.ServoY)
 	}
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
-func newRecordingTempName() string {
-	return time.Now().Format("20060102.150405.000." + cptvTempExt)
 }
 
 func renameTempRecording(tempName string) (string, error) {
@@ -304,22 +245,4 @@ func checkDiskSpace(mb uint64, dir string) (bool, error) {
 		return false, err
 	}
 	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
-}
-
-func writeInitialFramesToFile(writer *cptv.FileWriter, frames []*lepton3.Frame, firstFrame *lepton3.Frame) error {
-	prevFrame := firstFrame
-	var frame *lepton3.Frame
-	ii := 0
-
-	// it never writes the current frame as this will be written as part of the program!!
-	for ii < len(frames)-1 {
-		frame = frames[ii]
-		if err := writer.WriteFrame(prevFrame, frame); err != nil {
-			return err
-		}
-		ii++
-		prevFrame = frame
-	}
-
-	return nil
 }
