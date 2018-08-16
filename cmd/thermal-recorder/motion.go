@@ -1,8 +1,6 @@
 package main
 
 import (
-	"log"
-
 	"github.com/TheCacophonyProject/lepton3"
 )
 
@@ -46,7 +44,6 @@ func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 
 func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
 	d.count++
-	log.Print("New Frame")
 
 	processedFrame := d.flooredFrames.Current()
 	d.setFloor(frame, processedFrame)
@@ -122,8 +119,6 @@ func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, 
 	// pixels are nonzero. This is to deal with sudden jumps in the
 	// readings as the camera recalibrates due to rapid temperature
 	// change.
-	log.Printf("deltacount %d", deltaCount)
-	log.Printf("nonZeroCount %d", nonzeroCount)
 
 	if nonzeroCount > d.nonzeroLimit {
 		return false, TOO_MANY_POINTS_CHANGED
