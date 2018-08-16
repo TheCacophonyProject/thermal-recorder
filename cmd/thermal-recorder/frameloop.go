@@ -23,6 +23,8 @@ func NewFrameLoop(size int) *FrameLoop {
 	}
 }
 
+const USE_NEXT = -1
+
 // FrameLoop stores the last n frames in a loop that will be overwritten when full.
 // The latest written frame can be anywhere in the list of frames.  Beware: all frames
 // returned by FrameLoop will at some point be over-written.
@@ -31,8 +33,8 @@ type FrameLoop struct {
 	currentIndex  int
 	frames        []*lepton3.Frame
 	orderedFrames []*lepton3.Frame
-	zeroFrame     lepton3.Frame
 	bufferFull    bool
+	oldest        int
 }
 
 func (fl *FrameLoop) nextIndexAfter(index int) int {
@@ -42,11 +44,13 @@ func (fl *FrameLoop) nextIndexAfter(index int) int {
 // Move, moves the current frame one forwards and return the new frame.
 // Note: data on all returned frame objects will eventually get overwritten
 func (fl *FrameLoop) Move() *lepton3.Frame {
-	if fl.currentIndex == fl.size-1 {
+	fl.currentIndex = fl.nextIndexAfter(fl.currentIndex)
+
+	if fl.currentIndex == fl.oldest {
 		fl.bufferFull = true
+		fl.oldest = USE_NEXT
 	}
 
-	fl.currentIndex = fl.nextIndexAfter(fl.currentIndex)
 	return fl.Current()
 }
 
@@ -56,15 +60,9 @@ func (fl *FrameLoop) Current() *lepton3.Frame {
 	return fl.frames[fl.currentIndex]
 }
 
-// Previous returns the previous frame.
-// Note: data on all returned frame objects will eventually get overwritten
-func (fl *FrameLoop) Previous() *lepton3.Frame {
-	previousIndex := (fl.currentIndex - 1 + fl.size) % fl.size
-	return fl.frames[previousIndex]
-}
-
 // GetHistory returns all the frames recorded in an slice from oldest to newest.
 // Note: The returned slice will be rewritten next time GetHistory is called.
+// Note: GetHistory always returns one frame even if none have been stored in the loop
 func (fl *FrameLoop) GetHistory() []*lepton3.Frame {
 	if fl.currentIndex == fl.size-1 {
 		copy(fl.orderedFrames[:], fl.frames[:])
@@ -81,4 +79,22 @@ func (fl *FrameLoop) GetHistory() []*lepton3.Frame {
 	copy(fl.orderedFrames, fl.frames[nextIndex:])
 	copy(fl.orderedFrames[fl.size-nextIndex:], fl.frames[:nextIndex])
 	return fl.orderedFrames
+}
+
+// Oldest returns the oldest frame remembered.   This is either the next
+// frame in the buffer (next to be overwritten), or the frame marked oldest
+func (fl *FrameLoop) Oldest() *lepton3.Frame {
+	if fl.oldest != USE_NEXT {
+		return fl.frames[fl.oldest]
+	}
+	return fl.frames[fl.nextIndexAfter(fl.currentIndex)]
+}
+
+// SetAsOldest - Marks current frame as oldest.  This mean Oldest() will never return
+// a frame that was written before this one.
+// Note:  Does not empty the buffer and GetHistory() still returns
+// the full history with older frames than this one.
+func (fl *FrameLoop) SetAsOldest() *lepton3.Frame {
+	fl.oldest = fl.currentIndex
+	return fl.Current()
 }

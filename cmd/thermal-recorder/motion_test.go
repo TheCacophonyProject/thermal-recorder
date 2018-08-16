@@ -52,53 +52,73 @@ func MovingBoxDetections(detector *motionDetector, frames, background, brightSpo
 	pixels := make([]int, frames)
 
 	for i := range results {
-		results[i], pixels[i] = detector.pixelsChanged(makeFrame(10+i, background, i*100))
+		results[i], pixels[i] = detector.pixelsChanged(makeFrame(10+i, background, i*brightSpot))
 	}
 	return pixels, results
 }
 
-func TestNoMotionDetectedUntilBufferFilledUp(t *testing.T) {
+func TestRevertsToUsingSmallerFrameIntervalWhenNotEnoughFrames_OneFrame(t *testing.T) {
 	config := defaultMotionParams()
 	config.UseOneFrameOnly = true
 	detector := NewMotionDetector(config)
 
 	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 100)
-	assert.Equal(t, []int{-1, -1, -1, 9, 18}, pixels)
-	assert.Equal(t, []bool{false, false, false, true, true}, detecteds)
+	assert.Equal(t, []int{-1, 9, 9, 9, 18}, pixels)
+	assert.Equal(t, []bool{false, true, true, true, true}, detecteds)
+}
+
+func TestNoMotionDetectedIfNothingHasChanged(t *testing.T) {
+	config := defaultMotionParams()
+	config.UseOneFrameOnly = true
+	detector := NewMotionDetector(config)
+
+	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 0)
+	assert.Equal(t, []int{-1, 0, 0, 0, 0}, pixels)
+	assert.Equal(t, []bool{false, false, false, false, false}, detecteds)
 }
 
 func TestIfUsingTwoFramesItOnlyCountsWhereBothFramesHaveChanged(t *testing.T) {
 	config := defaultMotionParams()
 	detector := NewMotionDetector(config)
 
-	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 100)
-	assert.Equal(t, []int{-1, -1, -1, 0, 5}, pixels)
-	assert.Equal(t, []bool{false, false, false, false, false}, detecteds)
-
-	// need to reduce the threshold to get the detector to triggeras
-	// now only when both frames have changes does it trigger.
-	config.CountThresh = 5
-	detector = NewMotionDetector(config)
-
-	pixels, detecteds = MovingBoxDetections(detector, 7, 3300, 100)
-	assert.Equal(t, []int{-1, -1, -1, 0, 5, 9, 9}, pixels)
-	assert.Equal(t, []bool{false, false, false, false, true, true, true}, detecteds)
+	pixels, detecteds := MovingBoxDetections(detector, 6, 3300, 100)
+	assert.Equal(t, []int{-1, 0, 4, 4, 5, 9}, pixels)
+	assert.Equal(t, []bool{false, false, false, false, false, true}, detecteds)
 }
 
-func TestIfRecalculationHasOccurred(t *testing.T) {
+func TestChangeCountThresh(t *testing.T) {
+	config := defaultMotionParams()
+	config.CountThresh = 4
+	detector := NewMotionDetector(config)
+
+	pixels, detecteds := MovingBoxDetections(detector, 6, 3300, 100)
+	assert.Equal(t, []int{-1, 0, 4, 4, 5, 9}, pixels)
+	assert.Equal(t, []bool{false, false, true, true, true, true}, detecteds)
+}
+
+func TestSomethingMovingWhileRecalculation_TwoPoints(t *testing.T) {
+	config := defaultMotionParams()
+	config.CountThresh = 4
+	detector := NewMotionDetector(config)
+
+	pixels, detecteds := MovingBoxDetections(detector, 6, 3300, 100)
+	assert.Equal(t, []int{-1, 0, 4, 4, 5, 9}, pixels)
+
+	pixels, detecteds = MovingBoxDetections(detector, 6, 3800, 100)
+	assert.Equal(t, []int{-2, -1, 4, 4, 5, 9}, pixels)
+	assert.Equal(t, []bool{false, false, true, true, true, true}, detecteds)
+}
+
+func TestIfRecalculationNothingMoving_TwoPoints(t *testing.T) {
 	config := defaultMotionParams()
 	detector := NewMotionDetector(config)
 
-	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 100)
-	assert.Equal(t, []int{-1, -1, -1, 0, 5}, pixels)
+	// fill buffer
+	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 0)
+	assert.Equal(t, []int{-1, 0, 0, 0, 0}, pixels)
+
+	// recalibration
+	pixels, detecteds = MovingBoxDetections(detector, 5, 3800, 0)
+	assert.Equal(t, []int{-2, -1, 0, 0, 0}, pixels)
 	assert.Equal(t, []bool{false, false, false, false, false}, detecteds)
-
-	// need to reduce the threshold to get the detector to triggeras
-	// now only when both frames have changes does it trigger.
-	config.CountThresh = 5
-	detector = NewMotionDetector(config)
-
-	pixels, detecteds = MovingBoxDetections(detector, 7, 3300, 100)
-	assert.Equal(t, []int{-1, -1, -1, 0, 5, 9, 9}, pixels)
-	assert.Equal(t, []bool{false, false, false, false, true, true, true}, detecteds)
 }

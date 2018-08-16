@@ -63,12 +63,12 @@ func NewServoController(conf ServoConfig) *ServoController {
 }
 
 // Update uses the motionDetector to see where the servos should point
-func (t *TurretController) Update(motion *motionDetector) {
+func (t *TurretController) Update(targetX, targetY int) {
 	if !t.Active {
 		return
 	}
-	t.ServoX.updateTargetAng((float64(motion.targetX-80) * 56 / 160))
-	t.ServoY.updateTargetAng((float64(motion.targetY-60) * 56 / 160))
+	t.ServoX.updateTargetAng((float64(targetX-80) * 56 / 160))
+	t.ServoY.updateTargetAng((float64(targetY-60) * 56 / 160))
 }
 
 // updates the angle to the target as seen by the camera

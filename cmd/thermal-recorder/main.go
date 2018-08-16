@@ -94,20 +94,24 @@ func runMain() error {
 	if err != nil {
 		return err
 	}
-	logConfig(conf)
 
 	if args.TestCptvFile != "" {
-		// conf.Motion.UseOneFrameOnly = true
+		//conf.Motion.UseOneFrameOnly = true
 		// log.Printf("Using one compare frame only")
-		MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
+		conf.Motion.DeltaThresh = 50
+		conf.Motion.CountThresh = 3
+		// MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
 
-		conf.Motion.FrameCompareGap = 1
-		MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
+		// conf.Motion.FrameCompareGap = 1
+		// MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
 
-		conf.Motion.FrameCompareGap = 48
+		conf.Motion.FrameCompareGap = 9
+		logConfig(conf)
 		MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
 		return nil
 	}
+
+	logConfig(conf)
 
 	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {

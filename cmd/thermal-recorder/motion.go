@@ -28,15 +28,13 @@ func NewMotionDetector(args MotionConfig) *motionDetector {
 type motionDetector struct {
 	flooredFrames FrameLoop
 	diffFrames    FrameLoop
+	firstDiff     bool
 	useOneFrame   bool
-	count         uint64
 	tempThresh    uint16
 	deltaThresh   uint16
 	countThresh   int
 	nonzeroLimit  int
 	framesGap     uint64
-	targetX       int
-	targetY       int
 }
 
 func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
@@ -45,25 +43,26 @@ func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 }
 
 func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
-	d.count++
 
 	processedFrame := d.flooredFrames.Current()
 	d.setFloor(frame, processedFrame)
 
 	// we will compare with the oldest saved frame.
-	compareFrame := d.flooredFrames.Move()
-
-	if d.count < d.framesGap+1 {
-		return false, NO_DATA
-	}
+	compareFrame := d.flooredFrames.Oldest()
+	defer d.flooredFrames.Move()
 
 	diffFrame := d.diffFrames.Current()
 	absDiffFrames(processedFrame, compareFrame, diffFrame)
+	prevDiffFrame := d.diffFrames.Move()
+
+	if !d.firstDiff {
+		d.firstDiff = true
+		return false, NO_DATA
+	}
 
 	if d.useOneFrame {
 		return d.hasMotion(diffFrame, nil)
 	} else {
-		prevDiffFrame := d.diffFrames.Move()
 		return d.hasMotion(diffFrame, prevDiffFrame)
 	}
 }
@@ -113,10 +112,6 @@ func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, 
 			}
 		}
 	}
-	if deltaCount >= 1 {
-		d.targetX = targetXTotal / deltaCount
-		d.targetY = targetYTotal / deltaCount
-	}
 	// Motion detection is suppressed when over nonzeroLimit motion
 	// pixels are nonzero. This is to deal with sudden jumps in the
 	// readings as the camera recalibrates due to rapid temperature
@@ -124,9 +119,12 @@ func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, 
 
 	if nonzeroCount > d.nonzeroLimit {
 		log.Printf("Motion detector - too many points changed, probably a recalculation")
+		d.flooredFrames.SetAsOldest()
+		d.firstDiff = false
 		return false, TOO_MANY_POINTS_CHANGED
 	}
 
+	log.Printf("deltaCount %d", deltaCount)
 	return deltaCount >= d.countThresh, deltaCount
 }
 
