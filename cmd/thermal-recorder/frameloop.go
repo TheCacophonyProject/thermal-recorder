@@ -23,7 +23,7 @@ func NewFrameLoop(size int) *FrameLoop {
 	}
 }
 
-const USE_NEXT = -1
+const NO_OLDEST_SET = -1
 
 // FrameLoop stores the last n frames in a loop that will be overwritten when full.
 // The latest written frame can be anywhere in the list of frames.  Beware: all frames
@@ -48,7 +48,7 @@ func (fl *FrameLoop) Move() *lepton3.Frame {
 
 	if fl.currentIndex == fl.oldest {
 		fl.bufferFull = true
-		fl.oldest = USE_NEXT
+		fl.oldest = NO_OLDEST_SET
 	}
 
 	return fl.Current()
@@ -64,6 +64,18 @@ func (fl *FrameLoop) Current() *lepton3.Frame {
 // Note: The returned slice will be rewritten next time GetHistory is called.
 // Note: GetHistory always returns one frame even if none have been stored in the loop
 func (fl *FrameLoop) GetHistory() []*lepton3.Frame {
+	fullHistory := fl.getFullHistory()
+
+	if fl.oldest == NO_OLDEST_SET {
+		return fullHistory
+	}
+
+	historyLength := (fl.currentIndex-fl.oldest+fl.size)%fl.size + 1
+
+	return fullHistory[len(fullHistory)-historyLength:]
+}
+
+func (fl *FrameLoop) getFullHistory() []*lepton3.Frame {
 	if fl.currentIndex == fl.size-1 {
 		copy(fl.orderedFrames[:], fl.frames[:])
 		return fl.orderedFrames
@@ -84,7 +96,7 @@ func (fl *FrameLoop) GetHistory() []*lepton3.Frame {
 // Oldest returns the oldest frame remembered.   This is either the next
 // frame in the buffer (next to be overwritten), or the frame marked oldest
 func (fl *FrameLoop) Oldest() *lepton3.Frame {
-	if fl.oldest != USE_NEXT {
+	if fl.oldest != NO_OLDEST_SET {
 		return fl.frames[fl.oldest]
 	}
 	return fl.frames[fl.nextIndexAfter(fl.currentIndex)]

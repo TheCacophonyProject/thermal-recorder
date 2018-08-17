@@ -23,7 +23,9 @@ func NewFrameLoopTestClass(frames int) *FrameLoopTestClass {
 		FrameLoop: NewFrameLoop(FIVE_FRAME_LOOP),
 		count:     1,
 	}
-	frameLoop.Current()[0][0] = frameLoop.count
+	if frames > 0 {
+		frameLoop.Current()[0][0] = frameLoop.count
+	}
 	frameLoop.AddFrames(frames - 1)
 	return frameLoop
 }
@@ -45,7 +47,8 @@ func getId(frame *lepton3.Frame) int {
 	return int(frame[0][0])
 }
 
-func getFrameIds(frames []*lepton3.Frame) []int {
+func getHistoryIds(frameLoop *FrameLoopTestClass) []int {
+	frames := frameLoop.GetHistory()
 	ids := make([]int, len(frames))
 	for ii, frame := range frames {
 		ids[ii] = getId(frame)
@@ -70,36 +73,58 @@ func TestFrameLoopLoopsRoundFrames(t *testing.T) {
 	assert.Equal(t, 2, getId(frameLoop.Move()))
 }
 
+func TestFrameHistoryFromStart(t *testing.T) {
+	frameLoop := NewFrameLoopTestClass(1)
+
+	frameLoop.SetAsOldest()
+	assert.Equal(t, []int{1}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{1, 2}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{1, 2, 3}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{1, 2, 3, 4}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{1, 2, 3, 4, 5}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{2, 3, 4, 5, 6}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	frameLoop.Move()
+	frameLoop.Move()
+	frameLoop.Move()
+	assert.Equal(t, []int{6, 7, 8, 9, 10}, getHistoryIds(frameLoop))
+}
+
 func TestFrameLoopHistoryDoesNotIncludeUnwrittenFrames(t *testing.T) {
 	frameLoop := NewFrameLoopTestClass(2)
-	assert.Equal(t, []int{1, 2}, getFrameIds(frameLoop.GetHistory()))
+	assert.Equal(t, []int{1, 2}, getHistoryIds(frameLoop))
 }
 
 func TestFrameLoopHistoryFromEndFirstTime(t *testing.T) {
 	frameLoop := NewFrameLoopTestClass(5)
-	assert.Equal(t, []int{1, 2, 3, 4, 5}, getFrameIds(frameLoop.GetHistory()))
+	assert.Equal(t, []int{1, 2, 3, 4, 5}, getHistoryIds(frameLoop))
 }
 
 func TestFrameLoopHistoryFromFirstInLoop(t *testing.T) {
 	frameLoop := NewFrameLoopTestClass(6)
-	assert.Equal(t, []int{2, 3, 4, 5, 6}, getFrameIds(frameLoop.GetHistory()))
+	assert.Equal(t, []int{2, 3, 4, 5, 6}, getHistoryIds(frameLoop))
 }
 
 func TestFrameLoopHistoryFromMiddleOfLoop(t *testing.T) {
 	frameLoop := NewFrameLoopTestClass(8)
-	assert.Equal(t, []int{4, 5, 6, 7, 8}, getFrameIds(frameLoop.GetHistory()))
+	assert.Equal(t, []int{4, 5, 6, 7, 8}, getHistoryIds(frameLoop))
 }
 
 func TestFrameLoopHistoryFromLastPositionOfLoop(t *testing.T) {
 	frameLoop := NewFrameLoopTestClass(10)
-	assert.Equal(t, []int{6, 7, 8, 9, 10}, getFrameIds(frameLoop.GetHistory()))
+	assert.Equal(t, []int{6, 7, 8, 9, 10}, getHistoryIds(frameLoop))
 }
 
 func TestFrameLoopHistoryWhenNothingHasBeenWritten(t *testing.T) {
-	frameLoop := NewFrameLoop(FIVE_FRAME_LOOP)
+	frameLoop := NewFrameLoopTestClass(0)
 
 	// this is a bit of a bug...but it is not a problem.
-	assert.Equal(t, []int{0}, getFrameIds(frameLoop.GetHistory()))
+	assert.Equal(t, []int{0}, getHistoryIds(frameLoop))
 }
 
 func getOldestFrameIds(frameLoop *FrameLoopTestClass, frames int) []int {
@@ -119,4 +144,21 @@ func TestFrameOldest(t *testing.T) {
 	assert.Equal(t, 8, getId(frameLoop.Current()))
 	frameLoop.SetAsOldest()
 	assert.Equal(t, []int{8, 8, 8, 8, 8, 9, 10}, getOldestFrameIds(frameLoop, 7))
+}
+
+func TestFrameHistoryAfterOldestSet(t *testing.T) {
+	frameLoop := NewFrameLoopTestClass(8)
+
+	frameLoop.SetAsOldest()
+	assert.Equal(t, []int{8}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{8, 9}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{8, 9, 10}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{8, 9, 10, 11}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{8, 9, 10, 11, 12}, getHistoryIds(frameLoop))
+	frameLoop.Move()
+	assert.Equal(t, []int{9, 10, 11, 12, 13}, getHistoryIds(frameLoop))
 }

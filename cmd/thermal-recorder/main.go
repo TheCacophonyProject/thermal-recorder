@@ -35,6 +35,7 @@ type Args struct {
 	UploaderConfigFile string `arg:"-u,--uploader-config" help:"path to uploader config file"`
 	Timestamps         bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
 	TestCptvFile       string `arg:"-f, --testfile" help:"Run a CPTV file through to see what the results are"`
+	Verbose            bool   `arg:"-v, --verbose" help:"Make logging more verbose"`
 }
 
 type HardwareListener struct {
@@ -96,18 +97,14 @@ func runMain() error {
 	}
 
 	if args.TestCptvFile != "" {
-		//conf.Motion.UseOneFrameOnly = true
-		// log.Printf("Using one compare frame only")
-		conf.Motion.DeltaThresh = 50
-		conf.Motion.CountThresh = 3
-		// MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
+		conf.Motion.Verbose = args.Verbose
 
-		// conf.Motion.FrameCompareGap = 1
-		// MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
-
-		conf.Motion.FrameCompareGap = 9
 		logConfig(conf)
-		MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
+		if args.TestCptvFile == "many" {
+			MotionTesterProcessMultipleCptvFiles(conf)
+		} else {
+			MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
+		}
 		return nil
 	}
 

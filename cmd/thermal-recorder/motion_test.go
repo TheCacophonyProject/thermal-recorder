@@ -18,6 +18,7 @@ func defaultMotionParams() MotionConfig {
 		CountThresh:       8,
 		NonzeroMaxPercent: 50,
 		FrameCompareGap:   3,
+		WarmerOnly:        false,
 	}
 }
 

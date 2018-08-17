@@ -27,11 +27,14 @@ func TestAllDefaults(t *testing.T) {
 		MinDiskSpace: 200,
 		Motion: MotionConfig{
 			TempThresh:        3000,
-			DeltaThresh:       30,
-			CountThresh:       5,
+			DeltaThresh:       50,
+			CountThresh:       3,
 			NonzeroMaxPercent: 50,
-			FrameCompareGap:   27,
-			UseOneFrameOnly:   false,
+			FrameCompareGap:   45,
+			UseOneFrameOnly:   true,
+			Verbose:           false,
+			TriggerFrames:     2,
+			WarmerOnly:        true,
 		},
 		LEDs: LEDsConfig{
 			Recording: "GPIO20",
@@ -74,7 +77,11 @@ motion:
     delta-thresh: 20
     count-thresh: 1
     nonzero-max-percent: 20
-    frame-compare-gap: 9
+    frame-compare-gap: 90
+    one-frame-only: false
+    trigger-frames: 1
+    verbose: true
+    warmer-only: false
 leds:
     recording: "RecordingPIN"
     running: "RunningPIN"
@@ -121,7 +128,11 @@ device-name: "aDeviceName"
 			DeltaThresh:       20,
 			CountThresh:       1,
 			NonzeroMaxPercent: 20,
-			FrameCompareGap:   9,
+			FrameCompareGap:   90,
+			UseOneFrameOnly:   false,
+			Verbose:           true,
+			TriggerFrames:     1,
+			WarmerOnly:        false,
 		},
 		LEDs: LEDsConfig{
 			Recording: "RecordingPIN",

@@ -73,7 +73,10 @@ type MotionConfig struct {
 	CountThresh       int    `yaml:"count-thresh"`
 	NonzeroMaxPercent int    `yaml:"nonzero-max-percent"`
 	FrameCompareGap   int    `yaml:"frame-compare-gap"`
-	UseOneFrameOnly   bool
+	UseOneFrameOnly   bool   `yaml:"one-frame-only"`
+	TriggerFrames     int    `yaml:"trigger-frames"`
+	WarmerOnly        bool   `yaml:"warmer-only"`
+	Verbose           bool   `yaml:"verbose"`
 }
 
 func (conf *MotionConfig) Validate() error {
@@ -110,10 +113,14 @@ var defaultConfig = rawConfig{
 	MinDiskSpace: 200,
 	Motion: MotionConfig{
 		TempThresh:        3000,
-		DeltaThresh:       30,
-		CountThresh:       5,
+		DeltaThresh:       50,
+		CountThresh:       3,
 		NonzeroMaxPercent: 50,
-		FrameCompareGap:   27,
+		FrameCompareGap:   45,
+		Verbose:           false,
+		TriggerFrames:     2,
+		UseOneFrameOnly:   true,
+		WarmerOnly:        true,
 	},
 	LEDs: LEDsConfig{
 		Recording: "GPIO20",
