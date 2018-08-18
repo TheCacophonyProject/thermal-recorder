@@ -31,21 +31,37 @@ motion:
 
     # Minimum raw temperature difference between recent frames to
     # trigger motion detection.
-    delta-thresh: 30
+    delta-thresh: 50
 
     # Number of pixels which must show delta-thresh change before
     # motion detection event will be triggered.
-    count-thresh: 5
+    count-thresh: 3
 
     # Suppress motion detection if more than this percentage of the
     # frame appears to change. This helps avoid false positives when
     # the camera is recalibrating.
     nonzero-max-percent: 50
 
-# GPIO pins for the LEDs
-leds:
-    # Pin of the blue LED, indicating that the device is recording.
-    recording: "GPIO20"
+    # When working out which pixels have changed it tries to compare
+    # the current frame with one recorded this many frames ago. If there
+    # aren't this many frames (eg since a recalibration) then it will use
+    # the oldest frame it has after the last 'bad' frame.
+    FrameCompareGap: 90
 
-    # Pin of the green LED, indicating that thermal-recording is running.
-    running: "GPIO25"
+    # When working out if motion has occured only look at a single frame diff.
+    # If set to false then it looks as two sequential frame diffs and only consideres
+    # pixels that have changed in both diffs
+    # Note: set to false because rats move too fast!
+    UseOneFrameOnly: false
+
+    # No. of sequential frames that must have motion detected before a recording will
+    # start.   Having this > 1 helps prevent false positives causing recordings
+    trigger-frames: 2
+
+    # If set to true, then the frame diff only considers pixels that have become warmer.
+    # Otherwise there are ghost pixels where the animal used to be but isn't now.
+    warmer-only: true
+
+    # Verbose gives lots of information on which pixels are detected as changed.
+    verbose: true
+
