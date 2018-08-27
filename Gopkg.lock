@@ -44,6 +44,12 @@
   revision = "7b13bcae7243fe17bbeb7dd5cd8b26675c8db048"
 
 [[projects]]
+  name = "github.com/godbus/dbus"
+  packages = [".","introspect"]
+  revision = "a389bdde4dd695d414e47b755e95e72b7826432c"
+  version = "v4.1.0"
+
+[[projects]]
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
@@ -83,6 +89,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "6ae815a61314ab4e49d601eb7d8c6c113e0e72bfabfcc31caf2b97a65124b120"
+  inputs-digest = "995549e4f18b081ebabce73b49c94c1fea31e107b81ba5c587934f8db976aff8"
   solver-name = "gps-cdcl"
   solver-version = 1

@@ -42,6 +42,7 @@ nfpm:
     "leptond.service": "/etc/systemd/system/leptond.service"
     "set-thermal-recorder-output/set-thermal-recorder-output.service": "/etc/systemd/system/set-thermal-recorder-output.service"
     "set-thermal-recorder-output/set-thermal-recorder-output": "/usr/bin/set-thermal-recorder-output"
+    "org.cacophony.thermalrecorder.conf": "/etc/dbus-1/system.d/org.cacophony.thermalrecorder.conf"
 
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
