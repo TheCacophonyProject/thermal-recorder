@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/TheCacophonyProject/go-cptv"
   packages = ["."]
-  revision = "b4d729fdf16ecafb016b9d9151fff8fbe10a6e5b"
+  revision = "c20b943db215789bbfddbea1e7a2a08f128b94e7"
 
 [[projects]]
   branch = "master"
@@ -57,7 +57,10 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = ["assert","require"]
+  packages = [
+    "assert",
+    "require"
+  ]
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
   version = "v1.2.2"
 
@@ -82,7 +85,35 @@
 [[projects]]
   branch = "v2"
   name = "periph.io/x/periph"
-  packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
+  packages = [
+    ".",
+    "conn",
+    "conn/gpio",
+    "conn/gpio/gpioreg",
+    "conn/i2c",
+    "conn/i2c/i2creg",
+    "conn/mmr",
+    "conn/pin",
+    "conn/pin/pinreg",
+    "conn/spi",
+    "conn/spi/spireg",
+    "devices",
+    "devices/lepton/cci",
+    "devices/lepton/internal",
+    "host",
+    "host/allwinner",
+    "host/bcm283x",
+    "host/chip",
+    "host/cpu",
+    "host/distro",
+    "host/fs",
+    "host/odroidc1",
+    "host/pine64",
+    "host/pmem",
+    "host/rpi",
+    "host/sysfs",
+    "host/videocore"
+  ]
   revision = "d06ef89e37e829cc301f5babee628e6c6e36d7c5"
   source = "https://github.com/TheCacophonyProject/periph.git"
 
