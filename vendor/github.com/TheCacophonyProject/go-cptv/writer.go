@@ -1,3 +1,17 @@
+// Copyright 2018 The Cacophony Project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 package cptv
 
 import (
@@ -10,7 +24,7 @@ import (
 func NewWriter(w io.Writer) *Writer {
 	return &Writer{
 		bldr: NewBuilder(w),
-		comp: NewCompressor(lepton3.FrameCols, lepton3.FrameRows),
+		comp: NewCompressor(),
 	}
 }
 
@@ -40,9 +54,9 @@ func (w *Writer) WriteHeader(deviceName string) error {
 	return w.bldr.WriteHeader(fields)
 }
 
-func (w *Writer) WriteFrame(prevFrame, frame *lepton3.Frame) error {
+func (w *Writer) WriteFrame(frame *lepton3.Frame) error {
 	dt := uint64(time.Since(w.t0))
-	bitWidth, compFrame := w.comp.Next(prevFrame, frame)
+	bitWidth, compFrame := w.comp.Next(frame)
 	fields := NewFieldWriter()
 	fields.Uint32(Offset, uint32(dt/1000))
 	fields.Uint8(BitWidth, uint8(bitWidth))
