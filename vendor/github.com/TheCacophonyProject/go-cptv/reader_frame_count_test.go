@@ -14,22 +14,28 @@
 
 package cptv
 
-const (
-	magic        = "CPTV"
-	version byte = 0x01
+import (
+	"bytes"
+	"testing"
 
-	headerSection = 'H'
-	frameSection  = 'F'
-
-	// Header field keys
-	Timestamp   byte = 'T'
-	XResolution byte = 'X'
-	YResolution byte = 'Y'
-	Compression byte = 'C'
-	DeviceName  byte = 'D'
-
-	// Frame field keys
-	Offset    byte = 't'
-	BitWidth  byte = 'w'
-	FrameSize byte = 'f'
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
+
+func TestReaderFrameCount(t *testing.T) {
+	frame := makeTestFrame()
+	cptvBytes := new(bytes.Buffer)
+
+	w := NewWriter(cptvBytes)
+	require.NoError(t, w.WriteHeader("nz43"))
+	require.NoError(t, w.WriteFrame(frame))
+	require.NoError(t, w.WriteFrame(frame))
+	require.NoError(t, w.WriteFrame(frame))
+	require.NoError(t, w.Close())
+
+	r, err := NewReader(cptvBytes)
+	require.NoError(t, err)
+	c, err := r.FrameCount()
+	require.NoError(t, err)
+	assert.Equal(t, 3, c)
+}

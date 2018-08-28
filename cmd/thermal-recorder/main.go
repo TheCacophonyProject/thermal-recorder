@@ -142,7 +142,6 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 	frameLoop := NewFrameLoop(loopFrames)
 
 	frame := frameLoop.Current()
-	var zeroFrame lepton3.Frame
 
 	var writer *cptv.FileWriter
 	defer func() {
@@ -207,7 +206,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 				return err
 			}
 
-			if err = writeInitialFramesToFile(writer, frameLoop.GetHistory(), &zeroFrame); err != nil {
+			if err = writeInitialFramesToFile(writer, frameLoop.GetHistory()); err != nil {
 				return err
 			}
 
@@ -228,7 +227,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 
 		// If recording, write the frame.
 		if writer != nil {
-			err := writer.WriteFrame(frameLoop.Previous(), frame)
+			err := writer.WriteFrame(frame)
 			if err != nil {
 				return err
 			}
@@ -305,19 +304,17 @@ func checkDiskSpace(mb uint64, dir string) (bool, error) {
 	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
 }
 
-func writeInitialFramesToFile(writer *cptv.FileWriter, frames []*lepton3.Frame, firstFrame *lepton3.Frame) error {
-	prevFrame := firstFrame
+func writeInitialFramesToFile(writer *cptv.FileWriter, frames []*lepton3.Frame) error {
 	var frame *lepton3.Frame
 	ii := 0
 
 	// it never writes the current frame as this will be written as part of the program!!
 	for ii < len(frames)-1 {
 		frame = frames[ii]
-		if err := writer.WriteFrame(prevFrame, frame); err != nil {
+		if err := writer.WriteFrame(frame); err != nil {
 			return err
 		}
 		ii++
-		prevFrame = frame
 	}
 
 	return nil

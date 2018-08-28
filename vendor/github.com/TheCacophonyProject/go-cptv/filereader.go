@@ -19,33 +19,39 @@ import (
 	"os"
 )
 
-func NewFileWriter(filename string) (*FileWriter, error) {
-	f, err := os.Create(filename)
+// NewFileReader returns a new FileReader from the filename.
+func NewFileReader(filename string) (*FileReader, error) {
+	f, err := os.Open(filename)
 	if err != nil {
 		return nil, err
 	}
-	bw := bufio.NewWriter(f)
-	return &FileWriter{
-		Writer: NewWriter(bw),
-		bw:     bw,
+	br := bufio.NewReader(f)
+	r, err := NewReader(br)
+	if err != nil {
+		f.Close()
+		return nil, err
+	}
+	return &FileReader{
+		Reader: r,
+		br:     br,
 		f:      f,
 	}, nil
 }
 
-// FileWriter wraps a Writer and provides a convenient way of writing
-// a CPTV stream to a disk file.
-type FileWriter struct {
-	*Writer
-	bw *bufio.Writer
+// FileReader wraps a Reader and provides a convenient way of reading
+// a CPTV stream from a disk file.
+type FileReader struct {
+	*Reader
+	br *bufio.Reader
 	f  *os.File
 }
 
-func (fw *FileWriter) Name() string {
-	return fw.f.Name()
+// Name returns the name of the FileReader
+func (fr *FileReader) Name() string {
+	return fr.f.Name()
 }
 
-func (fw *FileWriter) Close() {
-	fw.Writer.Close()
-	fw.bw.Flush()
-	fw.f.Close()
+// Close closes the file
+func (fr *FileReader) Close() {
+	fr.f.Close()
 }
