@@ -5,19 +5,12 @@
 package main
 
 import (
-	"errors"
 	"fmt"
-	"image"
-	"image/color"
-	"image/png"
 	"log"
-	"math"
 	"net"
 	"os"
-	"path"
 	"path/filepath"
 	"regexp"
-	"sync/atomic"
 	"syscall"
 	"time"
 
@@ -38,9 +31,8 @@ const (
 )
 
 var (
-	version         = "<not set>"
-	snapshotChan    = make(chan error, 1)
-	snapshotPending atomic.Value
+	version   = "<not set>"
+	frameLoop *FrameLoop
 )
 
 type Args struct {
@@ -82,7 +74,7 @@ func runMain() error {
 	logConfig(conf)
 
 	log.Println("starting d-bus service")
-	snapshotPending.Store(false)
+	snapshotDir = conf.OutputDir
 	err = startService()
 	if err != nil {
 		return err
@@ -157,7 +149,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 	window := NewWindow(conf.WindowStart, conf.WindowEnd)
 
 	loopFrames := conf.PreviewSecs * framesHz
-	frameLoop := NewFrameLoop(loopFrames)
+	frameLoop = NewFrameLoop(loopFrames)
 
 	frame := frameLoop.Current()
 
@@ -180,10 +172,6 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 		}
 		rawFrame.ToFrame(frame)
 		totalFrames++
-
-		if snapshotPending.Load() == true {
-			snapshotChan <- frameToSnapshot(conf.OutputDir, frame)
-		}
 
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
 			totalFrames <= 60*framesHz || totalFrames%frameLogInterval == 0 {
@@ -340,48 +328,4 @@ func writeInitialFramesToFile(writer *cptv.FileWriter, frames []*lepton3.Frame) 
 	}
 
 	return nil
-}
-
-func newSnapshot() error {
-	if snapshotPending.Load() == true {
-		//TODO return the pending snapshot error also.
-		return errors.New("snapshot already pending")
-	}
-	log.Println("take new snapshot")
-	snapshotPending.Store(true)
-	defer snapshotPending.Store(false)
-	var err error
-	select {
-	case err = <-snapshotChan:
-	case <-time.After(10 * time.Second):
-		err = errors.New("timeout for snapshot")
-	}
-	return err
-}
-
-func frameToSnapshot(dir string, f *lepton3.Frame) error {
-	g16 := image.NewGray16(image.Rect(0, 0, 160, 120))
-	// Max and min are needed for normalization of the frame
-	var valMax uint16
-	var valMin uint16 = 65535
-	for _, row := range f {
-		for _, val := range row {
-			valMax = uint16(math.Max(float64(valMax), float64(val)))
-			valMin = uint16(math.Min(float64(valMin), float64(val)))
-		}
-	}
-
-	var norm = 65535 / (valMax - valMin)
-	for y, row := range f {
-		for x, val := range row {
-			g16.SetGray16(x, y, color.Gray16{Y: (val - valMin) * norm})
-		}
-	}
-
-	out, err := os.Create(path.Join(dir, "still.png"))
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-	return png.Encode(out, g16)
 }

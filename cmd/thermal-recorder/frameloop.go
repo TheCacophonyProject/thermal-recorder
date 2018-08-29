@@ -5,8 +5,13 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/mohae/deepcopy"
 )
+
+var mu sync.Mutex
 
 func NewFrameLoop(size int) *FrameLoop {
 	frames := make([]*lepton3.Frame, size)
@@ -42,6 +47,8 @@ func (fl *FrameLoop) nextIndexAfter(index int) int {
 // Move, moves the current frame one forwards and return the new frame.
 // Note: data on all returned frame objects will eventually get overwritten
 func (fl *FrameLoop) Move() *lepton3.Frame {
+	mu.Lock()
+	defer mu.Unlock()
 	if fl.currentIndex == fl.size-1 {
 		fl.bufferFull = true
 	}
@@ -59,13 +66,20 @@ func (fl *FrameLoop) Current() *lepton3.Frame {
 // Previous returns the previous frame.
 // Note: data on all returned frame objects will eventually get overwritten
 func (fl *FrameLoop) Previous() *lepton3.Frame {
+	mu.Lock()
+	defer mu.Unlock()
+	if fl == nil {
+		return nil
+	}
 	previousIndex := (fl.currentIndex - 1 + fl.size) % fl.size
-	return fl.frames[previousIndex]
+	return deepcopy.Copy(fl.frames[previousIndex]).(*lepton3.Frame)
 }
 
 // GetHistory returns all the frames recorded in an slice from oldest to newest.
 // Note: The returned slice will be rewritten next time GetHistory is called.
 func (fl *FrameLoop) GetHistory() []*lepton3.Frame {
+	mu.Lock()
+	defer mu.Unlock()
 	if fl.currentIndex == fl.size-1 {
 		copy(fl.orderedFrames[:], fl.frames[:])
 		return fl.orderedFrames
