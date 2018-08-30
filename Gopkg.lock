@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/TheCacophonyProject/go-cptv"
   packages = ["."]
-  revision = "bb43c3db1d74d6787ba83f355fbd1501f218cf4e"
+  revision = "367f84db37395791ec264f2b35e459189a669811"
 
 [[projects]]
   branch = "master"
@@ -34,8 +34,8 @@
 [[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
-  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
-  version = "v1.1.0"
+  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
+  version = "v1.1.1"
 
 [[projects]]
   branch = "master"
@@ -62,7 +62,7 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "c39426892332e1bb5ec0a434a079bf82f5d30c54"
+  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
 
 [[projects]]
   branch = "v2"

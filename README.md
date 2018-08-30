@@ -15,7 +15,7 @@ automate releases. To produce a release:
   Project repositories.
 * Tag the release with an annotated tag. For example:
   `git tag -a "v1.4" -m "1.4 release"`
-* Push the tag to Github: `git push --tags origin`
-* Run `goreleaser`
+* Push the tag to Github: `git push origin v1.4`
+* Run `goreleaser --rm-dist`
 
 The configuration for GoReleaser can be found in `.goreleaser.yml`.
