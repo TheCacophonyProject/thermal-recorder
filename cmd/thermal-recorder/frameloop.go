@@ -63,11 +63,11 @@ func (fl *FrameLoop) Current() *lepton3.Frame {
 
 // Previous returns a copy of the previous frame.
 func (fl *FrameLoop) Previous() *lepton3.Frame {
-	fl.mu.Lock()
-	defer fl.mu.Unlock()
 	if fl == nil {
 		return nil
 	}
+	fl.mu.Lock()
+	defer fl.mu.Unlock()
 	previousIndex := (fl.currentIndex - 1 + fl.size) % fl.size
 	f := new(lepton3.Frame)
 	f.Copy(fl.frames[previousIndex])
