@@ -8,7 +8,6 @@ import (
 	"sync"
 
 	"github.com/TheCacophonyProject/lepton3"
-	"github.com/mohae/deepcopy"
 )
 
 var mu sync.Mutex
@@ -72,7 +71,9 @@ func (fl *FrameLoop) Previous() *lepton3.Frame {
 		return nil
 	}
 	previousIndex := (fl.currentIndex - 1 + fl.size) % fl.size
-	return deepcopy.Copy(fl.frames[previousIndex]).(*lepton3.Frame)
+	f := new(lepton3.Frame)
+	f.Copy(fl.frames[previousIndex])
+	return f
 }
 
 // GetHistory returns all the frames recorded in an slice from oldest to newest.
