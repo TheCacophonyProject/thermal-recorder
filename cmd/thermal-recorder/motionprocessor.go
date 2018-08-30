@@ -79,7 +79,6 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 		} else if err := mp.canStartWriting(); err != nil {
 			mp.occasionallyWriteError("Recording not started", err)
 		} else if err := mp.startRecording(); err != nil {
-			mp.recorder.StopRecording()
 			mp.occasionallyWriteError("Can't start recording file", err)
 		} else {
 			mp.writeUntil = mp.minFrames
@@ -172,7 +171,7 @@ func (mp *MotionProcessor) recordPreTriggerFrames() error {
 	var frame *lepton3.Frame
 	ii := 0
 
-	// it never writes the current frame as this will be written as part of the program!!
+	// it never writes the current frame as this will be written later
 	for ii < len(frames)-1 {
 		frame = frames[ii]
 		if err := mp.recorder.WriteFrame(frame); err != nil {

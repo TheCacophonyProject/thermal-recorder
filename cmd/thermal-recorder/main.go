@@ -130,7 +130,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 	defer hardwareListener.RecordingEnded()
 
 	cptvRecorder := NewCPTVFileRecorder(conf)
-	defer cptvRecorder.StopRecording()
+	defer cptvRecorder.Stop()
 
 	processor := NewMotionProcessor(conf, hardwareListener, cptvRecorder)
 

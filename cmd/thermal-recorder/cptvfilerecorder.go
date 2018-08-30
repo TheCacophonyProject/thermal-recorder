@@ -50,21 +50,32 @@ func (fw *CPTVFileRecorder) StartRecording() error {
 		return err
 	}
 
-	fw.writer.WriteHeader(fw.conf.DeviceName)
+	if err = fw.writer.WriteHeader(fw.conf.DeviceName); err != nil {
+		fw.Stop()
+	}
+
 	return err
 }
 
 func (fw *CPTVFileRecorder) StopRecording() error {
 	if fw.writer != nil {
 		fw.writer.Close()
-		fw.writer = nil
 
 		finalName, err := renameTempRecording(fw.writer.Name())
 		log.Printf("recording stopped: %s\n", finalName)
+		fw.writer = nil
 
 		return err
 	}
 	return nil
+}
+
+func (fw *CPTVFileRecorder) Stop() {
+	if fw.writer != nil {
+		fw.writer.Close()
+		os.Remove(fw.writer.Name())
+		fw.writer = nil
+	}
 }
 
 func (fw *CPTVFileRecorder) WriteFrame(frame *lepton3.Frame) error {
