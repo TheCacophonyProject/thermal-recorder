@@ -26,3 +26,10 @@ func (rf *RawFrame) ToFrame(out *Frame) {
 		}
 	}
 }
+
+// Copy sets current frame as other frame
+func (fr *Frame) Copy(orig *Frame) {
+	for y := 0; y < FrameRows; y++ {
+		copy(fr[y][:], orig[y][:])
+	}
+}

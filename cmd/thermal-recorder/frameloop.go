@@ -5,6 +5,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/TheCacophonyProject/lepton3"
 )
 
@@ -33,6 +35,7 @@ type FrameLoop struct {
 	orderedFrames []*lepton3.Frame
 	zeroFrame     lepton3.Frame
 	bufferFull    bool
+	mu            sync.Mutex
 }
 
 func (fl *FrameLoop) nextIndexAfter(index int) int {
@@ -42,6 +45,8 @@ func (fl *FrameLoop) nextIndexAfter(index int) int {
 // Move, moves the current frame one forwards and return the new frame.
 // Note: data on all returned frame objects will eventually get overwritten
 func (fl *FrameLoop) Move() *lepton3.Frame {
+	fl.mu.Lock()
+	defer fl.mu.Unlock()
 	if fl.currentIndex == fl.size-1 {
 		fl.bufferFull = true
 	}
@@ -56,16 +61,24 @@ func (fl *FrameLoop) Current() *lepton3.Frame {
 	return fl.frames[fl.currentIndex]
 }
 
-// Previous returns the previous frame.
-// Note: data on all returned frame objects will eventually get overwritten
+// Previous returns a copy of the previous frame.
 func (fl *FrameLoop) Previous() *lepton3.Frame {
+	if fl == nil {
+		return nil
+	}
+	fl.mu.Lock()
+	defer fl.mu.Unlock()
 	previousIndex := (fl.currentIndex - 1 + fl.size) % fl.size
-	return fl.frames[previousIndex]
+	f := new(lepton3.Frame)
+	f.Copy(fl.frames[previousIndex])
+	return f
 }
 
 // GetHistory returns all the frames recorded in an slice from oldest to newest.
 // Note: The returned slice will be rewritten next time GetHistory is called.
 func (fl *FrameLoop) GetHistory() []*lepton3.Frame {
+	fl.mu.Lock()
+	defer fl.mu.Unlock()
 	if fl.currentIndex == fl.size-1 {
 		copy(fl.orderedFrames[:], fl.frames[:])
 		return fl.orderedFrames

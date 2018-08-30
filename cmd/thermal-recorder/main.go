@@ -30,7 +30,10 @@ const (
 	frameLogInterval         = 60 * 5 * framesHz
 )
 
-var version = "<not set>"
+var (
+	version   = "<not set>"
+	frameLoop *FrameLoop
+)
 
 type Args struct {
 	ConfigFile         string `arg:"-c,--config" help:"path to configuration file"`
@@ -69,6 +72,12 @@ func runMain() error {
 		return err
 	}
 	logConfig(conf)
+
+	log.Println("starting d-bus service")
+	err = startService(conf.OutputDir)
+	if err != nil {
+		return err
+	}
 
 	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {
@@ -139,7 +148,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController, recording
 	window := NewWindow(conf.WindowStart, conf.WindowEnd)
 
 	loopFrames := conf.PreviewSecs * framesHz
-	frameLoop := NewFrameLoop(loopFrames)
+	frameLoop = NewFrameLoop(loopFrames)
 
 	frame := frameLoop.Current()
 
