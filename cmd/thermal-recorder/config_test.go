@@ -36,10 +36,6 @@ func TestAllDefaults(t *testing.T) {
 			TriggerFrames:     2,
 			WarmerOnly:        true,
 		},
-		LEDs: LEDsConfig{
-			Recording: "GPIO20",
-			Running:   "GPIO25",
-		},
 		Turret: TurretConfig{
 			Active: false,
 			PID:    []float64{0.05, 0, 0},
@@ -133,10 +129,6 @@ device-name: "aDeviceName"
 			Verbose:           true,
 			TriggerFrames:     1,
 			WarmerOnly:        false,
-		},
-		LEDs: LEDsConfig{
-			Recording: "RecordingPIN",
-			Running:   "RunningPIN",
 		},
 		Turret: TurretConfig{
 			Active: true,

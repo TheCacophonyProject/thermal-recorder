@@ -5,18 +5,12 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net"
 	"os"
-	"path/filepath"
-	"regexp"
-	"syscall"
 
 	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
-	"periph.io/x/periph/conn/gpio"
-	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
 )
 
@@ -38,31 +32,13 @@ type Args struct {
 	Verbose            bool   `arg:"-v, --verbose" help:"Make logging more verbose"`
 }
 
-type HardwareListener struct {
-	recordingLed gpio.PinIO
-}
-
-func NewHardwareListener(led gpio.PinIO) *HardwareListener {
-	return &HardwareListener{
-		recordingLed: led,
-	}
-}
+type HardwareListener struct{}
 
 func (hl *HardwareListener) MotionDetected() {
 	//turret.Update(motion)
 }
-
-func (hl *HardwareListener) RecordingStarted() {
-	if err := hl.recordingLed.Out(gpio.High); err != nil {
-		log.Printf("failed to set recording LED on: %v", err)
-	}
-}
-
-func (hl *HardwareListener) RecordingEnded() {
-	if err := hl.recordingLed.Out(gpio.Low); err != nil {
-		log.Printf("failed to set recording LED off: %v", err)
-	}
-}
+func (hl *HardwareListener) RecordingStarted() {}
+func (hl *HardwareListener) RecordingEnded()   {}
 
 func (Args) Version() string {
 	return version
@@ -123,23 +99,6 @@ func runMain() error {
 		return err
 	}
 
-	runningLed := gpioreg.ByName(conf.LEDs.Running)
-	if runningLed == nil {
-		return fmt.Errorf("failed to load pin: %s", conf.LEDs.Running)
-	}
-	if err := runningLed.Out(gpio.High); err != nil {
-		return fmt.Errorf("failed to set running led on: %v", err)
-	}
-	defer runningLed.Out(gpio.Low)
-
-	recordingLed := gpioreg.ByName(conf.LEDs.Recording)
-	if recordingLed == nil {
-		return fmt.Errorf("failed to load pin: %s", conf.LEDs.Recording)
-	}
-	if err := recordingLed.Out(gpio.Low); err != nil {
-		return fmt.Errorf("failed to set recording LED off: %v", err)
-	}
-
 	for {
 		// Set up listener for frames sent by leptond.
 		os.Remove(conf.FrameInput)
@@ -158,20 +117,22 @@ func runMain() error {
 		// Prevent concurrent connections.
 		listener.Close()
 
-		err = handleConn(conn, conf, turret, recordingLed)
+		err = handleConn(conn, conf, turret)
 		log.Printf("camera connection ended with: %v", err)
 	}
 }
 
-func handleConn(conn net.Conn, conf *Config, turret *TurretController, recordingLed gpio.PinIO) error {
+func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 
 	totalFrames := 0
 
-	hardwareListener := NewHardwareListener(recordingLed)
+	hardwareListener := new(HardwareListener)
 	defer hardwareListener.RecordingEnded()
 
-	processor := NewMotionProcessor(conf, hardwareListener)
-	defer processor.Stop()
+	cptvRecorder := NewCPTVFileRecorder(conf)
+	defer cptvRecorder.StopRecording()
+
+	processor := NewMotionProcessor(conf, hardwareListener, cptvRecorder)
 
 	rawFrame := new(lepton3.RawFrame)
 
@@ -201,7 +162,6 @@ func logConfig(conf *Config) {
 	log.Printf("preview seconds: %d", conf.PreviewSecs)
 	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
-	log.Printf("leds: %+v", conf.LEDs)
 	if !conf.WindowStart.IsZero() {
 		log.Printf("recording window: %02d:%02d to %02d:%02d",
 			conf.WindowStart.Hour(), conf.WindowStart.Minute(),
@@ -213,37 +173,4 @@ func logConfig(conf *Config) {
 		log.Printf("\tServoX: %+v", conf.Turret.ServoX)
 		log.Printf("\tServoY: %+v", conf.Turret.ServoY)
 	}
-}
-
-func renameTempRecording(tempName string) (string, error) {
-	finalName := recordingFinalName(tempName)
-	err := os.Rename(tempName, finalName)
-	if err != nil {
-		return "", err
-	}
-	return finalName, nil
-}
-
-var reTempName = regexp.MustCompile(`(.+)\.temp$`)
-
-func recordingFinalName(filename string) string {
-	return reTempName.ReplaceAllString(filename, `$1`)
-}
-
-func deleteTempFiles(directory string) error {
-	matches, _ := filepath.Glob(filepath.Join(directory, "*."+cptvTempExt))
-	for _, filename := range matches {
-		if err := os.Remove(filename); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func checkDiskSpace(mb uint64, dir string) (bool, error) {
-	var fs syscall.Statfs_t
-	if err := syscall.Statfs(dir, &fs); err != nil {
-		return false, err
-	}
-	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
 }

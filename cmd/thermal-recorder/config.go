@@ -23,7 +23,6 @@ type Config struct {
 	WindowEnd    time.Time
 	MinDiskSpace uint64
 	Motion       MotionConfig
-	LEDs         LEDsConfig
 	Turret       TurretConfig
 }
 
@@ -40,11 +39,6 @@ type TurretConfig struct {
 	PID    []float64   `yaml:"pid"`
 	ServoX ServoConfig `yaml:"servo-x"`
 	ServoY ServoConfig `yaml:"servo-y"`
-}
-
-type LEDsConfig struct {
-	Recording string `yaml:"recording"`
-	Running   string `yaml:"running"`
 }
 
 type uploaderConfig struct {
@@ -96,7 +90,6 @@ type rawConfig struct {
 	WindowEnd    string       `yaml:"window-end"`
 	MinDiskSpace uint64       `yaml:"min-disk-space"`
 	Motion       MotionConfig `yaml:"motion"`
-	LEDs         LEDsConfig   `yaml:"leds"`
 	Turret       TurretConfig `yaml:"turret"`
 }
 
@@ -121,10 +114,6 @@ var defaultConfig = rawConfig{
 		TriggerFrames:     2,
 		UseOneFrameOnly:   true,
 		WarmerOnly:        true,
-	},
-	LEDs: LEDsConfig{
-		Recording: "GPIO20",
-		Running:   "GPIO25",
 	},
 	Turret: TurretConfig{
 		Active: false,
@@ -177,7 +166,6 @@ func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 		PreviewSecs:  raw.PreviewSecs,
 		MinDiskSpace: raw.MinDiskSpace,
 		Motion:       raw.Motion,
-		LEDs:         raw.LEDs,
 		Turret:       raw.Turret,
 	}
 

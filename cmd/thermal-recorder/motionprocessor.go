@@ -6,17 +6,12 @@ package main
 
 import (
 	"errors"
-	"fmt"
 	"log"
-	"os"
-	"path/filepath"
-	"time"
 
-	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
 )
 
-func NewMotionProcessor(conf *Config, listener RecordingListener) *MotionProcessor {
+func NewMotionProcessor(conf *Config, listener RecordingListener, recorder Recorder) *MotionProcessor {
 	return &MotionProcessor{
 		minFrames:      conf.MinSecs * framesHz,
 		maxFrames:      conf.MaxSecs * framesHz,
@@ -26,8 +21,8 @@ func NewMotionProcessor(conf *Config, listener RecordingListener) *MotionProcess
 		window:         *NewWindow(conf.WindowStart, conf.WindowEnd),
 		listener:       listener,
 		conf:           conf,
-		DoRecord:       true,
 		triggerFrames:  conf.Motion.TriggerFrames,
+		recorder:       recorder,
 	}
 }
 
@@ -41,19 +36,25 @@ type MotionProcessor struct {
 	totalFrames    int
 	writeUntil     int
 	lastLogFrame   int
-	writer         *cptv.FileWriter
 	window         Window
 	conf           *Config
 	listener       RecordingListener
-	DoRecord       bool
 	triggerFrames  int
 	triggered      int
+	recorder       Recorder
 }
 
 type RecordingListener interface {
 	MotionDetected()
 	RecordingStarted()
 	RecordingEnded()
+}
+
+type Recorder interface {
+	StopRecording() error
+	StartRecording() error
+	WriteFrame(*lepton3.Frame) error
+	CheckCanRecord() error
 }
 
 func (mp *MotionProcessor) Process(rawFrame *lepton3.RawFrame) {
@@ -68,17 +69,18 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 
 	if mp.motionDetector.Detect(frame) {
 		mp.listener.MotionDetected()
+		mp.triggered++
 
 		if mp.isRecording {
 			// increase the length of recording
 			mp.writeUntil = min(mp.framesWritten+mp.minFrames, mp.maxFrames)
-		} else if mp.triggered+1 < mp.triggerFrames {
+		} else if mp.triggered < mp.triggerFrames {
 			// Only start recording after n (triggerFrames) consecutive frames with motion detected.
-			mp.triggered++
 		} else if err := mp.canStartWriting(); err != nil {
-			mp.SometimesWriteError("Recording not started", err)
+			mp.occasionallyWriteError("Recording not started", err)
 		} else if err := mp.startRecording(); err != nil {
-			mp.SometimesWriteError("Can't start recording file", err)
+			mp.recorder.StopRecording()
+			mp.occasionallyWriteError("Can't start recording file", err)
 		} else {
 			mp.writeUntil = mp.minFrames
 		}
@@ -88,11 +90,9 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 
 	// If recording, write the frame.
 	if mp.isRecording {
-		if mp.DoRecord {
-			err := mp.writer.WriteFrame(frame)
-			if err != nil {
-				log.Printf("Failed to write to CPTV file %v", err)
-			}
+		err := mp.recorder.WriteFrame(frame)
+		if err != nil {
+			log.Printf("Failed to write to CPTV file %v", err)
 		}
 		mp.framesWritten++
 	}
@@ -110,8 +110,7 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 func (mp *MotionProcessor) processFrame(srcFrame *lepton3.Frame) {
 
 	frame := mp.frameLoop.Current()
-	//frame.Copy(srcFrame)
-	CopyFrames(frame, srcFrame)
+	frame.Copy(srcFrame)
 
 	mp.internalProcess(frame)
 }
@@ -119,15 +118,12 @@ func (mp *MotionProcessor) processFrame(srcFrame *lepton3.Frame) {
 func (mp *MotionProcessor) canStartWriting() error {
 	if !mp.window.Active() {
 		return errors.New("motion detected but outside of recording window")
-	} else if enoughSpace, err := checkDiskSpace(mp.conf.MinDiskSpace, mp.conf.OutputDir); err != nil {
-		return fmt.Errorf("Problem with disk space: %v", err)
-	} else if !enoughSpace {
-		return errors.New("motion detected but not enough free disk space to start recording")
+	} else {
+		return mp.recorder.CheckCanRecord()
 	}
-	return nil
 }
 
-func (mp *MotionProcessor) SometimesWriteError(task string, err error) {
+func (mp *MotionProcessor) occasionallyWriteError(task string, err error) {
 	shouldLogMotion := (mp.lastLogFrame == 0) //|| (mp.totalFrames >= mp.lastLogFrame+(10*framesHz))
 	if shouldLogMotion {
 		log.Printf("%s (%d): %v", task, mp.totalFrames, err)
@@ -136,46 +132,24 @@ func (mp *MotionProcessor) SometimesWriteError(task string, err error) {
 }
 
 func (mp *MotionProcessor) startRecording() error {
+
 	var err error
 
-	if mp.DoRecord {
-		filename := filepath.Join(mp.conf.OutputDir, newRecordingTempName())
-		log.Printf("recording started: %s", filename)
-
-		if mp.writer, err = cptv.NewFileWriter(filename); err != nil {
-			return err
-		}
+	if err = mp.recorder.StartRecording(); err != nil {
+		return err
 	}
 
 	mp.isRecording = true
 	mp.listener.RecordingStarted()
 
-	if mp.DoRecord {
-		if mp.writer.WriteHeader(mp.conf.DeviceName); err != nil {
-			return err
-		}
-
-		err = mp.writeInitialFramesToFile(mp.writer)
-		return err
-	}
-
-	return nil
+	err = mp.recordPreTriggerFrames()
+	return err
 }
 
 func (mp *MotionProcessor) stopRecording() error {
 	mp.listener.RecordingEnded()
-	var returnErr error
+	err := mp.recorder.StopRecording()
 
-	if mp.DoRecord {
-
-		mp.writer.Close()
-
-		finalName, err := renameTempRecording(mp.writer.Name())
-		returnErr = err
-		log.Printf("recording stopped: %s\n", finalName)
-	}
-
-	mp.writer = nil
 	mp.framesWritten = 0
 	mp.writeUntil = 0
 	mp.isRecording = false
@@ -183,14 +157,7 @@ func (mp *MotionProcessor) stopRecording() error {
 	// if it starts recording again very quickly it won't write the same frames again
 	mp.frameLoop.SetAsOldest()
 
-	return returnErr
-}
-
-func (mp *MotionProcessor) Stop() {
-	if mp.writer != nil {
-		mp.writer.Close()
-		os.Remove(mp.writer.Name())
-	}
+	return err
 }
 
 func min(a, b int) int {
@@ -200,11 +167,7 @@ func min(a, b int) int {
 	return b
 }
 
-func newRecordingTempName() string {
-	return time.Now().Format("20060102.150405.000." + cptvTempExt)
-}
-
-func (mp *MotionProcessor) writeInitialFramesToFile(writer *cptv.FileWriter) error {
+func (mp *MotionProcessor) recordPreTriggerFrames() error {
 	frames := mp.frameLoop.GetHistory()
 	var frame *lepton3.Frame
 	ii := 0
@@ -212,18 +175,11 @@ func (mp *MotionProcessor) writeInitialFramesToFile(writer *cptv.FileWriter) err
 	// it never writes the current frame as this will be written as part of the program!!
 	for ii < len(frames)-1 {
 		frame = frames[ii]
-		if err := writer.WriteFrame(frame); err != nil {
+		if err := mp.recorder.WriteFrame(frame); err != nil {
 			return err
 		}
 		ii++
 	}
 
 	return nil
-}
-
-// Copy sets current frame as other frame
-func CopyFrames(dest *lepton3.Frame, orig *lepton3.Frame) {
-	for y := 0; y < lepton3.FrameRows; y++ {
-		copy(dest[y][:], orig[y][:])
-	}
 }

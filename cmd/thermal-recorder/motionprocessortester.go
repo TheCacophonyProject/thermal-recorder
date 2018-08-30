@@ -49,6 +49,14 @@ func (p *EventLoggingRecordingListener) RecordingEnded() {
 	}
 }
 
+type NoWriteRecorder struct {
+}
+
+func (*NoWriteRecorder) StopRecording() error            { return nil }
+func (*NoWriteRecorder) StartRecording() error           { return nil }
+func (*NoWriteRecorder) WriteFrame(*lepton3.Frame) error { return nil }
+func (*NoWriteRecorder) CheckCanRecord() error           { return nil }
+
 func MotionTesterProcessMultipleCptvFiles(conf *Config) {
 	path := "/Users/clare/cacophony/data/cptvfiles/"
 
@@ -56,6 +64,8 @@ func MotionTesterProcessMultipleCptvFiles(conf *Config) {
 	MotionTesterProcessCPTVFile(path+"rat02.cptv", conf)
 	MotionTesterProcessCPTVFile(path+"noise_01.cptv", conf)
 	MotionTesterProcessCPTVFile(path+"noise_02.cptv", conf)
+	MotionTesterProcessCPTVFile(path+"noise_03.cptv", conf)
+	MotionTesterProcessCPTVFile(path+"noise_05.cptv", conf)
 	MotionTesterProcessCPTVFile(path+"skyline.cptv", conf)
 	MotionTesterProcessCPTVFile(path+"20180814-182224.cptv", conf)
 	MotionTesterProcessCPTVFile(path+"20180814-153539.cptv", conf)
@@ -72,9 +82,9 @@ func MotionTesterProcessCPTVFile(filename string, conf *Config) {
 	listener.verbose = verbose
 	listener.recordingStarted = -1
 
-	processor := NewMotionProcessor(conf, listener)
-	processor.DoRecord = false
-	defer processor.Stop()
+	recorder := new(NoWriteRecorder)
+
+	processor := NewMotionProcessor(conf, listener, recorder)
 
 	file, reader, err := motionTesterLoadFile(filename)
 	if err != nil {
