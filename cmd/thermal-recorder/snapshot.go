@@ -30,8 +30,8 @@ func newSnapshot() error {
 	for _, row := range f {
 		for _, val := range row {
 			id += int(val)
-			valMax = uint16(math.Max(float64(valMax), float64(val)))
-			valMin = uint16(math.Min(float64(valMin), float64(val)))
+			valMax = maxUint16(valMax, val)
+			valMin = minUint16(valMin, val)
 		}
 	}
 
@@ -54,4 +54,18 @@ func newSnapshot() error {
 	}
 	defer out.Close()
 	return png.Encode(out, g16)
+}
+
+func maxUint16(a, b uint16) uint16 {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func minUint16(a, b uint16) uint16 {
+	if a < b {
+		return a
+	}
+	return b
 }
