@@ -8,16 +8,17 @@ import (
 	"math"
 	"os"
 	"path"
+	"sync"
 
 	"github.com/TheCacophonyProject/lepton3"
 )
 
 var (
 	previousSnapshotID = 0
-	snapshotDir        string
+	mu                 sync.Mutex
 )
 
-func newSnapshot() error {
+func newSnapshot(dir string) error {
 	f := frameLoop.Previous()
 	if f == nil {
 		return errors.New("no frames yet")
@@ -36,10 +37,12 @@ func newSnapshot() error {
 	}
 
 	// Check if frame had already been processed
+	mu.Lock()
 	if id == previousSnapshotID {
 		return nil
 	}
 	previousSnapshotID = id
+	mu.Unlock()
 
 	var norm = math.MaxUint16 / (valMax - valMin)
 	for y, row := range f {
@@ -48,7 +51,7 @@ func newSnapshot() error {
 		}
 	}
 
-	out, err := os.Create(path.Join(snapshotDir, "still.png"))
+	out, err := os.Create(path.Join(dir, "still.png"))
 	if err != nil {
 		return err
 	}

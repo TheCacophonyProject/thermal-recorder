@@ -74,8 +74,7 @@ func runMain() error {
 	logConfig(conf)
 
 	log.Println("starting d-bus service")
-	snapshotDir = conf.OutputDir
-	err = startService()
+	err = startService(conf.OutputDir)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"sync"
 
 	"github.com/godbus/dbus"
 	"github.com/godbus/dbus/introspect"
@@ -12,9 +13,12 @@ const (
 	dbusPath = "/org/cacophony/thermalrecorder"
 )
 
-type service struct{}
+type service struct {
+	dir string
+	mu  sync.Mutex
+}
 
-func startService() error {
+func startService(dir string) error {
 	conn, err := dbus.SystemBus()
 	if err != nil {
 		return err
@@ -27,7 +31,9 @@ func startService() error {
 		return errors.New("name already taken")
 	}
 
-	s := &service{}
+	s := &service{
+		dir: dir,
+	}
 	conn.Export(s, dbusPath, dbusName)
 	conn.Export(genIntrospectable(s), dbusPath, "org.freedesktop.DBus.Introspectable")
 
@@ -45,8 +51,10 @@ func genIntrospectable(v interface{}) introspect.Introspectable {
 }
 
 // TakeSnapshot will save the next frame as a still
-func (s service) TakeSnapshot() *dbus.Error {
-	err := newSnapshot()
+func (s *service) TakeSnapshot() *dbus.Error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	err := newSnapshot(s.dir)
 	if err != nil {
 		return &dbus.Error{
 			Name: dbusName + ".StayOnForError",
