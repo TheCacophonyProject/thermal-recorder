@@ -74,13 +74,8 @@ func runMain() error {
 
 	if args.TestCptvFile != "" {
 		conf.Motion.Verbose = args.Verbose
-
-		logConfig(conf)
-		if args.TestCptvFile == "many" {
-			MotionTesterProcessMultipleCptvFiles(conf)
-		} else {
-			MotionTesterProcessCPTVFile(args.TestCptvFile, conf)
-		}
+		results := NewCPTVPlaybackTester(conf).Detect(args.TestCptvFile)
+		log.Printf("Detected: %-16s Recorded: %-16s Motion frames: %d/%d", results.motionDetected, results.recordingStarted, results.motionDetectedCount, results.frameCount)
 		return nil
 	}
 

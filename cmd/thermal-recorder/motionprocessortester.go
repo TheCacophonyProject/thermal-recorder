@@ -5,21 +5,26 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"log"
 	"os"
+	"path/filepath"
+	"strings"
 
 	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
 )
 
 type EventLoggingRecordingListener struct {
+	config              *Config
 	gaps                int
 	frameCount          int
 	motionDetectedCount int
 	lastDetection       int
 	verbose             bool
-	recordingStarted    int
+	recordingStarted    string
+	motionDetected      string
 }
 
 func (p *EventLoggingRecordingListener) MotionDetected() {
@@ -40,13 +45,16 @@ func (p *EventLoggingRecordingListener) RecordingStarted() {
 	if p.verbose {
 		log.Printf("%d: Recording Started", p.frameCount)
 	}
-	p.recordingStarted = p.frameCount
+	p.recordingStarted += fmt.Sprintf("(%d:", p.frameCount)
+	p.motionDetected += fmt.Sprintf("(%d:", p.frameCount-p.config.Motion.TriggerFrames+1)
 }
 
 func (p *EventLoggingRecordingListener) RecordingEnded() {
 	if p.verbose {
 		log.Printf("%d: Recording Ended", p.frameCount)
 	}
+	p.recordingStarted += fmt.Sprintf("%d)", p.frameCount)
+	p.motionDetected += fmt.Sprintf("%d)", p.frameCount-p.config.MinSecs*9)
 }
 
 type NoWriteRecorder struct {
@@ -57,34 +65,64 @@ func (*NoWriteRecorder) StartRecording() error           { return nil }
 func (*NoWriteRecorder) WriteFrame(*lepton3.Frame) error { return nil }
 func (*NoWriteRecorder) CheckCanRecord() error           { return nil }
 
-func MotionTesterProcessMultipleCptvFiles(conf *Config) {
-	path := "/Users/clare/cacophony/data/cptvfiles/"
-
-	MotionTesterProcessCPTVFile(path+"rat.cptv", conf)
-	MotionTesterProcessCPTVFile(path+"rat02.cptv", conf)
-	MotionTesterProcessCPTVFile(path+"noise_01.cptv", conf)
-	MotionTesterProcessCPTVFile(path+"noise_02.cptv", conf)
-	MotionTesterProcessCPTVFile(path+"noise_03.cptv", conf)
-	MotionTesterProcessCPTVFile(path+"noise_05.cptv", conf)
-	MotionTesterProcessCPTVFile(path+"skyline.cptv", conf)
-	MotionTesterProcessCPTVFile(path+"20180814-182224.cptv", conf)
-	MotionTesterProcessCPTVFile(path+"20180814-153539.cptv", conf)
-	MotionTesterProcessCPTVFile(path+"20180814-153527.cptv", conf)
+type CPTVPlaybackTester struct {
+	config   *Config
+	basePath string
+	results  []string
 }
 
-func MotionTesterProcessCPTVFile(filename string, conf *Config) {
-	verbose := conf.Motion.Verbose
+func NewCPTVPlaybackTester(conf *Config) *CPTVPlaybackTester {
+	return &CPTVPlaybackTester{
+		config:  conf,
+		results: make([]string, 0, 100),
+	}
+}
+
+func (cpt *CPTVPlaybackTester) processIfCPTVFile(path string, info os.FileInfo, err error) error {
+	if strings.HasSuffix(path, ".cptv") {
+		log.Printf("Testing  %s", path)
+		newResult := cpt.Detect(path)
+		cpt.results = append(cpt.results, cpt.makeResultSummary(path, newResult))
+	}
+	return nil
+}
+
+func (cpt *CPTVPlaybackTester) makeResultSummary(filename string, listener *EventLoggingRecordingListener) string {
+	shortName := filename[len(cpt.basePath)+1:]
+	if listener.motionDetected == "" {
+		listener.motionDetected = "None"
+	}
+
+	if listener.recordingStarted == "" {
+		listener.recordingStarted = "None"
+	}
+
+	details := fmt.Sprintf("%-20s Detected: %-16s Recorded: %-16s Motion frames: %d/%d", shortName, listener.motionDetected, listener.recordingStarted, listener.motionDetectedCount, listener.frameCount)
+	log.Print(details)
+	return details
+}
+
+func (cpt *CPTVPlaybackTester) TestAllCPTVFiles(dir string) []string {
+	cpt.basePath = dir
+	log.Printf("Looking for CPTV files in %s", cpt.basePath)
+	filepath.Walk(cpt.basePath, cpt.processIfCPTVFile)
+	return cpt.results
+}
+
+func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingListener {
+	verbose := cpt.config.Motion.Verbose
 	if verbose {
 		log.Printf("TestFile is %s", filename)
 	}
 
 	listener := new(EventLoggingRecordingListener)
+	listener.config = cpt.config
 	listener.verbose = verbose
-	listener.recordingStarted = -1
+	listener.recordingStarted = ""
 
 	recorder := new(NoWriteRecorder)
 
-	processor := NewMotionProcessor(conf, listener, recorder)
+	processor := NewMotionProcessor(cpt.config, listener, recorder)
 
 	file, reader, err := motionTesterLoadFile(filename)
 	if err != nil {
@@ -94,7 +132,6 @@ func MotionTesterProcessCPTVFile(filename string, conf *Config) {
 
 	frame := new(lepton3.Frame)
 	for {
-		// log.Printf("%d, Timestampe: %v", listener.frameCount, reader.Timestamp())
 		if err := reader.ReadFrame(frame); err != nil {
 			if verbose {
 				if err != io.EOF {
@@ -102,10 +139,8 @@ func MotionTesterProcessCPTVFile(filename string, conf *Config) {
 				}
 				log.Printf("Last Frame gap %d", listener.frameCount-listener.lastDetection)
 				log.Printf("Motion detected frames %d out of frames %d (%d)", listener.motionDetectedCount, listener.frameCount, listener.gaps)
-			} else {
-				log.Printf("%s: %d out of frames %d (last: %d, gaps: %d) recorded from (%d) ", filename, listener.motionDetectedCount, listener.frameCount, listener.lastDetection, listener.gaps, listener.recordingStarted)
 			}
-			return
+			return listener
 		}
 		processor.processFrame(frame)
 		listener.frameCount++

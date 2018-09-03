@@ -16,7 +16,7 @@ func NewMotionProcessor(conf *Config, listener RecordingListener, recorder Recor
 		minFrames:      conf.MinSecs * framesHz,
 		maxFrames:      conf.MaxSecs * framesHz,
 		motionDetector: NewMotionDetector(conf.Motion),
-		frameLoop:      NewFrameLoop(conf.PreviewSecs * framesHz),
+		frameLoop:      NewFrameLoop(conf.PreviewSecs*framesHz + conf.Motion.TriggerFrames),
 		isRecording:    false,
 		window:         *NewWindow(conf.WindowStart, conf.WindowEnd),
 		listener:       listener,

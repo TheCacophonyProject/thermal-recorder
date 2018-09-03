@@ -108,7 +108,7 @@ func TestRecorderNotTriggeredUntilTriggerFramesReached(t *testing.T) {
 
 	// not triggered by 3 moving frames in a row
 	scenarioMaker.AddMovingDotFrames(3).AddBackgroundFrames(40)
-	assert.Equal(t, FramesFrom(14, 48), recorder.GetRecordedFramesIds())
+	assert.Equal(t, FramesFrom(12, 48), recorder.GetRecordedFramesIds())
 }
 
 func TestRecorderNotStartedIfCheckCanRecordReturnsError(t *testing.T) {

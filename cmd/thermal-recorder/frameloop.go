@@ -46,8 +46,11 @@ func (fl *FrameLoop) nextIndexAfter(index int) int {
 func (fl *FrameLoop) Move() *lepton3.Frame {
 	fl.currentIndex = fl.nextIndexAfter(fl.currentIndex)
 
-	if fl.currentIndex == fl.oldest {
+	if fl.currentIndex == 0 {
 		fl.bufferFull = true
+	}
+
+	if fl.currentIndex == fl.oldest {
 		fl.oldest = NO_OLDEST_SET
 	}
 

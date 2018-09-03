@@ -162,3 +162,16 @@ func TestFrameHistoryAfterOldestSet(t *testing.T) {
 	frameLoop.Move()
 	assert.Equal(t, []int{9, 10, 11, 12, 13}, getHistoryIds(frameLoop))
 }
+
+func TestFrameOldestWhenCornerCondition(t *testing.T) {
+	frameLoop := NewFrameLoopTestClass(3)
+
+	assert.Equal(t, []int{1, 2, 3}, getHistoryIds(frameLoop))
+
+	frameLoop.SetAsOldest()
+	frameLoop.Move()
+	frameLoop.Move()
+	frameLoop.Move()
+
+	assert.Equal(t, []int{3, 4, 5, 6}, getHistoryIds(frameLoop))
+}
