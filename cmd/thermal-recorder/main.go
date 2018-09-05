@@ -22,7 +22,10 @@ const (
 	frameLogInterval         = 60 * 5 * framesHz
 )
 
-var version = "<not set>"
+var (
+	version   = "<not set>"
+	frameLoop *FrameLoop
+)
 
 type Args struct {
 	ConfigFile         string `arg:"-c,--config" help:"path to configuration file"`
@@ -81,6 +84,12 @@ func runMain() error {
 
 	logConfig(conf)
 
+	log.Println("starting d-bus service")
+	err = startService(conf.OutputDir)
+	if err != nil {
+		return err
+	}
+
 	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {
 		return err
@@ -128,7 +137,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 	defer cptvRecorder.Stop()
 
 	processor := NewMotionProcessor(conf, hardwareListener, cptvRecorder)
-
+	frameLoop = processor.frameLoop
 	rawFrame := new(lepton3.RawFrame)
 
 	log.Print("new camera connection, reading frames")

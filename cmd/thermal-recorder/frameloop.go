@@ -63,6 +63,16 @@ func (fl *FrameLoop) Current() *lepton3.Frame {
 	return fl.frames[fl.currentIndex]
 }
 
+// CopyRecent returns a copy of the previous frame.
+func (fl *FrameLoop) CopyRecent(f *lepton3.Frame) *lepton3.Frame {
+	if fl == nil {
+		return nil
+	}
+	previousIndex := (fl.currentIndex - 1 + fl.size) % fl.size
+	f.Copy(fl.frames[previousIndex])
+	return f
+}
+
 // GetHistory returns all the frames recorded in an slice from oldest to newest.
 // Note: The returned slice will be rewritten next time GetHistory is called.
 // Note: GetHistory always returns one frame even if none have been stored in the loop
@@ -107,8 +117,6 @@ func (fl *FrameLoop) Oldest() *lepton3.Frame {
 
 // SetAsOldest - Marks current frame as oldest.  This mean Oldest() will never return
 // a frame that was written before this one.
-// Note:  Does not empty the buffer and GetHistory() still returns
-// the full history with older frames than this one.
 func (fl *FrameLoop) SetAsOldest() *lepton3.Frame {
 	fl.oldest = fl.currentIndex
 	return fl.Current()

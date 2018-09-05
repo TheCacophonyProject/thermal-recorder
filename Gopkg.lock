@@ -5,7 +5,7 @@
   branch = "master"
   name = "github.com/TheCacophonyProject/go-cptv"
   packages = ["."]
-  revision = "367f84db37395791ec264f2b35e459189a669811"
+  revision = "c20b943db215789bbfddbea1e7a2a08f128b94e7"
 
 [[projects]]
   branch = "master"
@@ -34,14 +34,20 @@
 [[projects]]
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
-  revision = "8991bc29aa16c548c550c7ff78260e27b9ab7c73"
-  version = "v1.1.1"
+  revision = "346938d642f2ec3594ed81d874461961cd0faa76"
+  version = "v1.1.0"
 
 [[projects]]
   branch = "master"
   name = "github.com/felixge/pidctrl"
   packages = ["."]
   revision = "7b13bcae7243fe17bbeb7dd5cd8b26675c8db048"
+
+[[projects]]
+  name = "github.com/godbus/dbus"
+  packages = [".","introspect"]
+  revision = "a389bdde4dd695d414e47b755e95e72b7826432c"
+  version = "v4.1.0"
 
 [[projects]]
   name = "github.com/pmezard/go-difflib"
@@ -51,10 +57,7 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = [
-    "assert",
-    "require"
-  ]
+  packages = ["assert","require"]
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
   version = "v1.2.2"
 
@@ -62,7 +65,7 @@
   branch = "master"
   name = "golang.org/x/net"
   packages = ["context"]
-  revision = "8a410e7b638dca158bf9e766925842f6651ff828"
+  revision = "4cb1c02c05b0e749b0365f61ae859a8e0cfceed9"
 
 [[projects]]
   branch = "v2"
@@ -79,41 +82,13 @@
 [[projects]]
   branch = "v2"
   name = "periph.io/x/periph"
-  packages = [
-    ".",
-    "conn",
-    "conn/gpio",
-    "conn/gpio/gpioreg",
-    "conn/i2c",
-    "conn/i2c/i2creg",
-    "conn/mmr",
-    "conn/pin",
-    "conn/pin/pinreg",
-    "conn/spi",
-    "conn/spi/spireg",
-    "devices",
-    "devices/lepton/cci",
-    "devices/lepton/internal",
-    "host",
-    "host/allwinner",
-    "host/bcm283x",
-    "host/chip",
-    "host/cpu",
-    "host/distro",
-    "host/fs",
-    "host/odroidc1",
-    "host/pine64",
-    "host/pmem",
-    "host/rpi",
-    "host/sysfs",
-    "host/videocore"
-  ]
+  packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
   revision = "d06ef89e37e829cc301f5babee628e6c6e36d7c5"
   source = "https://github.com/TheCacophonyProject/periph.git"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "0369fca3a0792f0c0b34cb0d49c69d75ac60c08bddc18f166805190363a09d2d"
+  inputs-digest = "995549e4f18b081ebabce73b49c94c1fea31e107b81ba5c587934f8db976aff8"
   solver-name = "gps-cdcl"
   solver-version = 1
