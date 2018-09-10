@@ -8,6 +8,9 @@ frame-input: "/var/run/lepton-frames"
 # Directory to place CPTV output files.
 output-dir: "/var/spool/cptv"
 
+# Time to record before motion was detected.
+preview-secs: 3
+
 # Minimum length to keep recording after motion is detected.
 min-secs: 10
 
