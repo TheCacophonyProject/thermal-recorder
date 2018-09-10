@@ -27,7 +27,7 @@ min-disk-space: 200
 motion:
     # Movement below raw temperatures of this value will not activate
     # motion detection.
-    temp-thresh: 3000
+    temp-thresh: 2900
 
     # Minimum raw temperature difference between recent frames to
     # trigger motion detection.

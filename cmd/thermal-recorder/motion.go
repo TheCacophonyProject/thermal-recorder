@@ -121,7 +121,7 @@ func (d *motionDetector) CountPixels(f1 *lepton3.Frame) (nonZeros, deltas int) {
 				nonzeroCount++
 				if v1 > d.deltaThresh {
 					if d.verbose {
-						log.Printf("Met %d, %d - %d", x, y, v1)
+						log.Printf("Motion (%d, %d) = %d", x, y, v1)
 					}
 					deltaCount++
 				}

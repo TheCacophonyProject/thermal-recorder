@@ -109,6 +109,26 @@ func (cpt *CPTVPlaybackTester) TestAllCPTVFiles(dir string) []string {
 	return cpt.results
 }
 
+func (cpt *CPTVPlaybackTester) LoadAllCptvFrames(filename string) []*lepton3.Frame {
+	cpt.config.Motion.Verbose = false
+	frames := make([]*lepton3.Frame, 0, 100)
+
+	file, reader, err := motionTesterLoadFile(filename)
+	if err != nil {
+		return frames[0:1]
+	}
+	defer file.Close()
+
+	frame := new(lepton3.Frame)
+	for {
+		if err := reader.ReadFrame(frame); err != nil {
+			return frames
+		}
+		frames = append(frames, frame)
+		frame = new(lepton3.Frame)
+	}
+}
+
 func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingListener {
 	verbose := cpt.config.Motion.Verbose
 	if verbose {

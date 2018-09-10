@@ -5,6 +5,9 @@
 package main
 
 import (
+	"bufio"
+	"fmt"
+	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -21,6 +24,7 @@ func CurrentConfig() *Config {
 	// Use smaller min secs to detect more clearly when we stop detecting.
 	config.MinSecs = 1
 	logConfig(config)
+
 	return config
 }
 
@@ -36,37 +40,86 @@ func OldDefaultConfig() *Config {
 	return config
 }
 
-func TestAnimalRecordings(t *testing.T) {
-	config := OldDefaultConfig()
+func TestCptvAnimalRecordings(t *testing.T) {
+	config := CurrentConfig()
 
 	results := NewCPTVPlaybackTester(config).TestAllCPTVFiles(GetBaseDir() + "/motiontest/animals")
 
 	expectedResults := []string{
-		"20180814-153527.cptv Detected: (1:15)(29:66)    Recorded: (2:24)(30:75)    Motion frames: 51/107",
-		"20180814-153539.cptv Detected: (1:101)(115:163)(175: Recorded: (2:110)(116:172)(176: Motion frames: 159/190",
-		"20180814-182224.cptv Detected: (1:14)(37:37)    Recorded: (2:23)(38:46)    Motion frames: 17/94",
-		"cat.cptv             Detected: (25:40)          Recorded: (26:49)          Motion frames: 16/133",
+		"cat.cptv             Detected: (25:41)          Recorded: (26:50)          Motion frames: 18/133",
+		"hedgehog.cptv        Detected: (3:32)(45:       Recorded: (4:41)(46:       Motion frames: 55/100",
+		"possum02.cptv        Detected: (1:              Recorded: (2:              Motion frames: 92/94",
 		"rat.cptv             Detected: (1:6)            Recorded: (2:15)           Motion frames: 7/99",
-		"rat02.cptv           Detected: (2:21)(57:90)    Recorded: (3:30)(58:99)    Motion frames: 44/107",
-		"recalc.cptv          Detected: (1:279)(290:452)(472:479) Recorded: (2:288)(291:461)(473:488) Motion frames: 445/540",
+		"rat02.cptv           Detected: (1:14)(61:92)    Recorded: (2:23)(62:101)   Motion frames: 39/107",
+		"recalc.cptv          Detected: (1:497)          Recorded: (2:506)          Motion frames: 490/540",
 	}
 
 	assert.Equal(t, expectedResults, results)
 }
 
-func TestNoiseRecordings(t *testing.T) {
-	config := OldDefaultConfig()
+func TestCptvNoiseRecordings(t *testing.T) {
+	config := CurrentConfig()
 
 	results := NewCPTVPlaybackTester(config).TestAllCPTVFiles(GetBaseDir() + "/motiontest/noise")
 	expectedResults := []string{
-		"noise_01.cptv        Detected: None             Recorded: None             Motion frames: 0/177",
-		"noise_02.cptv        Detected: None             Recorded: None             Motion frames: 0/99",
-		"noise_03.cptv        Detected: None             Recorded: None             Motion frames: 1/117",
-		"noise_05.cptv        Detected: (34:41)(52:71)(91:93) Recorded: (35:50)(53:80)(92:102) Motion frames: 23/119",
+		"noise_01.cptv        Detected: None             Recorded: None             Motion frames: 1/177",
+		"noise_02.cptv        Detected: None             Recorded: None             Motion frames: 1/99",
+		"noise_03.cptv        Detected: (75:79)          Recorded: (76:88)          Motion frames: 9/117",
+		"noise_05.cptv        Detected: (19:76)(90:94)   Recorded: (20:85)(91:103)  Motion frames: 43/119",
 		"skyline.cptv         Detected: None             Recorded: None             Motion frames: 1/91",
 	}
 
 	assert.Equal(t, expectedResults, results)
+}
+
+// DoTestResearchAnimalRecordings - change this to test to run though different scenarios of test
+// calculations.   It will output the results to /motiontest/results
+func DoTestResearchAnimalRecordings(t *testing.T) {
+	testname := "cut off - noise"
+	searchDir := GetBaseDir() + "/motiontest/noise"
+
+	f, err := os.Create(GetBaseDir() + "/motiontest/results/" + testname)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	writer := bufio.NewWriter(f)
+
+	config := CurrentConfig()
+	config.Motion.TempThresh = 2900
+	ExperiementAndWriteResultsToFile(testname+"2900", config, searchDir, writer)
+
+	config.Motion.TempThresh = 2800
+	ExperiementAndWriteResultsToFile(testname+"2800", config, searchDir, writer)
+
+	config.Motion.TempThresh = 2700
+	ExperiementAndWriteResultsToFile(testname+"2700", config, searchDir, writer)
+
+	config.Motion.TempThresh = 2500
+	ExperiementAndWriteResultsToFile(testname+"2500", config, searchDir, writer)
+
+	ExperiementAndWriteResultsToFile("Current config", CurrentConfig(), searchDir, writer)
+
+	ExperiementAndWriteResultsToFile("Old default", OldDefaultConfig(), searchDir, writer)
+}
+
+func ExperiementAndWriteResultsToFile(name string, config *Config, dir string, writer *bufio.Writer) {
+	fmt.Fprintf(writer, "Results for %s", name)
+	fmt.Fprintln(writer)
+
+	results := NewCPTVPlaybackTester(config).TestAllCPTVFiles(dir)
+
+	fmt.Fprintf(writer, "%-10s:  %ds - %ds", "Recording limits", config.MinSecs, config.MaxSecs)
+	fmt.Fprintln(writer, "")
+	fmt.Fprintln(writer, config.Motion)
+
+	for ii := range results {
+		fmt.Fprintln(writer, results[ii])
+	}
+	fmt.Fprintln(writer)
+	fmt.Fprintln(writer)
+
+	writer.Flush()
 }
 
 func GetBaseDir() string {
@@ -75,4 +128,23 @@ func GetBaseDir() string {
 	dir, _ := filepath.Abs(filepath.Dir(file))
 
 	return dir
+}
+
+func BenchmarkMotionDetection(b *testing.B) {
+	config := CurrentConfig()
+
+	tester := NewCPTVPlaybackTester(config)
+	frames := tester.LoadAllCptvFrames(GetBaseDir() + "/motiontest/animals/recalc.cptv")
+
+	listener := new(HardwareListener) // currently doesn't do anything
+	recorder := new(NoWriteRecorder)
+
+	processor := NewMotionProcessor(config, listener, recorder)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for jj := range frames {
+			processor.processFrame(frames[jj])
+		}
+	}
 }
