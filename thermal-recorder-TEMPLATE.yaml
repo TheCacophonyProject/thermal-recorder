@@ -49,13 +49,14 @@ motion:
     # the current frame with one recorded this many frames ago. If there
     # aren't this many frames (eg since a recalibration) then it will use
     # the oldest frame it has after the last 'bad' frame.
-    FrameCompareGap: 45
+    frame-compare-gap: 45
 
-    # When working out if motion has occured only look at a single frame diff.
-    # If set to false then it looks as two sequential frame diffs and only consideres
-    # pixels that have changed in both diffs
-    # Note: set to false because rats move too fast!
-    UseOneFrameOnly: true
+    # When working out if motion has occured only look at a single frame diff (default).
+    # If set to false then it looks as two sequential frame diffs and only considers
+    # pixels that have changed in both diffs.  However, rats etc can move so fast that
+    # the pixels they are in can differ between frames so it is recommend to use only one diff
+    # frame and increase the number of trigger-frames instead.
+    one-diff-only: true
 
     # No. of sequential frames that must have motion detected before a recording will
     # start.   Having this > 1 helps prevent false positives causing recordings

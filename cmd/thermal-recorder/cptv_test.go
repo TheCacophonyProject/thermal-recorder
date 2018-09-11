@@ -1,12 +1,9 @@
-// Copyright 2018 The Cacophony Project. All rights reserved.
-// Use of this source code is governed by the Apache License Version 2.0;
-// see the LICENSE file for further details.
-
 package main
 
 import (
 	"bufio"
 	"fmt"
+	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -20,7 +17,11 @@ func CurrentConfig() *Config {
 	dir := GetBaseDir()
 	config_file := strings.Replace(dir, "cmd/thermal-recorder", "thermal-recorder-TEMPLATE.yaml", 1)
 	uploader_config_file := dir + "/motiontest/thermal-uploader-test.yaml"
-	config, _ := ParseConfigFiles(config_file, uploader_config_file)
+	config, err := ParseConfigFiles(config_file, uploader_config_file)
+	if err != nil {
+		panic(err)
+	}
+
 	// Use smaller min secs to detect more clearly when we stop detecting.
 	config.MinSecs = 1
 	logConfig(config)
@@ -32,7 +33,7 @@ func OldDefaultConfig() *Config {
 	config := DefaultTestConfig()
 	config.MinSecs = 1
 	config.Motion.TriggerFrames = 1
-	config.Motion.UseOneFrameOnly = false
+	config.Motion.UseOneDiffOnly = false
 	config.Motion.FrameCompareGap = 1
 	config.Motion.DeltaThresh = 30
 	config.Motion.CountThresh = 5
@@ -43,40 +44,67 @@ func OldDefaultConfig() *Config {
 func TestCptvAnimalRecordings(t *testing.T) {
 	config := CurrentConfig()
 
-	results := NewCPTVPlaybackTester(config).TestAllCPTVFiles(GetBaseDir() + "/motiontest/animals")
+	actualResults := NewCPTVPlaybackTester(config).TestAllCPTVFiles(GetBaseDir() + "/motiontest/animals")
 
-	expectedResults := []string{
-		"cat.cptv             Detected: (25:41)          Recorded: (26:50)          Motion frames: 18/133",
-		"hedgehog.cptv        Detected: (3:32)(45:       Recorded: (4:41)(46:       Motion frames: 55/100",
-		"possum02.cptv        Detected: (1:              Recorded: (2:              Motion frames: 92/94",
-		"rat.cptv             Detected: (1:6)            Recorded: (2:15)           Motion frames: 7/99",
-		"rat02.cptv           Detected: (1:14)(61:92)    Recorded: (2:23)(62:101)   Motion frames: 39/107",
-		"recalc.cptv          Detected: (1:497)          Recorded: (2:506)          Motion frames: 490/540",
+	expectedResults := map[string]string{
+		"cat.cptv":      "(25:41)",
+		"hedgehog.cptv": "(3:32)(45:end)",
+		"possum02.cptv": "(1:end)",
+		"rat.cptv":      "(1:6)",
+		"rat02.cptv":    "(1:14)(61:92)",
+		"recalc.cptv":   "(1:497)",
 	}
 
-	assert.Equal(t, expectedResults, results)
+	CompareDetectedPeriods(t, expectedResults, actualResults)
+}
+
+func CompareDetectedPeriods(t *testing.T, expectedResults map[string]string, actual map[string]*EventLoggingRecordingListener) {
+	errors := 0
+
+	for key, expected := range expectedResults {
+		if actual, ok := actual[key]; ok == false {
+			log.Printf("Missing results for file  %s", key)
+			errors++
+		} else if expected != actual.motionDetectedFrames {
+			log.Printf("Expected results for %-16s: %s", key, expected)
+			log.Printf("Actual results for   %-16s: %s", key, actual.motionDetectedFrames)
+			errors++
+		}
+	}
+
+	for key, result := range actual {
+		if _, ok := expectedResults[key]; ok == false {
+			log.Printf("Extra file %s has results %s", key, result.motionDetectedFrames)
+			errors++
+		}
+	}
+
+	if errors > 0 {
+		assert.Fail(t, fmt.Sprintf("There were %d errors.", errors))
+	}
 }
 
 func TestCptvNoiseRecordings(t *testing.T) {
 	config := CurrentConfig()
 
-	results := NewCPTVPlaybackTester(config).TestAllCPTVFiles(GetBaseDir() + "/motiontest/noise")
-	expectedResults := []string{
-		"noise_01.cptv        Detected: None             Recorded: None             Motion frames: 1/177",
-		"noise_02.cptv        Detected: None             Recorded: None             Motion frames: 1/99",
-		"noise_03.cptv        Detected: (75:79)          Recorded: (76:88)          Motion frames: 9/117",
-		"noise_05.cptv        Detected: (19:76)(90:94)   Recorded: (20:85)(91:103)  Motion frames: 43/119",
-		"skyline.cptv         Detected: None             Recorded: None             Motion frames: 1/91",
+	actualResults := NewCPTVPlaybackTester(config).TestAllCPTVFiles(GetBaseDir() + "/motiontest/noise")
+
+	expectedResults := map[string]string{
+		"noise_01.cptv": "None",
+		"noise_02.cptv": "None",
+		"noise_03.cptv": "(75:79)",
+		"noise_05.cptv": "(19:76)(90:94)",
+		"skyline.cptv":  "None",
 	}
 
-	assert.Equal(t, expectedResults, results)
+	CompareDetectedPeriods(t, expectedResults, actualResults)
 }
 
 // DoTestResearchAnimalRecordings - change this to test to run though different scenarios of test
 // calculations.   It will output the results to /motiontest/results
 func DoTestResearchAnimalRecordings(t *testing.T) {
-	testname := "cut off - noise"
-	searchDir := GetBaseDir() + "/motiontest/noise"
+	testname := "cut off - animals2"
+	searchDir := GetBaseDir() + "/motiontest/animals"
 
 	f, err := os.Create(GetBaseDir() + "/motiontest/results/" + testname)
 	if err != nil {
@@ -87,35 +115,38 @@ func DoTestResearchAnimalRecordings(t *testing.T) {
 
 	config := CurrentConfig()
 	config.Motion.TempThresh = 2900
-	ExperiementAndWriteResultsToFile(testname+"2900", config, searchDir, writer)
+	ExperimentAndWriteResultsToFile(testname+"2900", config, searchDir, writer)
 
 	config.Motion.TempThresh = 2800
-	ExperiementAndWriteResultsToFile(testname+"2800", config, searchDir, writer)
+	ExperimentAndWriteResultsToFile(testname+"2800", config, searchDir, writer)
 
 	config.Motion.TempThresh = 2700
-	ExperiementAndWriteResultsToFile(testname+"2700", config, searchDir, writer)
+	ExperimentAndWriteResultsToFile(testname+"2700", config, searchDir, writer)
 
 	config.Motion.TempThresh = 2500
-	ExperiementAndWriteResultsToFile(testname+"2500", config, searchDir, writer)
+	ExperimentAndWriteResultsToFile(testname+"2500", config, searchDir, writer)
 
-	ExperiementAndWriteResultsToFile("Current config", CurrentConfig(), searchDir, writer)
+	ExperimentAndWriteResultsToFile("Current config", CurrentConfig(), searchDir, writer)
 
-	ExperiementAndWriteResultsToFile("Old default", OldDefaultConfig(), searchDir, writer)
+	ExperimentAndWriteResultsToFile("Old default", OldDefaultConfig(), searchDir, writer)
 }
 
-func ExperiementAndWriteResultsToFile(name string, config *Config, dir string, writer *bufio.Writer) {
+func ExperimentAndWriteResultsToFile(name string, config *Config, dir string, writer *bufio.Writer) {
 	fmt.Fprintf(writer, "Results for %s", name)
 	fmt.Fprintln(writer)
 
 	results := NewCPTVPlaybackTester(config).TestAllCPTVFiles(dir)
 
 	fmt.Fprintf(writer, "%-10s:  %ds - %ds", "Recording limits", config.MinSecs, config.MaxSecs)
-	fmt.Fprintln(writer, "")
-	fmt.Fprintln(writer, config.Motion)
+	fmt.Fprintln(writer)
+	fmt.Fprintf(writer, "Motion: %+v", config.Motion)
+	fmt.Fprintln(writer)
 
-	for ii := range results {
-		fmt.Fprintln(writer, results[ii])
+	for key, result := range results {
+		fmt.Fprintf(writer, "%-20s Detected: %-16s Recorded: %-16s Motion frames: %d/%d", key, result.motionDetectedFrames, result.recordedFrames, result.motionDetectedCount, result.frameCount)
+		fmt.Fprintln(writer)
 	}
+
 	fmt.Fprintln(writer)
 	fmt.Fprintln(writer)
 
@@ -123,9 +154,16 @@ func ExperiementAndWriteResultsToFile(name string, config *Config, dir string, w
 }
 
 func GetBaseDir() string {
-	_, file, _, _ := runtime.Caller(0)
+	_, file, _, ok := runtime.Caller(0)
 
-	dir, _ := filepath.Abs(filepath.Dir(file))
+	if !ok {
+		panic(fmt.Errorf("Could not find the base dir where sample files are"))
+	}
+
+	dir, err := filepath.Abs(filepath.Dir(file))
+	if err != nil {
+		panic(err)
+	}
 
 	return dir
 }
@@ -143,8 +181,8 @@ func BenchmarkMotionDetection(b *testing.B) {
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
-		for jj := range frames {
-			processor.processFrame(frames[jj])
+		for _, frame := range frames {
+			processor.processFrame(frame)
 		}
 	}
 }

@@ -1,7 +1,3 @@
-// Copyright 2018 The Cacophony Project. All rights reserved.
-// Use of this source code is governed by the Apache License Version 2.0;
-// see the LICENSE file for further details.
-
 package main
 
 import (

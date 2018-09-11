@@ -1,7 +1,3 @@
-// Copyright 2018 The Cacophony Project. All rights reserved.
-// Use of this source code is governed by the Apache License Version 2.0;
-// see the LICENSE file for further details.
-
 package main
 
 import (
@@ -26,12 +22,12 @@ func TestAllDefaults(t *testing.T) {
 		PreviewSecs:  3,
 		MinDiskSpace: 200,
 		Motion: MotionConfig{
-			TempThresh:        3000,
+			TempThresh:        2900,
 			DeltaThresh:       50,
 			CountThresh:       3,
 			NonzeroMaxPercent: 50,
 			FrameCompareGap:   45,
-			UseOneFrameOnly:   true,
+			UseOneDiffOnly:    true,
 			Verbose:           false,
 			TriggerFrames:     2,
 			WarmerOnly:        true,
@@ -74,7 +70,7 @@ motion:
     count-thresh: 1
     nonzero-max-percent: 20
     frame-compare-gap: 90
-    one-frame-only: false
+    one-diff-only: false
     trigger-frames: 1
     verbose: true
     warmer-only: false
@@ -125,7 +121,7 @@ device-name: "aDeviceName"
 			CountThresh:       1,
 			NonzeroMaxPercent: 20,
 			FrameCompareGap:   90,
-			UseOneFrameOnly:   false,
+			UseOneDiffOnly:    false,
 			Verbose:           true,
 			TriggerFrames:     1,
 			WarmerOnly:        false,

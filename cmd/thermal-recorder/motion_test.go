@@ -1,7 +1,3 @@
-// Copyright 2018 The Cacophony Project. All rights reserved.
-// Use of this source code is governed by the Apache License Version 2.0;
-// see the LICENSE file for further details.
-
 package main
 
 import (
@@ -60,7 +56,7 @@ func MovingBoxDetections(detector *motionDetector, frames, background, brightSpo
 
 func TestRevertsToUsingSmallerFrameIntervalWhenNotEnoughFrames_OneFrame(t *testing.T) {
 	config := defaultMotionParams()
-	config.UseOneFrameOnly = true
+	config.UseOneDiffOnly = true
 	detector := NewMotionDetector(config)
 
 	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 100)
@@ -70,7 +66,7 @@ func TestRevertsToUsingSmallerFrameIntervalWhenNotEnoughFrames_OneFrame(t *testi
 
 func TestNoMotionDetectedIfNothingHasChanged(t *testing.T) {
 	config := defaultMotionParams()
-	config.UseOneFrameOnly = true
+	config.UseOneDiffOnly = true
 	detector := NewMotionDetector(config)
 
 	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 0)

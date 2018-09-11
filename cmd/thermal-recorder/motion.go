@@ -1,7 +1,3 @@
-// Copyright 2018 The Cacophony Project. All rights reserved.
-// Use of this source code is governed by the Apache License Version 2.0;
-// see the LICENSE file for further details.
-
 package main
 
 import (
@@ -18,7 +14,7 @@ func NewMotionDetector(args MotionConfig) *motionDetector {
 	d := new(motionDetector)
 	d.flooredFrames = *NewFrameLoop(args.FrameCompareGap + 1)
 	d.diffFrames = *NewFrameLoop(2)
-	d.useOneFrame = args.UseOneFrameOnly
+	d.useOneDiff = args.UseOneDiffOnly
 	d.framesGap = uint64(args.FrameCompareGap)
 	d.deltaThresh = args.DeltaThresh
 	d.countThresh = args.CountThresh
@@ -35,7 +31,7 @@ type motionDetector struct {
 	flooredFrames FrameLoop
 	diffFrames    FrameLoop
 	firstDiff     bool
-	useOneFrame   bool
+	useOneDiff    bool
 	tempThresh    uint16
 	deltaThresh   uint16
 	countThresh   int
@@ -72,7 +68,7 @@ func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
 		return false, NO_DATA
 	}
 
-	if d.useOneFrame {
+	if d.useOneDiff {
 		return d.hasMotion(diffFrame, nil)
 	} else {
 		return d.hasMotion(diffFrame, prevDiffFrame)
@@ -134,7 +130,7 @@ func (d *motionDetector) CountPixels(f1 *lepton3.Frame) (nonZeros, deltas int) {
 func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, int) {
 	var nonzeroCount int
 	var deltaCount int
-	if d.useOneFrame {
+	if d.useOneDiff {
 		nonzeroCount, deltaCount = d.CountPixels(f1)
 	} else {
 		nonzeroCount, deltaCount = d.CountPixelsTwoCompare(f1, f2)

@@ -1,7 +1,3 @@
-// Copyright 2017 The Cacophony Project. All rights reserved.
-// Use of this source code is governed by the Apache License Version 2.0;
-// see the LICENSE file for further details.
-
 package main
 
 import (
@@ -78,7 +74,7 @@ func runMain() error {
 	if args.TestCptvFile != "" {
 		conf.Motion.Verbose = args.Verbose
 		results := NewCPTVPlaybackTester(conf).Detect(args.TestCptvFile)
-		log.Printf("Detected: %-16s Recorded: %-16s Motion frames: %d/%d", results.motionDetected, results.recordingStarted, results.motionDetectedCount, results.frameCount)
+		log.Printf("Detected: %-16s Recorded: %-16s Motion frames: %d/%d", results.motionDetectedFrames, results.recordedFrames, results.motionDetectedCount, results.frameCount)
 		return nil
 	}
 
@@ -138,6 +134,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 
 	processor := NewMotionProcessor(conf, hardwareListener, cptvRecorder)
 	frameLoop = processor.frameLoop
+
 	rawFrame := new(lepton3.RawFrame)
 
 	log.Print("new camera connection, reading frames")

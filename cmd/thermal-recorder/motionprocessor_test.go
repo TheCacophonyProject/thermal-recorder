@@ -1,7 +1,3 @@
-// Copyright 2018 The Cacophony Project. All rights reserved.
-// Use of this source code is governed by the Apache License Version 2.0;
-// see the LICENSE file for further details.
-
 package main
 
 import (
@@ -64,7 +60,7 @@ func DefaultTestConfig() *Config {
 	config.Motion.FrameCompareGap = 12
 	config.Motion.Verbose = false
 	config.Motion.TriggerFrames = 1
-	config.Motion.UseOneFrameOnly = true
+	config.Motion.UseOneDiffOnly = true
 	config.Motion.WarmerOnly = true
 	return config
 }
