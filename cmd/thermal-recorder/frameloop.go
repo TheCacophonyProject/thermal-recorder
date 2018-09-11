@@ -1,6 +1,8 @@
 package main
 
 import (
+	"sync"
+
 	"github.com/TheCacophonyProject/lepton3"
 )
 
@@ -31,6 +33,7 @@ type FrameLoop struct {
 	orderedFrames []*lepton3.Frame
 	bufferFull    bool
 	oldest        int
+	mu            sync.Mutex
 }
 
 func (fl *FrameLoop) nextIndexAfter(index int) int {
@@ -40,6 +43,9 @@ func (fl *FrameLoop) nextIndexAfter(index int) int {
 // Move, moves the current frame one forwards and return the new frame.
 // Note: data on all returned frame objects will eventually get overwritten
 func (fl *FrameLoop) Move() *lepton3.Frame {
+	fl.mu.Lock()
+	defer fl.mu.Unlock()
+
 	fl.currentIndex = fl.nextIndexAfter(fl.currentIndex)
 
 	if fl.currentIndex == 0 {
@@ -64,6 +70,9 @@ func (fl *FrameLoop) CopyRecent(f *lepton3.Frame) *lepton3.Frame {
 	if fl == nil {
 		return nil
 	}
+	fl.mu.Lock()
+	defer fl.mu.Unlock()
+
 	previousIndex := (fl.currentIndex - 1 + fl.size) % fl.size
 	f.Copy(fl.frames[previousIndex])
 	return f
