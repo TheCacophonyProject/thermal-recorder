@@ -67,9 +67,6 @@ func (fl *FrameLoop) Current() *lepton3.Frame {
 
 // CopyRecent returns a copy of the previous frame.
 func (fl *FrameLoop) CopyRecent(f *lepton3.Frame) *lepton3.Frame {
-	if fl == nil {
-		return nil
-	}
 	fl.mu.Lock()
 	defer fl.mu.Unlock()
 

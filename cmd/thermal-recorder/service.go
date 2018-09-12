@@ -2,7 +2,6 @@ package main
 
 import (
 	"errors"
-	"sync"
 
 	"github.com/godbus/dbus"
 	"github.com/godbus/dbus/introspect"
@@ -15,7 +14,6 @@ const (
 
 type service struct {
 	dir string
-	mu  sync.Mutex
 }
 
 func startService(dir string) error {
@@ -52,8 +50,6 @@ func genIntrospectable(v interface{}) introspect.Introspectable {
 
 // TakeSnapshot will save the next frame as a still
 func (s *service) TakeSnapshot() *dbus.Error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
 	err := newSnapshot(s.dir)
 	if err != nil {
 		return &dbus.Error{
