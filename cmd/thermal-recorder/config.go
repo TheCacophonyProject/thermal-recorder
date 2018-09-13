@@ -1,7 +1,3 @@
-// Copyright 2018 The Cacophony Project. All rights reserved.
-// Use of this source code is governed by the Apache License Version 2.0;
-// see the LICENSE file for further details.
-
 package main
 
 import (
@@ -23,7 +19,6 @@ type Config struct {
 	WindowEnd    time.Time
 	MinDiskSpace uint64
 	Motion       MotionConfig
-	LEDs         LEDsConfig
 	Turret       TurretConfig
 }
 
@@ -40,11 +35,6 @@ type TurretConfig struct {
 	PID    []float64   `yaml:"pid"`
 	ServoX ServoConfig `yaml:"servo-x"`
 	ServoY ServoConfig `yaml:"servo-y"`
-}
-
-type LEDsConfig struct {
-	Recording string `yaml:"recording"`
-	Running   string `yaml:"running"`
 }
 
 type uploaderConfig struct {
@@ -72,6 +62,11 @@ type MotionConfig struct {
 	DeltaThresh       uint16 `yaml:"delta-thresh"`
 	CountThresh       int    `yaml:"count-thresh"`
 	NonzeroMaxPercent int    `yaml:"nonzero-max-percent"`
+	FrameCompareGap   int    `yaml:"frame-compare-gap"`
+	UseOneDiffOnly    bool   `yaml:"one-diff-only"`
+	TriggerFrames     int    `yaml:"trigger-frames"`
+	WarmerOnly        bool   `yaml:"warmer-only"`
+	Verbose           bool   `yaml:"verbose"`
 }
 
 func (conf *MotionConfig) Validate() error {
@@ -91,7 +86,6 @@ type rawConfig struct {
 	WindowEnd    string       `yaml:"window-end"`
 	MinDiskSpace uint64       `yaml:"min-disk-space"`
 	Motion       MotionConfig `yaml:"motion"`
-	LEDs         LEDsConfig   `yaml:"leds"`
 	Turret       TurretConfig `yaml:"turret"`
 }
 
@@ -107,14 +101,15 @@ var defaultConfig = rawConfig{
 	PreviewSecs:  3,
 	MinDiskSpace: 200,
 	Motion: MotionConfig{
-		TempThresh:        3000,
-		DeltaThresh:       30,
-		CountThresh:       5,
+		TempThresh:        2900,
+		DeltaThresh:       50,
+		CountThresh:       3,
 		NonzeroMaxPercent: 50,
-	},
-	LEDs: LEDsConfig{
-		Recording: "GPIO20",
-		Running:   "GPIO25",
+		FrameCompareGap:   45,
+		Verbose:           false,
+		TriggerFrames:     2,
+		UseOneDiffOnly:    true,
+		WarmerOnly:        true,
 	},
 	Turret: TurretConfig{
 		Active: false,
@@ -167,7 +162,6 @@ func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 		PreviewSecs:  raw.PreviewSecs,
 		MinDiskSpace: raw.MinDiskSpace,
 		Motion:       raw.Motion,
-		LEDs:         raw.LEDs,
 		Turret:       raw.Turret,
 	}
 

@@ -1,0 +1,6 @@
+#
+# Extra parameters needed for test so that we can get a Config object
+#
+
+# Socket where thermal camera frames will be received from.
+device-name: "unit-tester"

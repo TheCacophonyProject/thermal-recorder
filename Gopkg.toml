@@ -8,3 +8,7 @@
 [[constraint]]
   name = "periph.io/x/periph"
   source = "https://github.com/TheCacophonyProject/periph.git"
+
+[[constraint]]
+  name = "github.com/TheCacophonyProject/go-cptv"
+  branch = "master"

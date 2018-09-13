@@ -19,7 +19,13 @@ var (
 )
 
 func newSnapshot(dir string) error {
-	f := frameLoop.Previous()
+	mu.Lock()
+	defer mu.Unlock()
+
+	if frameLoop == nil {
+		return errors.New("Reading from camera has not started yet.")
+	}
+	f := frameLoop.CopyRecent(new(lepton3.Frame))
 	if f == nil {
 		return errors.New("no frames yet")
 	}
@@ -37,12 +43,10 @@ func newSnapshot(dir string) error {
 	}
 
 	// Check if frame had already been processed
-	mu.Lock()
 	if id == previousSnapshotID {
 		return nil
 	}
 	previousSnapshotID = id
-	mu.Unlock()
 
 	var norm = math.MaxUint16 / (valMax - valMin)
 	for y, row := range f {

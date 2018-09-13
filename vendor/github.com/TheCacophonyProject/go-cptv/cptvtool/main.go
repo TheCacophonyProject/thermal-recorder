@@ -54,8 +54,6 @@ func runMain() error {
 		err := fr.ReadFrame(frame)
 		if err != nil {
 			if err == io.EOF {
-				fmt.Print(".")
-				frames++ // the last valid read returns EOF
 				break
 			}
 			return err

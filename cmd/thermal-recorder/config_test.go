@@ -1,7 +1,3 @@
-// Copyright 2018 The Cacophony Project. All rights reserved.
-// Use of this source code is governed by the Apache License Version 2.0;
-// see the LICENSE file for further details.
-
 package main
 
 import (
@@ -26,14 +22,15 @@ func TestAllDefaults(t *testing.T) {
 		PreviewSecs:  3,
 		MinDiskSpace: 200,
 		Motion: MotionConfig{
-			TempThresh:        3000,
-			DeltaThresh:       30,
-			CountThresh:       5,
+			TempThresh:        2900,
+			DeltaThresh:       50,
+			CountThresh:       3,
 			NonzeroMaxPercent: 50,
-		},
-		LEDs: LEDsConfig{
-			Recording: "GPIO20",
-			Running:   "GPIO25",
+			FrameCompareGap:   45,
+			UseOneDiffOnly:    true,
+			Verbose:           false,
+			TriggerFrames:     2,
+			WarmerOnly:        true,
 		},
 		Turret: TurretConfig{
 			Active: false,
@@ -72,6 +69,11 @@ motion:
     delta-thresh: 20
     count-thresh: 1
     nonzero-max-percent: 20
+    frame-compare-gap: 90
+    one-diff-only: false
+    trigger-frames: 1
+    verbose: true
+    warmer-only: false
 leds:
     recording: "RecordingPIN"
     running: "RunningPIN"
@@ -118,10 +120,11 @@ device-name: "aDeviceName"
 			DeltaThresh:       20,
 			CountThresh:       1,
 			NonzeroMaxPercent: 20,
-		},
-		LEDs: LEDsConfig{
-			Recording: "RecordingPIN",
-			Running:   "RunningPIN",
+			FrameCompareGap:   90,
+			UseOneDiffOnly:    false,
+			Verbose:           true,
+			TriggerFrames:     1,
+			WarmerOnly:        false,
 		},
 		Turret: TurretConfig{
 			Active: true,
