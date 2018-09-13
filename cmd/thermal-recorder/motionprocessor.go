@@ -64,7 +64,9 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 	mp.totalFrames++
 
 	if mp.motionDetector.Detect(frame) {
-		mp.listener.MotionDetected()
+		if mp.listener != nil {
+			mp.listener.MotionDetected()
+		}
 		mp.triggered++
 
 		if mp.isRecording {
@@ -135,14 +137,19 @@ func (mp *MotionProcessor) startRecording() error {
 	}
 
 	mp.isRecording = true
-	mp.listener.RecordingStarted()
+	if mp.listener != nil {
+		mp.listener.RecordingStarted()
+	}
 
 	err = mp.recordPreTriggerFrames()
 	return err
 }
 
 func (mp *MotionProcessor) stopRecording() error {
-	mp.listener.RecordingEnded()
+	if mp.listener != nil {
+		mp.listener.RecordingEnded()
+	}
+
 	err := mp.recorder.StopRecording()
 
 	mp.framesWritten = 0

@@ -75,7 +75,7 @@ func FramesFrom(start, end int) []int {
 
 func SetupTest(config *Config) (*TestRecorder, *TestFrameMaker) {
 	recorder := new(TestRecorder)
-	processor := NewMotionProcessor(config, new(HardwareListener), recorder)
+	processor := NewMotionProcessor(config, nil, recorder)
 
 	scenarioMaker := MakeTestFrameMaker(processor)
 	return recorder, scenarioMaker

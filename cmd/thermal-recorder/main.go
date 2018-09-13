@@ -31,14 +31,6 @@ type Args struct {
 	Verbose            bool   `arg:"-v, --verbose" help:"Make logging more verbose"`
 }
 
-type HardwareListener struct{}
-
-func (hl *HardwareListener) MotionDetected() {
-	//turret.Update(motion)
-}
-func (hl *HardwareListener) RecordingStarted() {}
-func (hl *HardwareListener) RecordingEnded()   {}
-
 func (Args) Version() string {
 	return version
 }
@@ -126,13 +118,10 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 
 	totalFrames := 0
 
-	hardwareListener := new(HardwareListener)
-	defer hardwareListener.RecordingEnded()
-
 	cptvRecorder := NewCPTVFileRecorder(conf)
 	defer cptvRecorder.Stop()
 
-	processor := NewMotionProcessor(conf, hardwareListener, cptvRecorder)
+	processor := NewMotionProcessor(conf, nil, cptvRecorder)
 	frameLoop = processor.frameLoop
 
 	rawFrame := new(lepton3.RawFrame)

@@ -62,7 +62,7 @@ func CompareDetectedPeriods(t *testing.T, expectedResults map[string]string, act
 	errors := 0
 
 	for key, expected := range expectedResults {
-		if actual, ok := actual[key]; ok == false {
+		if actual, ok := actual[key]; !ok {
 			log.Printf("Missing results for file  %s", key)
 			errors++
 		} else if expected != actual.motionDetectedFrames {
@@ -143,7 +143,11 @@ func ExperimentAndWriteResultsToFile(name string, config *Config, dir string, wr
 	fmt.Fprintln(writer)
 
 	for key, result := range results {
-		fmt.Fprintf(writer, "%-20s Detected: %-16s Recorded: %-16s Motion frames: %d/%d", key, result.motionDetectedFrames, result.recordedFrames, result.motionDetectedCount, result.frameCount)
+		fmt.Fprintf(writer, "%-20s Detected: %-16s Recorded: %-16s Motion frames: %d/%d",
+			key, result.motionDetectedFrames,
+			result.recordedFrames,
+			result.motionDetectedCount,
+			result.frameCount)
 		fmt.Fprintln(writer)
 	}
 
@@ -174,10 +178,9 @@ func BenchmarkMotionDetection(b *testing.B) {
 	tester := NewCPTVPlaybackTester(config)
 	frames := tester.LoadAllCptvFrames(GetBaseDir() + "/motiontest/animals/recalc.cptv")
 
-	listener := new(HardwareListener) // currently doesn't do anything
 	recorder := new(NoWriteRecorder)
 
-	processor := NewMotionProcessor(config, listener, recorder)
+	processor := NewMotionProcessor(config, nil, recorder)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
