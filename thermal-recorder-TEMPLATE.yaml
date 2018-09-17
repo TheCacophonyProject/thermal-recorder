@@ -69,3 +69,17 @@ motion:
     # Verbose gives lots of information on which pixels are detected as changed.
     verbose: false
 
+# Throttling of recording (for wind or animal in trap)
+throttler:
+    # start throttling after this many seconds of recording
+    throttle-after-secs: 600
+
+    # record an 'occasional' recording after this many seconds of throttling during which
+    # time no recordings have been made
+    occ-after-secs: 3600
+
+    # max length that 'occasional' recording should be.
+    # if =0 then no occassional recordings will be made
+    # if value is less than the min recording length then it will set to min recording length
+    occ-length-secs: 30
+

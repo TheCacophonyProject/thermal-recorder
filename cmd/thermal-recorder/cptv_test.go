@@ -5,26 +5,16 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
-	"runtime"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func CurrentConfig() *Config {
-	dir := GetBaseDir()
-	config_file := strings.Replace(dir, "cmd/thermal-recorder", "thermal-recorder-TEMPLATE.yaml", 1)
-	uploader_config_file := dir + "/motiontest/thermal-uploader-test.yaml"
-	config, err := ParseConfigFiles(config_file, uploader_config_file)
-	if err != nil {
-		panic(err)
-	}
+	config := GetDefaultConfigFromFile()
 
 	// Use smaller min secs to detect more clearly when we stop detecting.
 	config.MinSecs = 1
-	logConfig(config)
 
 	return config
 }
@@ -155,21 +145,6 @@ func ExperimentAndWriteResultsToFile(name string, config *Config, dir string, wr
 	fmt.Fprintln(writer)
 
 	writer.Flush()
-}
-
-func GetBaseDir() string {
-	_, file, _, ok := runtime.Caller(0)
-
-	if !ok {
-		panic(fmt.Errorf("Could not find the base dir where sample files are"))
-	}
-
-	dir, err := filepath.Abs(filepath.Dir(file))
-	if err != nil {
-		panic(err)
-	}
-
-	return dir
 }
 
 func BenchmarkMotionDetection(b *testing.B) {

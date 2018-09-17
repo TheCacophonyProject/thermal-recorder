@@ -7,15 +7,20 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const MAX_FRAMES int = 20
+const MAX_FRAMES int = 18
 const MIN_FRAMES_PER_RECORDING int = 8
-const SUPP_STARTFRAMES int = 100
-const SUPP_LENGTH int = 10
+const SUPP_STARTFRAMES int = 99
+const SUPP_LENGTH int = 9
 
 func NewThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
 	recorder := new(CountWritesRecorder)
-	const MIN_FRAMES_PER_RECORDING int = 8
-	return recorder, NewRecordingThrottler(recorder, MAX_FRAMES, MIN_FRAMES_PER_RECORDING, SUPP_STARTFRAMES, SUPP_LENGTH)
+
+	config := &ThrottlerConfig{
+		ThrottleAfter:     2,
+		OccasionalAfter:   11,
+		OccassionalLength: 1,
+	}
+	return recorder, NewRecordingThrottler(recorder, config, uint16(MIN_FRAMES_PER_RECORDING))
 }
 
 type CountWritesRecorder struct {
@@ -65,7 +70,7 @@ func TestCanRecordTwice(t *testing.T) {
 	baseRecorder.Reset()
 
 	PlayRecordingFrames(recorder, 10)
-	assert.Equal(t, 10, baseRecorder.writes)
+	assert.Equal(t, 8, baseRecorder.writes)
 }
 
 func TestWillNotStartRecordingIfLessThanMinFramesToFillBucket(t *testing.T) {
@@ -105,7 +110,7 @@ func TestSupplementaryRecordingCountRestartsWhenARealRecordingStarts(t *testing.
 	baseRecorder, recorder := NewThrottledRecorder()
 	// fill bucket to supplementary point
 	PlayRecordingFrames(recorder, 20)
-	PlayNonRecordingFrames(recorder, MIN_FRAMES_PER_RECORDING+1)
+	PlayNonRecordingFrames(recorder, int(MIN_FRAMES_PER_RECORDING+1))
 	baseRecorder.Reset()
 
 	PlayRecordingFrames(recorder, 60)
@@ -118,4 +123,22 @@ func TestSupplementaryRecordingCountRestartsWhenARealRecordingStarts(t *testing.
 
 	PlayRecordingFrames(recorder, 50)
 	assert.Equal(t, SUPP_LENGTH, baseRecorder.writes)
+}
+
+func TestCanHaveNoSupplementaryRecording(t *testing.T) {
+	baseRecorder := new(CountWritesRecorder)
+
+	config := &ThrottlerConfig{
+		ThrottleAfter:     2,
+		OccasionalAfter:   11,
+		OccassionalLength: 0,
+	}
+	recorder := NewRecordingThrottler(baseRecorder, config, uint16(MIN_FRAMES_PER_RECORDING))
+
+	PlayRecordingFrames(recorder, 50)
+	PlayRecordingFrames(recorder, 60)
+	baseRecorder.Reset()
+
+	PlayRecordingFrames(recorder, 20)
+	assert.Equal(t, 0, baseRecorder.writes)
 }

@@ -20,6 +20,7 @@ type Config struct {
 	MinDiskSpace uint64
 	Motion       MotionConfig
 	Turret       TurretConfig
+	Throttler    ThrottlerConfig
 }
 
 type ServoConfig struct {
@@ -77,16 +78,17 @@ func (conf *MotionConfig) Validate() error {
 }
 
 type rawConfig struct {
-	FrameInput   string       `yaml:"frame-input"`
-	OutputDir    string       `yaml:"output-dir"`
-	MinSecs      int          `yaml:"min-secs"`
-	MaxSecs      int          `yaml:"max-secs"`
-	PreviewSecs  int          `yaml:"preview-secs"`
-	WindowStart  string       `yaml:"window-start"`
-	WindowEnd    string       `yaml:"window-end"`
-	MinDiskSpace uint64       `yaml:"min-disk-space"`
-	Motion       MotionConfig `yaml:"motion"`
-	Turret       TurretConfig `yaml:"turret"`
+	FrameInput   string          `yaml:"frame-input"`
+	OutputDir    string          `yaml:"output-dir"`
+	MinSecs      int             `yaml:"min-secs"`
+	MaxSecs      int             `yaml:"max-secs"`
+	PreviewSecs  int             `yaml:"preview-secs"`
+	WindowStart  string          `yaml:"window-start"`
+	WindowEnd    string          `yaml:"window-end"`
+	MinDiskSpace uint64          `yaml:"min-disk-space"`
+	Motion       MotionConfig    `yaml:"motion"`
+	Turret       TurretConfig    `yaml:"turret"`
+	Throttler    ThrottlerConfig `yaml:"throttler"`
 }
 
 var defaultUploaderConfig = uploaderConfig{
@@ -111,6 +113,7 @@ var defaultConfig = rawConfig{
 		UseOneDiffOnly:    true,
 		WarmerOnly:        true,
 	},
+	Throttler: DefaultThrottlerConfig(),
 	Turret: TurretConfig{
 		Active: false,
 		PID:    []float64{0.05, 0, 0},
@@ -163,6 +166,7 @@ func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 		MinDiskSpace: raw.MinDiskSpace,
 		Motion:       raw.Motion,
 		Turret:       raw.Turret,
+		Throttler:    raw.Throttler,
 	}
 
 	const timeOnly = "15:04"

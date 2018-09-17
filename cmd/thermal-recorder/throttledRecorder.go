@@ -9,40 +9,42 @@ type ThrottledRecorder struct {
 	mainBucket          TokenBucket
 	suppBucket          TokenBucket
 	recording           bool
-	minRecordingLength  int32
-	suppRecordingLength int32
+	minRecordingLength  uint32
+	suppRecordingLength uint32
 	askedToWriteFrame   bool
 }
 
-func NewRecordingThrottler(baseRecorder Recorder, bucketSize, minFrames int, suppBucketSize, supFrames int) *ThrottledRecorder {
-	if supFrames < minFrames {
+func NewRecordingThrottler(baseRecorder Recorder, config *ThrottlerConfig, minFrames uint16) *ThrottledRecorder {
+	supFrames := config.OccassionalLength * framesHz
+
+	if supFrames > 0 && supFrames < minFrames {
 		supFrames = minFrames
 	}
 
-	mainBucketSize := int32(bucketSize)
-	supBucketSize := int32(suppBucketSize)
+	mainBucketSize := uint32(config.ThrottleAfter * framesHz)
+	supBucketSize := uint32(config.OccasionalAfter * framesHz)
 	return &ThrottledRecorder{
 		recorder:            baseRecorder,
 		mainBucket:          TokenBucket{tokens: mainBucketSize, size: mainBucketSize},
 		suppBucket:          TokenBucket{size: supBucketSize},
-		minRecordingLength:  int32(minFrames),
-		suppRecordingLength: int32(supFrames),
+		minRecordingLength:  uint32(minFrames),
+		suppRecordingLength: uint32(supFrames),
 	}
 }
 
 type TokenBucket struct {
-	tokens int32
-	size   int32
+	tokens uint32
+	size   uint32
 }
 
-func (bucket *TokenBucket) AddTokens(newTokens int32) {
+func (bucket *TokenBucket) AddTokens(newTokens uint32) {
 	bucket.tokens += newTokens
 	if bucket.tokens > bucket.size {
 		bucket.tokens = bucket.size
 	}
 }
 
-func (bucket *TokenBucket) RemoveTokens(oldTokens int32) {
+func (bucket *TokenBucket) RemoveTokens(oldTokens uint32) {
 	if bucket.tokens >= oldTokens {
 		bucket.tokens -= oldTokens
 	} else {
@@ -50,7 +52,7 @@ func (bucket *TokenBucket) RemoveTokens(oldTokens int32) {
 	}
 }
 
-func (bucket TokenBucket) HasTokens(tokens int32) bool {
+func (bucket TokenBucket) HasTokens(tokens uint32) bool {
 	return bucket.tokens >= tokens
 }
 
