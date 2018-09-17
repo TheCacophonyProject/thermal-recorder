@@ -119,10 +119,17 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 	totalFrames := 0
 
 	cptvRecorder := NewCPTVFileRecorder(conf)
-	throttledRecorder := NewThrottledRecorder(cptvRecorder, &conf.Throttler, conf.MinSecs+conf.PreviewSecs)
 	defer cptvRecorder.Stop()
+	var recorder Recorder = cptvRecorder
 
-	processor := NewMotionProcessor(conf, nil, throttledRecorder)
+	var throttledRecorder *ThrottledRecorder
+
+	if conf.Throttler.ApplyThrottling {
+		throttledRecorder = NewThrottledRecorder(cptvRecorder, &conf.Throttler, conf.MinSecs+conf.PreviewSecs)
+		recorder = throttledRecorder
+	}
+
+	processor := NewMotionProcessor(conf, nil, recorder)
 	frameLoop = processor.frameLoop
 
 	rawFrame := new(lepton3.RawFrame)
@@ -141,7 +148,9 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 			log.Printf("%d frames for this connection", totalFrames)
 		}
 
-		throttledRecorder.NewFrame()
+		if throttledRecorder != nil {
+			throttledRecorder.NewFrame()
+		}
 		processor.Process(rawFrame)
 	}
 }
@@ -154,6 +163,7 @@ func logConfig(conf *Config) {
 	log.Printf("preview seconds: %d", conf.PreviewSecs)
 	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
+	log.Printf("throttler: %+v", conf.Throttler)
 	if !conf.WindowStart.IsZero() {
 		log.Printf("recording window: %02d:%02d to %02d:%02d",
 			conf.WindowStart.Hour(), conf.WindowStart.Minute(),

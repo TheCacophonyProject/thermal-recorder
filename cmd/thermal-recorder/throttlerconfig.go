@@ -1,15 +1,17 @@
 package main
 
 type ThrottlerConfig struct {
-	ThrottleAfter     uint16 `yaml:"throttle-after-secs"`
-	OccasionalAfter   uint16 `yaml:"occ-after-secs"`
-	OccassionalLength uint16 `yaml:"occ-length-secs"`
+	ApplyThrottling bool   `yaml:"apply-throttling"`
+	ThrottleAfter   uint16 `yaml:"throttle-after-secs"`
+	SparseAfter     uint16 `yaml:"sparse-after-secs"`
+	SparseLength    uint16 `yaml:"sparse-length-secs"`
 }
 
 func DefaultThrottlerConfig() ThrottlerConfig {
 	return ThrottlerConfig{
-		OccasionalAfter:   3600,
-		OccassionalLength: 30,
-		ThrottleAfter:     600,
+		ApplyThrottling: true,
+		SparseAfter:     3600,
+		SparseLength:    30,
+		ThrottleAfter:   600,
 	}
 }

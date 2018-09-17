@@ -7,18 +7,18 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const MAX_FRAMES int = 27
+const THROTTLE_FRAMES int = 27
 const MIN_FRAMES_PER_RECORDING int = 9
-const OCC_STARTFRAMES int = 99
-const OCC_LENGTH int = 18
+const SPARSE_LENGTH int = 18
 
 var baseRecorder CountWritesRecorder = CountWritesRecorder{}
 
 func NewTestThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
 	config := &ThrottlerConfig{
-		ThrottleAfter:     3,
-		OccasionalAfter:   11,
-		OccassionalLength: 2,
+		ApplyThrottling: true,
+		ThrottleAfter:   3,
+		SparseAfter:     11,
+		SparseLength:    2,
 	}
 	return &baseRecorder, NewThrottledRecorder(&baseRecorder, config, 1)
 }
@@ -60,7 +60,7 @@ func TestOnlyWritesUntilBucketIsFull(t *testing.T) {
 	baseRecorder, recorder := NewTestThrottledRecorder()
 
 	PlayRecordingFrames(recorder, 50)
-	assert.Equal(t, MAX_FRAMES, baseRecorder.writes)
+	assert.Equal(t, THROTTLE_FRAMES, baseRecorder.writes)
 }
 
 func TestCanRecordTwice(t *testing.T) {
@@ -93,15 +93,15 @@ func TestNotRecordingIncreasesRecordingLength(t *testing.T) {
 	assert.Equal(t, 15, baseRecorder.writes)
 }
 
-func TestOccasionalRecordingWillStartAndStopAgain(t *testing.T) {
+func TestSparseRecordingWillStartAndStopAgain(t *testing.T) {
 	baseRecorder, recorder := NewTestThrottledRecorder()
-	// fill bucket to supplementary point
+	// add enough frames to trigger sparse recording
 	PlayRecordingFrames(recorder, 50)
 	PlayRecordingFrames(recorder, 60)
 	assert.Equal(t, 0, baseRecorder.writes)
 
 	PlayRecordingFrames(recorder, 20)
-	assert.Equal(t, OCC_LENGTH, baseRecorder.writes)
+	assert.Equal(t, SPARSE_LENGTH, baseRecorder.writes)
 
 	PlayRecordingFrames(recorder, 20)
 	assert.Equal(t, 0, baseRecorder.writes)
@@ -109,16 +109,16 @@ func TestOccasionalRecordingWillStartAndStopAgain(t *testing.T) {
 	PlayRecordingFrames(recorder, 100)
 
 	PlayRecordingFrames(recorder, 20)
-	assert.Equal(t, OCC_LENGTH, baseRecorder.writes)
+	assert.Equal(t, SPARSE_LENGTH, baseRecorder.writes)
 }
 
-func TestSupplementaryRecordingCountRestartsWhenARealRecordingStarts(t *testing.T) {
+func TestSparseRecordingCountRestartsWhenARealRecordingStarts(t *testing.T) {
 	baseRecorder, recorder := NewTestThrottledRecorder()
-	// fill bucket to supplementary point
-	PlayRecordingFrames(recorder, MAX_FRAMES)
+	// fill bucket to trigger sparse recording
+	PlayRecordingFrames(recorder, THROTTLE_FRAMES)
 	PlayNonRecordingFrames(recorder, int(MIN_FRAMES_PER_RECORDING+1))
 
-	// Occassional count restarts with start of this recording
+	// Sparse count restarts with start of this recording
 	PlayRecordingFrames(recorder, 60)
 	assert.Equal(t, MIN_FRAMES_PER_RECORDING+1, baseRecorder.writes)
 
@@ -126,21 +126,22 @@ func TestSupplementaryRecordingCountRestartsWhenARealRecordingStarts(t *testing.
 	assert.Equal(t, 0, baseRecorder.writes)
 
 	PlayRecordingFrames(recorder, 50)
-	assert.Equal(t, OCC_LENGTH, baseRecorder.writes)
+	assert.Equal(t, SPARSE_LENGTH, baseRecorder.writes)
 }
 
-func TestCanHaveNoSupplementaryRecording(t *testing.T) {
+func TestCanHaveNoSparseRecordings(t *testing.T) {
 	baseRecorder := new(CountWritesRecorder)
 
 	config := &ThrottlerConfig{
-		ThrottleAfter:     3,
-		OccasionalAfter:   11,
-		OccassionalLength: 0,
+		ApplyThrottling: true,
+		ThrottleAfter:   3,
+		SparseAfter:     11,
+		SparseLength:    0,
 	}
 	recorder := NewThrottledRecorder(baseRecorder, config, 1)
 
 	PlayRecordingFrames(recorder, 50)
-	assert.Equal(t, MAX_FRAMES, baseRecorder.writes)
+	assert.Equal(t, THROTTLE_FRAMES, baseRecorder.writes)
 
 	PlayRecordingFrames(recorder, 60)
 	baseRecorder.Reset()

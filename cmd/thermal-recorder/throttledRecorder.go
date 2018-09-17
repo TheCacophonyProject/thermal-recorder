@@ -7,33 +7,33 @@ import (
 )
 
 type ThrottledRecorder struct {
-	recorder            Recorder
-	mainBucket          TokenBucket
-	suppBucket          TokenBucket
-	recording           bool
-	minRecordingLength  uint32
-	suppRecordingLength uint32
-	askedToWriteFrame   bool
-	throttledFrames     uint32
-	frameCount          uint32
+	recorder              Recorder
+	mainBucket            TokenBucket
+	sparseBucket          TokenBucket
+	recording             bool
+	minRecordingLength    uint32
+	sparseRecordingLength uint32
+	askedToWriteFrame     bool
+	throttledFrames       uint32
+	frameCount            uint32
 }
 
 func NewThrottledRecorder(baseRecorder Recorder, config *ThrottlerConfig, minSeconds int) *ThrottledRecorder {
-	supFrames := config.OccassionalLength * framesHz
+	sparseFrames := config.SparseLength * framesHz
 	minFrames := uint16(minSeconds) * framesHz
 
-	if supFrames > 0 && supFrames < minFrames {
-		supFrames = minFrames
+	if sparseFrames > 0 && sparseFrames < minFrames {
+		sparseFrames = minFrames
 	}
 
 	mainBucketSize := uint32(config.ThrottleAfter * framesHz)
-	supBucketSize := uint32(config.OccasionalAfter * framesHz)
+	supBucketSize := uint32(config.SparseAfter * framesHz)
 	return &ThrottledRecorder{
-		recorder:            baseRecorder,
-		mainBucket:          TokenBucket{tokens: mainBucketSize, size: mainBucketSize},
-		suppBucket:          TokenBucket{size: supBucketSize},
-		minRecordingLength:  uint32(minFrames),
-		suppRecordingLength: uint32(supFrames),
+		recorder:              baseRecorder,
+		mainBucket:            TokenBucket{tokens: mainBucketSize, size: mainBucketSize},
+		sparseBucket:          TokenBucket{size: supBucketSize},
+		minRecordingLength:    uint32(minFrames),
+		sparseRecordingLength: uint32(sparseFrames),
 	}
 }
 
@@ -74,7 +74,7 @@ func (throttler *ThrottledRecorder) NewFrame() {
 		throttler.mainBucket.AddTokens(1)
 	} else {
 		throttler.mainBucket.RemoveTokens(1)
-		throttler.suppBucket.AddTokens(1)
+		throttler.sparseBucket.AddTokens(1)
 	}
 	throttler.askedToWriteFrame = false
 }
@@ -84,18 +84,18 @@ func (throttler *ThrottledRecorder) CheckCanRecord() error {
 }
 
 func (throttler *ThrottledRecorder) StartRecording() error {
-	if throttler.suppBucket.IsFull() {
-		log.Print("Occasional recording starting soon...")
-		throttler.mainBucket.AddTokens(throttler.suppRecordingLength)
+	if throttler.sparseBucket.IsFull() {
+		log.Print("Sparse recording starting soon...")
+		throttler.mainBucket.AddTokens(throttler.sparseRecordingLength)
 	}
 
 	if throttler.mainBucket.HasTokens(throttler.minRecordingLength) {
 		throttler.recording = true
-		throttler.suppBucket.Empty()
+		throttler.sparseBucket.Empty()
 		return throttler.recorder.StartRecording()
 	} else {
 		throttler.recording = false
-		log.Print("Start recording triggered but recording throttled.")
+		log.Print("Recording throttled")
 		return nil
 	}
 }

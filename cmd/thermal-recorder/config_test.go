@@ -38,9 +38,10 @@ func TestAllDefaults(t *testing.T) {
 			WarmerOnly:        true,
 		},
 		Throttler: ThrottlerConfig{
-			OccasionalAfter:   3600,
-			OccassionalLength: 30,
-			ThrottleAfter:     600,
+			ApplyThrottling: true,
+			ThrottleAfter:   600,
+			SparseAfter:     3600,
+			SparseLength:    30,
 		},
 		Turret: TurretConfig{
 			Active: false,
@@ -94,9 +95,10 @@ motion:
     verbose: true
     warmer-only: false
 throttler:
+    apply-throttling: false
     throttle-after-secs: 650
-    occ-after-secs: 6500
-    occ-length-secs: 300
+    sparse-after-secs: 6500
+    sparse-length-secs: 300
 leds:
     recording: "RecordingPIN"
     running: "RunningPIN"
@@ -150,9 +152,10 @@ device-name: "aDeviceName"
 			WarmerOnly:        false,
 		},
 		Throttler: ThrottlerConfig{
-			OccasionalAfter:   6500,
-			OccassionalLength: 300,
-			ThrottleAfter:     650,
+			ApplyThrottling: false,
+			ThrottleAfter:   650,
+			SparseAfter:     6500,
+			SparseLength:    300,
 		},
 		Turret: TurretConfig{
 			Active: true,
