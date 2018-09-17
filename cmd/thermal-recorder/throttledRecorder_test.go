@@ -7,15 +7,15 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-const MAX_FRAMES int16 = 20
+const MAX_FRAMES int = 20
+const MIN_FRAMES_PER_RECORDING int = 8
+const SUPP_STARTFRAMES int = 100
+const SUPP_LENGTH int = 10
 
-func NewThrottledRecorder() (*CountWritesRecorder, *ThrottleWrapper) {
+func NewThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
 	recorder := new(CountWritesRecorder)
-	return recorder, &ThrottleWrapper{
-		recorder:   recorder,
-		bucketSize: MAX_FRAMES,
-		minFrames:  8,
-	}
+	const MIN_FRAMES_PER_RECORDING int = 8
+	return recorder, NewRecordingThrottler(recorder, MAX_FRAMES, MIN_FRAMES_PER_RECORDING, SUPP_STARTFRAMES, SUPP_LENGTH)
 }
 
 type CountWritesRecorder struct {
@@ -30,13 +30,13 @@ func (rec *CountWritesRecorder) WriteFrame(frame *lepton3.Frame) error {
 
 func (rec *CountWritesRecorder) Reset() { rec.writes = 0 }
 
-func PlayNonRecordingFrames(recorder *ThrottleWrapper, frames int) {
+func PlayNonRecordingFrames(recorder *ThrottledRecorder, frames int) {
 	for count := 0; count < frames; count++ {
 		recorder.NewFrame()
 	}
 }
 
-func PlayRecordingFrames(recorder *ThrottleWrapper, frames int) {
+func PlayRecordingFrames(recorder *ThrottledRecorder, frames int) {
 	testframe := new(lepton3.Frame)
 
 	for count := 0; count < frames; count++ {
@@ -62,6 +62,7 @@ func TestCanRecordTwice(t *testing.T) {
 
 	PlayRecordingFrames(recorder, 10)
 	assert.Equal(t, 10, baseRecorder.writes)
+	baseRecorder.Reset()
 
 	PlayRecordingFrames(recorder, 10)
 	assert.Equal(t, 10, baseRecorder.writes)
@@ -71,6 +72,7 @@ func TestWillNotStartRecordingIfLessThanMinFramesToFillBucket(t *testing.T) {
 	baseRecorder, recorder := NewThrottledRecorder()
 
 	PlayRecordingFrames(recorder, 15)
+	baseRecorder.Reset()
 	PlayRecordingFrames(recorder, 10)
 
 	// not frames recorded as cannot make minimum recording length
@@ -86,4 +88,34 @@ func TestNotRecordingIncreasesRecordingLength(t *testing.T) {
 
 	PlayRecordingFrames(recorder, 50)
 	assert.Equal(t, 15, baseRecorder.writes)
+}
+
+func TestSupplementaryRecordingWillStart(t *testing.T) {
+	baseRecorder, recorder := NewThrottledRecorder()
+	// fill bucket to supplementary point
+	PlayRecordingFrames(recorder, 50)
+	PlayRecordingFrames(recorder, 60)
+	baseRecorder.Reset()
+
+	PlayRecordingFrames(recorder, 20)
+	assert.Equal(t, SUPP_LENGTH, baseRecorder.writes)
+}
+
+func TestSupplementaryRecordingCountRestartsWhenARealRecordingStarts(t *testing.T) {
+	baseRecorder, recorder := NewThrottledRecorder()
+	// fill bucket to supplementary point
+	PlayRecordingFrames(recorder, 20)
+	PlayNonRecordingFrames(recorder, MIN_FRAMES_PER_RECORDING+1)
+	baseRecorder.Reset()
+
+	PlayRecordingFrames(recorder, 60)
+	assert.Equal(t, MIN_FRAMES_PER_RECORDING+1, baseRecorder.writes)
+	baseRecorder.Reset()
+
+	// won't start recording because supplementary count reset with start of previous recording
+	PlayRecordingFrames(recorder, 50)
+	assert.Equal(t, 0, baseRecorder.writes)
+
+	PlayRecordingFrames(recorder, 50)
+	assert.Equal(t, SUPP_LENGTH, baseRecorder.writes)
 }
