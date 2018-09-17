@@ -119,9 +119,10 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 	totalFrames := 0
 
 	cptvRecorder := NewCPTVFileRecorder(conf)
+	throttledRecorder := NewThrottledRecorder(cptvRecorder, &conf.Throttler, conf.MinSecs+conf.PreviewSecs)
 	defer cptvRecorder.Stop()
 
-	processor := NewMotionProcessor(conf, nil, cptvRecorder)
+	processor := NewMotionProcessor(conf, nil, throttledRecorder)
 	frameLoop = processor.frameLoop
 
 	rawFrame := new(lepton3.RawFrame)
@@ -140,6 +141,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 			log.Printf("%d frames for this connection", totalFrames)
 		}
 
+		throttledRecorder.NewFrame()
 		processor.Process(rawFrame)
 	}
 }
