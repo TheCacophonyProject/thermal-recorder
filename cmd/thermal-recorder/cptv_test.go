@@ -15,7 +15,7 @@ import (
 
 func CurrentConfig() *Config {
 	dir := GetBaseDir()
-	config_file := strings.Replace(dir, "cmd/thermal-recorder", "thermal-recorder-TEMPLATE.yaml", 1)
+	config_file := strings.Replace(dir, "cmd/thermal-recorder", "_release/thermal-recorder.yaml", 1)
 	uploader_config_file := dir + "/motiontest/thermal-uploader-test.yaml"
 	config, err := ParseConfigFiles(config_file, uploader_config_file)
 	if err != nil {
