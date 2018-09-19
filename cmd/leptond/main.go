@@ -5,6 +5,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"net"
@@ -74,6 +75,16 @@ func runMain() error {
 	}
 	logConfig(conf)
 
+	log.Print("dialing frame output socket")
+	conn, err := net.DialUnix("unixpacket", nil, &net.UnixAddr{
+		Net:  "unixgram",
+		Name: conf.FrameOutput,
+	})
+	if err != nil {
+		return errors.New("error: connecting to frame output socket failed")
+	}
+	defer conn.Close()
+
 	log.Print("host initialisation")
 	if _, err := host.Init(); err != nil {
 		return err
@@ -105,7 +116,7 @@ func runMain() error {
 			return err
 		}
 
-		err := runCamera(conf, camera)
+		err := runCamera(conf, camera, conn)
 		if err != nil {
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
 				return err
@@ -123,16 +134,7 @@ func runMain() error {
 	}
 }
 
-func runCamera(conf *Config, camera *lepton3.Lepton3) error {
-	log.Print("dialing frame output socket")
-	conn, err := net.DialUnix("unixpacket", nil, &net.UnixAddr{
-		Net:  "unixgram",
-		Name: conf.FrameOutput,
-	})
-	if err != nil {
-		return err
-	}
-	defer conn.Close()
+func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error {
 	conn.SetWriteBuffer(lepton3.FrameCols * lepton3.FrameRows * 2 * 20)
 
 	log.Print("reading frames")
