@@ -204,7 +204,7 @@ func TestWindowStartWithoutEnd(t *testing.T) {
 
 func GetDefaultConfigFromFile() *Config {
 	dir := GetBaseDir()
-	config_file := strings.Replace(dir, "cmd/thermal-recorder", "thermal-recorder-TEMPLATE.yaml", 1)
+	config_file := strings.Replace(dir, "cmd/thermal-recorder", "_release/thermal-recorder.yaml", 1)
 	buf, err := ioutil.ReadFile(config_file)
 	if err != nil {
 		panic(err)
