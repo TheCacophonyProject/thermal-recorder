@@ -149,7 +149,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 		}
 
 		if throttledRecorder != nil {
-			throttledRecorder.NewFrame()
+			throttledRecorder.NextFrame()
 		}
 		processor.Process(rawFrame)
 	}

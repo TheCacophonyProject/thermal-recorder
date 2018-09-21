@@ -6,6 +6,18 @@ import (
 	"github.com/TheCacophonyProject/lepton3"
 )
 
+// ThrottledRecorder wraps a standard recorder so that it stops recording (ie gets throttled) if requested to
+// record too often.  This is desirable as the extra recordings are likely to be highly similar to the earlier recordings
+// and contain no new information.  It can happen when an animal is stuck in a trap or it is very windy.
+// When throttled, some recordings can still be made occasionally using the sparse recording feature.
+//
+// Implementation:
+// The ThrottledRecorder will record as long as the mainBucket has some 'recording' tokens.  This bucket is
+// filled when there is no record request and empties as recordings are made.
+// The sparse bucket allows occasional recordings when the device is throttled (ie not actually recording but
+// detecting movement).  This bucket is completely emptied whenever a new recording starts.   It is filled whenever
+// the recorder is asked to record.  This results in a new recording only after device has been throttled for a
+// given time period.
 type ThrottledRecorder struct {
 	recorder              Recorder
 	mainBucket            TokenBucket
@@ -37,44 +49,12 @@ func NewThrottledRecorder(baseRecorder Recorder, config *ThrottlerConfig, minSec
 	}
 }
 
-type TokenBucket struct {
-	tokens uint32
-	size   uint32
-}
-
-func (bucket *TokenBucket) AddTokens(newTokens uint32) {
-	bucket.tokens += newTokens
-	if bucket.tokens > bucket.size {
-		bucket.tokens = bucket.size
-	}
-}
-
-func (bucket *TokenBucket) RemoveTokens(oldTokens uint32) {
-	if bucket.tokens >= oldTokens {
-		bucket.tokens -= oldTokens
-	} else {
-		bucket.tokens = 0
-	}
-}
-
-func (bucket *TokenBucket) HasTokens(tokens uint32) bool {
-	return bucket.tokens >= tokens
-}
-
-func (bucket *TokenBucket) Empty() {
-	bucket.tokens = 0
-}
-
-func (bucket *TokenBucket) IsFull() bool {
-	return bucket.HasTokens(bucket.size)
-}
-
-func (throttler *ThrottledRecorder) NewFrame() {
-	if !throttler.askedToWriteFrame {
-		throttler.mainBucket.AddTokens(1)
-	} else {
+func (throttler *ThrottledRecorder) NextFrame() {
+	if throttler.askedToWriteFrame {
 		throttler.mainBucket.RemoveTokens(1)
 		throttler.sparseBucket.AddTokens(1)
+	} else {
+		throttler.mainBucket.AddTokens(1)
 	}
 	throttler.askedToWriteFrame = false
 }

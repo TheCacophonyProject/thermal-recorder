@@ -11,7 +11,7 @@ const THROTTLE_FRAMES int = 27
 const MIN_FRAMES_PER_RECORDING int = 9
 const SPARSE_LENGTH int = 18
 
-var baseRecorder CountWritesRecorder = CountWritesRecorder{}
+var countRecorder CountWritesRecorder
 
 func NewTestThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
 	config := &ThrottlerConfig{
@@ -20,7 +20,7 @@ func NewTestThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
 		SparseAfter:     11,
 		SparseLength:    2,
 	}
-	return &baseRecorder, NewThrottledRecorder(&baseRecorder, config, 1)
+	return &countRecorder, NewThrottledRecorder(&countRecorder, config, 1)
 }
 
 type CountWritesRecorder struct {
@@ -37,16 +37,16 @@ func (rec *CountWritesRecorder) Reset() { rec.writes = 0 }
 
 func PlayNonRecordingFrames(recorder *ThrottledRecorder, frames int) {
 	for count := 0; count < frames; count++ {
-		recorder.NewFrame()
+		recorder.NextFrame()
 	}
 }
 
 func PlayRecordingFrames(recorder *ThrottledRecorder, frames int) {
 	testframe := new(lepton3.Frame)
-	baseRecorder.Reset()
+	countRecorder.Reset()
 
 	for count := 0; count < frames; count++ {
-		recorder.NewFrame()
+		recorder.NextFrame()
 		if count == 0 {
 			recorder.StartRecording()
 		}
