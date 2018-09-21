@@ -82,7 +82,7 @@ throttler:
     sparse-after-secs: 3600
 
     # max length of sparse recording should be.
-    # if =0 then no occassional recordings will be made
+    # if =0 then no occasional recordings will be made
     # if value is less than the min recording length then it will set to min recording length
     sparse-length-secs: 30
 
