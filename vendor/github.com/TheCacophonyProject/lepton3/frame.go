@@ -8,6 +8,8 @@ import (
 	"encoding/binary"
 )
 
+const FramesHz = 9 // approx
+
 // RawFrame hold the raw bytes for single frame. This is helpful for
 // transferring frames around. It can be converted to the more useful
 // Frame.

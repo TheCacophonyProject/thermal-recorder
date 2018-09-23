@@ -1,4 +1,4 @@
-package main
+package throttle
 
 type ThrottlerConfig struct {
 	ApplyThrottling bool   `yaml:"apply-throttling"`

@@ -10,6 +10,8 @@ import (
 
 	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/thermal-recorder/motion"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
 type EventLoggingRecordingListener struct {
@@ -50,7 +52,7 @@ func (p *EventLoggingRecordingListener) RecordingEnded() {
 		log.Printf("%d: Recording Ended", p.frameCount)
 	}
 	p.recordedFrames += fmt.Sprintf("%d)", p.frameCount)
-	p.motionDetectedFrames += fmt.Sprintf("%d)", p.frameCount-p.config.MinSecs*9)
+	p.motionDetectedFrames += fmt.Sprintf("%d)", p.frameCount-p.config.Recorder.MinSecs*lepton3.FramesHz)
 }
 
 func (p *EventLoggingRecordingListener) completed() {
@@ -70,14 +72,6 @@ func (p *EventLoggingRecordingListener) completed() {
 		p.recordedFrames = "None"
 	}
 }
-
-type NoWriteRecorder struct {
-}
-
-func (*NoWriteRecorder) StopRecording() error            { return nil }
-func (*NoWriteRecorder) StartRecording() error           { return nil }
-func (*NoWriteRecorder) WriteFrame(*lepton3.Frame) error { return nil }
-func (*NoWriteRecorder) CheckCanRecord() error           { return nil }
 
 type CPTVPlaybackTester struct {
 	config   *Config
@@ -140,9 +134,9 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 	listener.config = cpt.config
 	listener.verbose = verbose
 
-	recorder := new(NoWriteRecorder)
+	recorder := new(recorder.NoWriteRecorder)
 
-	processor := NewMotionProcessor(cpt.config, listener, recorder)
+	processor := motion.NewMotionProcessor(&cpt.config.Motion, &cpt.config.Recorder, listener, recorder)
 
 	file, reader, err := motionTesterLoadFile(filename)
 	if err != nil {
@@ -162,7 +156,7 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 			}
 			return listener
 		}
-		processor.processFrame(frame)
+		processor.ProcessFrame(frame)
 		listener.frameCount++
 	}
 }

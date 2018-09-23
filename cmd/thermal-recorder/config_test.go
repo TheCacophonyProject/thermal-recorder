@@ -7,8 +7,11 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-	"time"
 
+	"github.com/TheCacophonyProject/thermal-recorder/motion"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
+	"github.com/TheCacophonyProject/thermal-recorder/throttle"
+	"github.com/TheCacophonyProject/window"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -22,11 +25,13 @@ func TestAllDefaults(t *testing.T) {
 		DeviceName:   "",
 		FrameInput:   "/var/run/lepton-frames",
 		OutputDir:    "/var/spool/cptv",
-		MinSecs:      10,
-		MaxSecs:      600,
-		PreviewSecs:  3,
 		MinDiskSpace: 200,
-		Motion: MotionConfig{
+		Recorder: recorder.RecorderConfig{
+			MinSecs:     10,
+			MaxSecs:     600,
+			PreviewSecs: 3,
+		},
+		Motion: motion.MotionConfig{
 			TempThresh:        2900,
 			DeltaThresh:       50,
 			CountThresh:       3,
@@ -37,7 +42,7 @@ func TestAllDefaults(t *testing.T) {
 			TriggerFrames:     2,
 			WarmerOnly:        true,
 		},
-		Throttler: ThrottlerConfig{
+		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: true,
 			ThrottleAfter:   600,
 			SparseAfter:     3600,
@@ -81,9 +86,13 @@ output-dir: "/some/where"
 min-secs: 2
 max-secs: 10
 preview-secs: 5
-window-start: 17:10
-window-end: 07:20
 min-disk-space: 321
+recorder:
+    min-secs: 2
+    max-secs: 10
+		preview-secs: 5
+		window-start: 17:10
+		window-end: 07:20
 motion:
     temp-thresh: 2000
     delta-thresh: 20
@@ -134,13 +143,15 @@ device-name: "aDeviceName"
 		DeviceName:   "aDeviceName",
 		FrameInput:   "/some/sock",
 		OutputDir:    "/some/where",
-		MinSecs:      2,
-		MaxSecs:      10,
-		PreviewSecs:  5,
-		WindowStart:  time.Date(0, 1, 1, 17, 10, 0, 0, time.UTC),
-		WindowEnd:    time.Date(0, 1, 1, 07, 20, 0, 0, time.UTC),
 		MinDiskSpace: 321,
-		Motion: MotionConfig{
+		Recorder: recorder.RecorderConfig{
+			MinSecs:     2,
+			MaxSecs:     10,
+			PreviewSecs: 5,
+			WindowStart: *window.NewTimeOfDay("17:10"),
+			WindowEnd:   *window.NewTimeOfDay("17:20"),
+		},
+		Motion: motion.MotionConfig{
 			TempThresh:        2000,
 			DeltaThresh:       20,
 			CountThresh:       1,
@@ -151,7 +162,7 @@ device-name: "aDeviceName"
 			TriggerFrames:     1,
 			WarmerOnly:        false,
 		},
-		Throttler: ThrottlerConfig{
+		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: false,
 			ThrottleAfter:   650,
 			SparseAfter:     6500,

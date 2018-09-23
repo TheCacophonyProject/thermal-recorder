@@ -1,4 +1,4 @@
-package main
+package motion
 
 import (
 	"github.com/TheCacophonyProject/lepton3"
@@ -38,7 +38,7 @@ func (tfm *TestFrameMaker) AddMovingDotFrames(frames int) *TestFrameMaker {
 }
 
 func (tfm *TestFrameMaker) PlayFrame(frame *lepton3.Frame) {
-	tfm.processor.processFrame(frame)
+	tfm.processor.ProcessFrame(frame)
 }
 
 func (tfm *TestFrameMaker) makeFrame() *lepton3.Frame {

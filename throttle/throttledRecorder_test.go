@@ -1,9 +1,10 @@
-package main
+package throttle
 
 import (
 	"testing"
 
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -20,11 +21,11 @@ func NewTestThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
 		SparseAfter:     11,
 		SparseLength:    2,
 	}
-	return &countRecorder, NewThrottledRecorder(&countRecorder, config, 1)
+	return &countRecorder, NewThrottledRecorder(&countRecorder, config, 1, lepton3.FramesHz)
 }
 
 type CountWritesRecorder struct {
-	NoWriteRecorder
+	recorder.NoWriteRecorder
 	writes int
 }
 
@@ -138,7 +139,7 @@ func TestCanHaveNoSparseRecordings(t *testing.T) {
 		SparseAfter:     11,
 		SparseLength:    0,
 	}
-	recorder := NewThrottledRecorder(baseRecorder, config, 1)
+	recorder := NewThrottledRecorder(baseRecorder, config, 1, lepton3.FramesHz)
 
 	PlayRecordingFrames(recorder, 50)
 	assert.Equal(t, THROTTLE_FRAMES, baseRecorder.writes)
