@@ -1,6 +1,11 @@
 package main
 
 import (
+	"fmt"
+	"io/ioutil"
+	"path/filepath"
+	"runtime"
+	"strings"
 	"testing"
 	"time"
 
@@ -32,6 +37,12 @@ func TestAllDefaults(t *testing.T) {
 			TriggerFrames:     2,
 			WarmerOnly:        true,
 		},
+		Throttler: ThrottlerConfig{
+			ApplyThrottling: true,
+			ThrottleAfter:   600,
+			SparseAfter:     3600,
+			SparseLength:    30,
+		},
 		Turret: TurretConfig{
 			Active: false,
 			PID:    []float64{0.05, 0, 0},
@@ -51,6 +62,15 @@ func TestAllDefaults(t *testing.T) {
 			},
 		},
 	}, *conf)
+}
+
+func TestAllProgramDefaultsMatchDefaultYamlFile(t *testing.T) {
+	configDefaults, err := ParseConfig([]byte(""), []byte(""))
+	require.NoError(t, err)
+
+	configYAML := GetDefaultConfigFromFile()
+
+	assert.Equal(t, configDefaults, configYAML)
 }
 
 func TestAllSet(t *testing.T) {
@@ -74,6 +94,11 @@ motion:
     trigger-frames: 1
     verbose: true
     warmer-only: false
+throttler:
+    apply-throttling: false
+    throttle-after-secs: 650
+    sparse-after-secs: 6500
+    sparse-length-secs: 300
 leds:
     recording: "RecordingPIN"
     running: "RunningPIN"
@@ -126,6 +151,12 @@ device-name: "aDeviceName"
 			TriggerFrames:     1,
 			WarmerOnly:        false,
 		},
+		Throttler: ThrottlerConfig{
+			ApplyThrottling: false,
+			ThrottleAfter:   650,
+			SparseAfter:     6500,
+			SparseLength:    300,
+		},
 		Turret: TurretConfig{
 			Active: true,
 			PID:    []float64{1, 2, 3},
@@ -169,4 +200,33 @@ func TestWindowStartWithoutEnd(t *testing.T) {
 	conf, err := ParseConfig([]byte("window-start: 09:10"), []byte(""))
 	assert.Nil(t, conf)
 	assert.EqualError(t, err, "window-start is set but window-end isn't")
+}
+
+func GetDefaultConfigFromFile() *Config {
+	dir := GetBaseDir()
+	config_file := strings.Replace(dir, "cmd/thermal-recorder", "_release/thermal-recorder.yaml", 1)
+	buf, err := ioutil.ReadFile(config_file)
+	if err != nil {
+		panic(err)
+	}
+	config, err := ParseConfig(buf, []byte(""))
+	if err != nil {
+		panic(err)
+	}
+	return config
+}
+
+func GetBaseDir() string {
+	_, file, _, ok := runtime.Caller(0)
+
+	if !ok {
+		panic(fmt.Errorf("Could not find the base dir where sample files are"))
+	}
+
+	dir, err := filepath.Abs(filepath.Dir(file))
+	if err != nil {
+		panic(err)
+	}
+
+	return dir
 }
