@@ -13,7 +13,7 @@ import (
 //
 // Implementation:
 // The ThrottledRecorder will record as long as the mainBucket has some 'recording' tokens.  This bucket is
-// filled when there is no record request and empties as recordings are made.
+// filled when recorder is not recording nor throttled and empties as recordings are made.
 // The sparse bucket allows occasional recordings when the device is throttled (ie not actually recording but
 // detecting movement).  This bucket is completely emptied whenever a new recording starts.   It is filled whenever
 // the recorder is asked to record.  This results in a new recording only after device has been throttled for a
@@ -107,8 +107,4 @@ func (throttler *ThrottledRecorder) WriteFrame(frame *lepton3.Frame) error {
 	}
 
 	return nil
-}
-
-func (throttler *ThrottledRecorder) IsRecording() bool {
-	return throttler.recording
 }
