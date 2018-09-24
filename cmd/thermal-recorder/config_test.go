@@ -90,9 +90,6 @@ func TestAllSet(t *testing.T) {
 	config := []byte(`
 frame-input: "/some/sock"
 output-dir: "/some/where"
-min-secs: 2
-max-secs: 10
-preview-secs: 5
 min-disk-space: 321
 recorder:
     min-secs: 2
