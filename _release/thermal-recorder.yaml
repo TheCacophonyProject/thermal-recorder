@@ -8,23 +8,25 @@ frame-input: "/var/run/lepton-frames"
 # Directory to place CPTV output files.
 output-dir: "/var/spool/cptv"
 
-# Time to record before motion was detected.
-preview-secs: 3
-
-# Minimum length to keep recording after motion is detected.
-min-secs: 10
-
-# Maximum total video length.
-max-secs: 600
-
 # Mininum disk space required to record, in MB
 min-disk-space: 200
 
-# Start time for recording window (optional)
-# window-start: 17:00
+# Recorder parameters
+recorder:
+    # Minimum length to keep recording after motion is detected.
+    min-secs: 10
 
-# End time for recording window (optional)
-# window-end: 07:00
+    # Maximum total video length.
+    max-secs: 600
+
+    # Time to record before motion was detected.
+    preview-secs: 3
+
+    # Start time for recording window (optional)
+    # window-start: 17:00
+
+    # End time for recording window (optional)
+    # window-end: 07:00
 
 # Motion detection parameters
 motion:

@@ -11,9 +11,9 @@ import (
 
 type Config struct {
 	DeviceName   string
-	FrameInput   string
-	OutputDir    string
-	MinDiskSpace uint64
+	FrameInput   string `yaml:"frame-input"`
+	OutputDir    string `yaml:"output-dir"`
+	MinDiskSpace uint64 `yaml:"min-disk-space"`
 	Recorder     recorder.RecorderConfig
 	Motion       motion.MotionConfig
 	Turret       TurretConfig
@@ -50,21 +50,11 @@ func (conf *Config) Validate() error {
 	return nil
 }
 
-type rawConfig struct {
-	FrameInput   string                   `yaml:"frame-input"`
-	OutputDir    string                   `yaml:"output-dir"`
-	MinDiskSpace uint64                   `yaml:"min-disk-space"`
-	Recorder     recorder.RecorderConfig  `yaml:"recorder"`
-	Motion       motion.MotionConfig      `yaml:"motion"`
-	Turret       TurretConfig             `yaml:"turret"`
-	Throttler    throttle.ThrottlerConfig `yaml:"throttler"`
-}
-
 var defaultUploaderConfig = uploaderConfig{
 	DeviceName: "",
 }
 
-var defaultConfig = rawConfig{
+var defaultConfig = Config{
 	FrameInput:   "/var/run/lepton-frames",
 	OutputDir:    "/var/spool/cptv",
 	MinDiskSpace: 200,
@@ -104,8 +94,8 @@ func ParseConfigFiles(recorderFilename, uploaderFilename string) (*Config, error
 }
 
 func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
-	raw := defaultConfig
-	if err := yaml.Unmarshal(buf, &raw); err != nil {
+	conf := defaultConfig
+	if err := yaml.Unmarshal(buf, &conf); err != nil {
 		return nil, err
 	}
 	uploaderConf := defaultUploaderConfig
@@ -113,20 +103,11 @@ func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 		return nil, err
 	}
 
-	conf := &Config{
-		DeviceName:   uploaderConf.DeviceName,
-		FrameInput:   raw.FrameInput,
-		OutputDir:    raw.OutputDir,
-		Recorder:     raw.Recorder,
-		MinDiskSpace: raw.MinDiskSpace,
-		Motion:       raw.Motion,
-		Turret:       raw.Turret,
-		Throttler:    raw.Throttler,
-	}
+	conf.DeviceName = uploaderConf.DeviceName
 
 	if err := conf.Validate(); err != nil {
 		return nil, err
 	}
 
-	return conf, nil
+	return &conf, nil
 }

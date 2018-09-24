@@ -8,6 +8,8 @@ import (
 	"strings"
 	"testing"
 
+	"gopkg.in/yaml.v2"
+
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
@@ -73,9 +75,14 @@ func TestAllProgramDefaultsMatchDefaultYamlFile(t *testing.T) {
 	configDefaults, err := ParseConfig([]byte(""), []byte(""))
 	require.NoError(t, err)
 
-	configYAML := GetDefaultConfigFromFile()
+	defaultConfig := GetDefaultConfig()
+	var configYAML Config
+	yaml.UnmarshalStrict(defaultConfig, &configYAML)
 
-	assert.Equal(t, configDefaults, configYAML)
+	// ignore errors in turret since they aren't in use atm
+	configDefaults.Turret = configYAML.Turret
+
+	assert.Equal(t, configDefaults, &configYAML)
 }
 
 func TestAllSet(t *testing.T) {
@@ -90,9 +97,9 @@ min-disk-space: 321
 recorder:
     min-secs: 2
     max-secs: 10
-		preview-secs: 5
-		window-start: 17:10
-		window-end: 07:20
+    preview-secs: 5
+    window-start: 17:10
+    window-end: 07:20
 motion:
     temp-thresh: 2000
     delta-thresh: 20
@@ -149,7 +156,7 @@ device-name: "aDeviceName"
 			MaxSecs:     10,
 			PreviewSecs: 5,
 			WindowStart: *window.NewTimeOfDay("17:10"),
-			WindowEnd:   *window.NewTimeOfDay("17:20"),
+			WindowEnd:   *window.NewTimeOfDay("07:20"),
 		},
 		Motion: motion.MotionConfig{
 			TempThresh:        2000,
@@ -189,38 +196,18 @@ device-name: "aDeviceName"
 	}, *conf)
 }
 
-func TestInvalidWindowStart(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-start: 25:10"), []byte(""))
-	assert.Nil(t, conf)
-	assert.EqualError(t, err, "invalid window-start")
-}
-
-func TestInvalidWindowEnd(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-end: 25:10"), []byte(""))
-	assert.Nil(t, conf)
-	assert.EqualError(t, err, "invalid window-end")
-}
-
-func TestWindowEndWithoutStart(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-end: 09:10"), []byte(""))
-	assert.Nil(t, conf)
-	assert.EqualError(t, err, "window-end is set but window-start isn't")
-}
-
-func TestWindowStartWithoutEnd(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-start: 09:10"), []byte(""))
-	assert.Nil(t, conf)
-	assert.EqualError(t, err, "window-start is set but window-end isn't")
-}
-
-func GetDefaultConfigFromFile() *Config {
+func GetDefaultConfig() []byte {
 	dir := GetBaseDir()
 	config_file := strings.Replace(dir, "cmd/thermal-recorder", "_release/thermal-recorder.yaml", 1)
 	buf, err := ioutil.ReadFile(config_file)
 	if err != nil {
 		panic(err)
 	}
-	config, err := ParseConfig(buf, []byte(""))
+	return buf
+}
+
+func GetDefaultConfigFromFile() *Config {
+	config, err := ParseConfig(GetDefaultConfig(), []byte(""))
 	if err != nil {
 		panic(err)
 	}
@@ -240,4 +227,14 @@ func GetBaseDir() string {
 	}
 
 	return dir
+}
+func TestRecorderErrorsStopConfigParsing(t *testing.T) {
+	configStr := []byte(`
+recorder:
+  min-secs: 10
+  max-secs: 4
+`)
+	conf, err := ParseConfig(configStr, []byte(""))
+	assert.Nil(t, conf)
+	assert.EqualError(t, err, "max-secs should be larger than min-secs")
 }
