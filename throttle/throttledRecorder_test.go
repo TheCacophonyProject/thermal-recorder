@@ -21,7 +21,7 @@ func NewTestThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
 		SparseAfter:     11,
 		SparseLength:    2,
 	}
-	return &countRecorder, NewThrottledRecorder(&countRecorder, config, 1, lepton3.FramesHz)
+	return &countRecorder, NewThrottledRecorder(&countRecorder, config, 1)
 }
 
 type CountWritesRecorder struct {
@@ -139,7 +139,7 @@ func TestCanHaveNoSparseRecordings(t *testing.T) {
 		SparseAfter:     11,
 		SparseLength:    0,
 	}
-	recorder := NewThrottledRecorder(baseRecorder, config, 1, lepton3.FramesHz)
+	recorder := NewThrottledRecorder(baseRecorder, config, 1)
 
 	PlayRecordingFrames(recorder, 50)
 	assert.Equal(t, THROTTLE_FRAMES, baseRecorder.writes)

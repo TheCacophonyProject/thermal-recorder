@@ -31,16 +31,17 @@ type ThrottledRecorder struct {
 	frameCount            uint32
 }
 
-func NewThrottledRecorder(baseRecorder recorder.Recorder, config *ThrottlerConfig, minSeconds int, frameRate uint16) *ThrottledRecorder {
-	sparseFrames := config.SparseLength * frameRate
-	minFrames := uint16(minSeconds) * frameRate
+func NewThrottledRecorder(baseRecorder recorder.Recorder, config *ThrottlerConfig, minSeconds int) *ThrottledRecorder {
+	framesHz := uint16(lepton3.FramesHz)
+	sparseFrames := config.SparseLength * framesHz
+	minFrames := uint16(minSeconds) * framesHz
 
 	if sparseFrames > 0 && sparseFrames < minFrames {
 		sparseFrames = minFrames
 	}
 
-	mainBucketSize := uint32(config.ThrottleAfter * frameRate)
-	supBucketSize := uint32(config.SparseAfter * frameRate)
+	mainBucketSize := uint32(config.ThrottleAfter * framesHz)
+	supBucketSize := uint32(config.SparseAfter * framesHz)
 	return &ThrottledRecorder{
 		recorder:              baseRecorder,
 		mainBucket:            TokenBucket{tokens: mainBucketSize, size: mainBucketSize},
