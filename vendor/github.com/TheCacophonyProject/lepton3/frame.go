@@ -8,8 +8,6 @@ import (
 	"encoding/binary"
 )
 
-const FramesHz = 9 // approx
-
 // RawFrame hold the raw bytes for single frame. This is helpful for
 // transferring frames around. It can be converted to the more useful
 // Frame.
@@ -17,6 +15,9 @@ type RawFrame [2 * FrameRows * FrameCols]byte
 
 // Frame represents the thermal readings for a single frame.
 type Frame [FrameRows][FrameCols]uint16
+
+// FramesHz define the approximate number of frames per second emitted by the Lepton 3 camera.
+const FramesHz = 9
 
 // ToFrame converts a RawFrame to a Frame.
 func (rf *RawFrame) ToFrame(out *Frame) {

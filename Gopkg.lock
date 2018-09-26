@@ -11,13 +11,13 @@
   branch = "master"
   name = "github.com/TheCacophonyProject/lepton3"
   packages = ["."]
-  revision = "0c95c62d48b541b68f3764ef2f953cee440d2b46"
+  revision = "c979564ef5f8db3d8cff8381b4493d79841dd6bf"
 
 [[projects]]
   branch = "master"
   name = "github.com/TheCacophonyProject/window"
   packages = ["."]
-  revision = "13ff4ca075caf55c0f868b25ae96ea5b1dac6308"
+  revision = "4e43785eca90dbe76573ecc47352b9ab1912d93e"
 
 [[projects]]
   branch = "master"
