@@ -10,6 +10,7 @@ import (
 
 	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
+
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )

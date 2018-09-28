@@ -6,11 +6,12 @@ import (
 	"os"
 
 	"github.com/TheCacophonyProject/lepton3"
+	arg "github.com/alexflint/go-arg"
+	"periph.io/x/periph/host"
+
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
-	arg "github.com/alexflint/go-arg"
-	"periph.io/x/periph/host"
 )
 
 const (

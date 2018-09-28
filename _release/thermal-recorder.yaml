@@ -8,7 +8,7 @@ frame-input: "/var/run/lepton-frames"
 # Directory to place CPTV output files.
 output-dir: "/var/spool/cptv"
 
-# Mininum disk space required to record, in MB
+# Minimum disk space required to record, in MB
 min-disk-space: 200
 
 # Recorder parameters

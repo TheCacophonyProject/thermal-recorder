@@ -3,9 +3,10 @@ package throttle
 import (
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
-	"github.com/stretchr/testify/assert"
 )
 
 const THROTTLE_FRAMES int = 27
