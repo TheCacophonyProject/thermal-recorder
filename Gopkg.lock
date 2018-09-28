@@ -11,7 +11,13 @@
   branch = "master"
   name = "github.com/TheCacophonyProject/lepton3"
   packages = ["."]
-  revision = "0c95c62d48b541b68f3764ef2f953cee440d2b46"
+  revision = "c979564ef5f8db3d8cff8381b4493d79841dd6bf"
+
+[[projects]]
+  branch = "master"
+  name = "github.com/TheCacophonyProject/window"
+  packages = ["."]
+  revision = "4e43785eca90dbe76573ecc47352b9ab1912d93e"
 
 [[projects]]
   branch = "master"
@@ -45,7 +51,10 @@
 
 [[projects]]
   name = "github.com/godbus/dbus"
-  packages = [".","introspect"]
+  packages = [
+    ".",
+    "introspect"
+  ]
   revision = "a389bdde4dd695d414e47b755e95e72b7826432c"
   version = "v4.1.0"
 
@@ -57,7 +66,10 @@
 
 [[projects]]
   name = "github.com/stretchr/testify"
-  packages = ["assert","require"]
+  packages = [
+    "assert",
+    "require"
+  ]
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
   version = "v1.2.2"
 
@@ -82,13 +94,41 @@
 [[projects]]
   branch = "v2"
   name = "periph.io/x/periph"
-  packages = [".","conn","conn/gpio","conn/gpio/gpioreg","conn/i2c","conn/i2c/i2creg","conn/mmr","conn/pin","conn/pin/pinreg","conn/spi","conn/spi/spireg","devices","devices/lepton/cci","devices/lepton/internal","host","host/allwinner","host/bcm283x","host/chip","host/cpu","host/distro","host/fs","host/odroidc1","host/pine64","host/pmem","host/rpi","host/sysfs","host/videocore"]
+  packages = [
+    ".",
+    "conn",
+    "conn/gpio",
+    "conn/gpio/gpioreg",
+    "conn/i2c",
+    "conn/i2c/i2creg",
+    "conn/mmr",
+    "conn/pin",
+    "conn/pin/pinreg",
+    "conn/spi",
+    "conn/spi/spireg",
+    "devices",
+    "devices/lepton/cci",
+    "devices/lepton/internal",
+    "host",
+    "host/allwinner",
+    "host/bcm283x",
+    "host/chip",
+    "host/cpu",
+    "host/distro",
+    "host/fs",
+    "host/odroidc1",
+    "host/pine64",
+    "host/pmem",
+    "host/rpi",
+    "host/sysfs",
+    "host/videocore"
+  ]
   revision = "d06ef89e37e829cc301f5babee628e6c6e36d7c5"
   source = "https://github.com/TheCacophonyProject/periph.git"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "995549e4f18b081ebabce73b49c94c1fea31e107b81ba5c587934f8db976aff8"
+  inputs-digest = "ee53d0c411011b6b9a12880b7952e0aed3ba576fafe8034b54d10ec12ce58ba7"
   solver-name = "gps-cdcl"
   solver-version = 1

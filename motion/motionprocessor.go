@@ -1,23 +1,30 @@
-package main
+package motion
 
 import (
 	"errors"
 	"log"
 
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/window"
+
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
-func NewMotionProcessor(conf *Config, listener RecordingListener, recorder Recorder) *MotionProcessor {
+func NewMotionProcessor(motionConf *MotionConfig,
+	recorderConf *recorder.RecorderConfig,
+	listener RecordingListener,
+	recorder recorder.Recorder) *MotionProcessor {
+
 	return &MotionProcessor{
-		minFrames:      conf.MinSecs * framesHz,
-		maxFrames:      conf.MaxSecs * framesHz,
-		motionDetector: NewMotionDetector(conf.Motion),
-		frameLoop:      NewFrameLoop(conf.PreviewSecs*framesHz + conf.Motion.TriggerFrames),
+		minFrames:      recorderConf.MinSecs * lepton3.FramesHz,
+		maxFrames:      recorderConf.MaxSecs * lepton3.FramesHz,
+		motionDetector: NewMotionDetector(*motionConf),
+		frameLoop:      NewFrameLoop(recorderConf.PreviewSecs*lepton3.FramesHz + motionConf.TriggerFrames),
 		isRecording:    false,
-		window:         *NewWindow(conf.WindowStart, conf.WindowEnd),
+		window:         *window.New(recorderConf.WindowStart.Time, recorderConf.WindowEnd.Time),
 		listener:       listener,
-		conf:           conf,
-		triggerFrames:  conf.Motion.TriggerFrames,
+		conf:           recorderConf,
+		triggerFrames:  motionConf.TriggerFrames,
 		recorder:       recorder,
 	}
 }
@@ -32,25 +39,18 @@ type MotionProcessor struct {
 	totalFrames    int
 	writeUntil     int
 	lastLogFrame   int
-	window         Window
-	conf           *Config
+	window         window.Window
+	conf           *recorder.RecorderConfig
 	listener       RecordingListener
 	triggerFrames  int
 	triggered      int
-	recorder       Recorder
+	recorder       recorder.Recorder
 }
 
 type RecordingListener interface {
 	MotionDetected()
 	RecordingStarted()
 	RecordingEnded()
-}
-
-type Recorder interface {
-	StopRecording() error
-	StartRecording() error
-	WriteFrame(*lepton3.Frame) error
-	CheckCanRecord() error
 }
 
 func (mp *MotionProcessor) Process(rawFrame *lepton3.RawFrame) {
@@ -104,12 +104,16 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 	}
 }
 
-func (mp *MotionProcessor) processFrame(srcFrame *lepton3.Frame) {
+func (mp *MotionProcessor) ProcessFrame(srcFrame *lepton3.Frame) {
 
 	frame := mp.frameLoop.Current()
 	frame.Copy(srcFrame)
 
 	mp.internalProcess(frame)
+}
+
+func (mp *MotionProcessor) GetRecentFrame(frame *lepton3.Frame) *lepton3.Frame {
+	return mp.frameLoop.CopyRecent(frame)
 }
 
 func (mp *MotionProcessor) canStartWriting() error {

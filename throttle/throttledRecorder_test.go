@@ -1,10 +1,12 @@
-package main
+package throttle
 
 import (
 	"testing"
 
-	"github.com/TheCacophonyProject/lepton3"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
 const THROTTLE_FRAMES int = 27
@@ -24,7 +26,7 @@ func NewTestThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
 }
 
 type CountWritesRecorder struct {
-	NoWriteRecorder
+	recorder.NoWriteRecorder
 	writes int
 }
 

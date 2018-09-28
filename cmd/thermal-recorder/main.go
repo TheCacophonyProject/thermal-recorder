@@ -8,10 +8,14 @@ import (
 	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
 	"periph.io/x/periph/host"
+
+	"github.com/TheCacophonyProject/thermal-recorder/motion"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
+	"github.com/TheCacophonyProject/thermal-recorder/throttle"
 )
 
 const (
-	framesHz    = 9 // approx
+	framesHz    = lepton3.FramesHz // approx
 	cptvTempExt = "cptv.temp"
 
 	frameLogIntervalFirstMin = 15 * framesHz
@@ -20,7 +24,7 @@ const (
 
 var (
 	version   = "<not set>"
-	frameLoop *FrameLoop
+	processor *motion.MotionProcessor
 )
 
 type Args struct {
@@ -120,17 +124,17 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 
 	cptvRecorder := NewCPTVFileRecorder(conf)
 	defer cptvRecorder.Stop()
-	var recorder Recorder = cptvRecorder
+	var recorder recorder.Recorder = cptvRecorder
 
-	var throttledRecorder *ThrottledRecorder
+	var throttledRecorder *throttle.ThrottledRecorder
 
 	if conf.Throttler.ApplyThrottling {
-		throttledRecorder = NewThrottledRecorder(cptvRecorder, &conf.Throttler, conf.MinSecs+conf.PreviewSecs)
+		minRecordingLength := conf.Recorder.MinSecs + conf.Recorder.PreviewSecs
+		throttledRecorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength)
 		recorder = throttledRecorder
 	}
 
-	processor := NewMotionProcessor(conf, nil, recorder)
-	frameLoop = processor.frameLoop
+	processor = motion.NewMotionProcessor(&conf.Motion, &conf.Recorder, nil, recorder)
 
 	rawFrame := new(lepton3.RawFrame)
 
@@ -159,15 +163,15 @@ func logConfig(conf *Config) {
 	log.Printf("device name: %s", conf.DeviceName)
 	log.Printf("frame input: %s", conf.FrameInput)
 	log.Printf("output dir: %s", conf.OutputDir)
-	log.Printf("recording limits: %ds to %ds", conf.MinSecs, conf.MaxSecs)
-	log.Printf("preview seconds: %d", conf.PreviewSecs)
+	log.Printf("recording limits: %ds to %ds", conf.Recorder.MinSecs, conf.Recorder.MaxSecs)
+	log.Printf("preview seconds: %d", conf.Recorder.PreviewSecs)
 	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
 	log.Printf("throttler: %+v", conf.Throttler)
-	if !conf.WindowStart.IsZero() {
+	if !conf.Recorder.WindowStart.IsZero() {
 		log.Printf("recording window: %02d:%02d to %02d:%02d",
-			conf.WindowStart.Hour(), conf.WindowStart.Minute(),
-			conf.WindowEnd.Hour(), conf.WindowEnd.Minute())
+			conf.Recorder.WindowStart.Hour(), conf.Recorder.WindowStart.Minute(),
+			conf.Recorder.WindowEnd.Hour(), conf.Recorder.WindowEnd.Minute())
 	}
 	if conf.Turret.Active {
 		log.Printf("Turret active")

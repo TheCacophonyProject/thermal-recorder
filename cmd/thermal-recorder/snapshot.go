@@ -22,10 +22,10 @@ func newSnapshot(dir string) error {
 	mu.Lock()
 	defer mu.Unlock()
 
-	if frameLoop == nil {
+	if processor == nil {
 		return errors.New("Reading from camera has not started yet.")
 	}
-	f := frameLoop.CopyRecent(new(lepton3.Frame))
+	f := processor.GetRecentFrame(new(lepton3.Frame))
 	if f == nil {
 		return errors.New("no frames yet")
 	}

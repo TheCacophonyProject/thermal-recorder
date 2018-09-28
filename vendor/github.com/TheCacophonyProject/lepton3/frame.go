@@ -16,6 +16,9 @@ type RawFrame [2 * FrameRows * FrameCols]byte
 // Frame represents the thermal readings for a single frame.
 type Frame [FrameRows][FrameCols]uint16
 
+// FramesHz define the approximate number of frames per second emitted by the Lepton 3 camera.
+const FramesHz = 9
+
 // ToFrame converts a RawFrame to a Frame.
 func (rf *RawFrame) ToFrame(out *Frame) {
 	i := 0

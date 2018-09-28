@@ -1,26 +1,24 @@
 package main
 
 import (
-	"errors"
 	"io/ioutil"
-	"time"
 
 	yaml "gopkg.in/yaml.v2"
+
+	"github.com/TheCacophonyProject/thermal-recorder/motion"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
+	"github.com/TheCacophonyProject/thermal-recorder/throttle"
 )
 
 type Config struct {
 	DeviceName   string
-	FrameInput   string
-	OutputDir    string
-	MinSecs      int
-	MaxSecs      int
-	PreviewSecs  int
-	WindowStart  time.Time
-	WindowEnd    time.Time
-	MinDiskSpace uint64
-	Motion       MotionConfig
+	FrameInput   string `yaml:"frame-input"`
+	OutputDir    string `yaml:"output-dir"`
+	MinDiskSpace uint64 `yaml:"min-disk-space"`
+	Recorder     recorder.RecorderConfig
+	Motion       motion.MotionConfig
 	Turret       TurretConfig
-	Throttler    ThrottlerConfig
+	Throttler    throttle.ThrottlerConfig
 }
 
 type ServoConfig struct {
@@ -43,77 +41,27 @@ type uploaderConfig struct {
 }
 
 func (conf *Config) Validate() error {
-	if conf.MaxSecs < conf.MinSecs {
-		return errors.New("max-secs should be larger than min-secs")
+	if err := conf.Recorder.Validate(); err != nil {
+		return err
 	}
-	if conf.WindowStart.IsZero() && !conf.WindowEnd.IsZero() {
-		return errors.New("window-end is set but window-start isn't")
-	}
-	if !conf.WindowStart.IsZero() && conf.WindowEnd.IsZero() {
-		return errors.New("window-start is set but window-end isn't")
-	}
+
 	if err := conf.Motion.Validate(); err != nil {
 		return err
 	}
 	return nil
 }
 
-type MotionConfig struct {
-	TempThresh        uint16 `yaml:"temp-thresh"`
-	DeltaThresh       uint16 `yaml:"delta-thresh"`
-	CountThresh       int    `yaml:"count-thresh"`
-	NonzeroMaxPercent int    `yaml:"nonzero-max-percent"`
-	FrameCompareGap   int    `yaml:"frame-compare-gap"`
-	UseOneDiffOnly    bool   `yaml:"one-diff-only"`
-	TriggerFrames     int    `yaml:"trigger-frames"`
-	WarmerOnly        bool   `yaml:"warmer-only"`
-	Verbose           bool   `yaml:"verbose"`
-}
-
-func (conf *MotionConfig) Validate() error {
-	if conf.NonzeroMaxPercent < 1 || conf.NonzeroMaxPercent > 100 {
-		return errors.New("nonzero-max-percent should be in range 1 - 100")
-	}
-	return nil
-}
-
-type rawConfig struct {
-	FrameInput   string          `yaml:"frame-input"`
-	OutputDir    string          `yaml:"output-dir"`
-	MinSecs      int             `yaml:"min-secs"`
-	MaxSecs      int             `yaml:"max-secs"`
-	PreviewSecs  int             `yaml:"preview-secs"`
-	WindowStart  string          `yaml:"window-start"`
-	WindowEnd    string          `yaml:"window-end"`
-	MinDiskSpace uint64          `yaml:"min-disk-space"`
-	Motion       MotionConfig    `yaml:"motion"`
-	Turret       TurretConfig    `yaml:"turret"`
-	Throttler    ThrottlerConfig `yaml:"throttler"`
-}
-
 var defaultUploaderConfig = uploaderConfig{
 	DeviceName: "",
 }
 
-var defaultConfig = rawConfig{
+var defaultConfig = Config{
 	FrameInput:   "/var/run/lepton-frames",
 	OutputDir:    "/var/spool/cptv",
-	MinSecs:      10,
-	MaxSecs:      600,
-	PreviewSecs:  3,
 	MinDiskSpace: 200,
-	Motion: MotionConfig{
-		TempThresh:        2900,
-		DeltaThresh:       50,
-		CountThresh:       3,
-		NonzeroMaxPercent: 50,
-		FrameCompareGap:   45,
-		Verbose:           false,
-		TriggerFrames:     2,
-		UseOneDiffOnly:    true,
-		WarmerOnly:        true,
-	},
-	Throttler: DefaultThrottlerConfig(),
+	Recorder:     recorder.DefaultRecorderConfig(),
+	Motion:       motion.DefaultMotionConfig(),
+	Throttler:    throttle.DefaultThrottlerConfig(),
 	Turret: TurretConfig{
 		Active: false,
 		PID:    []float64{0.05, 0, 0},
@@ -147,8 +95,8 @@ func ParseConfigFiles(recorderFilename, uploaderFilename string) (*Config, error
 }
 
 func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
-	raw := defaultConfig
-	if err := yaml.Unmarshal(buf, &raw); err != nil {
+	conf := defaultConfig
+	if err := yaml.Unmarshal(buf, &conf); err != nil {
 		return nil, err
 	}
 	uploaderConf := defaultUploaderConfig
@@ -156,38 +104,11 @@ func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 		return nil, err
 	}
 
-	conf := &Config{
-		DeviceName:   uploaderConf.DeviceName,
-		FrameInput:   raw.FrameInput,
-		OutputDir:    raw.OutputDir,
-		MinSecs:      raw.MinSecs,
-		MaxSecs:      raw.MaxSecs,
-		PreviewSecs:  raw.PreviewSecs,
-		MinDiskSpace: raw.MinDiskSpace,
-		Motion:       raw.Motion,
-		Turret:       raw.Turret,
-		Throttler:    raw.Throttler,
-	}
-
-	const timeOnly = "15:04"
-	if raw.WindowStart != "" {
-		t, err := time.Parse(timeOnly, raw.WindowStart)
-		if err != nil {
-			return nil, errors.New("invalid window-start")
-		}
-		conf.WindowStart = t
-	}
-	if raw.WindowEnd != "" {
-		t, err := time.Parse(timeOnly, raw.WindowEnd)
-		if err != nil {
-			return nil, errors.New("invalid window-end")
-		}
-		conf.WindowEnd = t
-	}
+	conf.DeviceName = uploaderConf.DeviceName
 
 	if err := conf.Validate(); err != nil {
 		return nil, err
 	}
 
-	return conf, nil
+	return &conf, nil
 }

@@ -1,9 +1,10 @@
-package main
+package throttle
 
 import (
 	"log"
 
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
 // ThrottledRecorder wraps a standard recorder so that it stops recording (ie gets throttled) if requested to
@@ -19,7 +20,7 @@ import (
 // the recorder is asked to record.  This results in a new recording only after device has been throttled for a
 // given time period.
 type ThrottledRecorder struct {
-	recorder              Recorder
+	recorder              recorder.Recorder
 	mainBucket            TokenBucket
 	sparseBucket          TokenBucket
 	recording             bool
@@ -30,7 +31,8 @@ type ThrottledRecorder struct {
 	frameCount            uint32
 }
 
-func NewThrottledRecorder(baseRecorder Recorder, config *ThrottlerConfig, minSeconds int) *ThrottledRecorder {
+func NewThrottledRecorder(baseRecorder recorder.Recorder, config *ThrottlerConfig, minSeconds int) *ThrottledRecorder {
+	framesHz := uint16(lepton3.FramesHz)
 	sparseFrames := config.SparseLength * framesHz
 	minFrames := uint16(minSeconds) * framesHz
 

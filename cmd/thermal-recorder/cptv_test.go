@@ -8,20 +8,25 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+
+	"github.com/TheCacophonyProject/thermal-recorder/motion"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
 func CurrentConfig() *Config {
 	config := GetDefaultConfigFromFile()
 
 	// Use smaller min secs to detect more clearly when we stop detecting.
-	config.MinSecs = 1
+	config.Recorder.MinSecs = 1
 
 	return config
 }
 
 func OldDefaultConfig() *Config {
-	config := DefaultTestConfig()
-	config.MinSecs = 1
+	config := new(Config)
+	config.Recorder.MinSecs = 1
+	config.Recorder.MaxSecs = 20
+	config.Recorder.PreviewSecs = 1
 	config.Motion.TriggerFrames = 1
 	config.Motion.UseOneDiffOnly = false
 	config.Motion.FrameCompareGap = 1
@@ -127,7 +132,7 @@ func ExperimentAndWriteResultsToFile(name string, config *Config, dir string, wr
 
 	results := NewCPTVPlaybackTester(config).TestAllCPTVFiles(dir)
 
-	fmt.Fprintf(writer, "%-10s:  %ds - %ds", "Recording limits", config.MinSecs, config.MaxSecs)
+	fmt.Fprintf(writer, "%-10s:  %ds - %ds", "Recording limits", config.Recorder.MinSecs, config.Recorder.MaxSecs)
 	fmt.Fprintln(writer)
 	fmt.Fprintf(writer, "Motion: %+v", config.Motion)
 	fmt.Fprintln(writer)
@@ -153,14 +158,14 @@ func BenchmarkMotionDetection(b *testing.B) {
 	tester := NewCPTVPlaybackTester(config)
 	frames := tester.LoadAllCptvFrames(GetBaseDir() + "/motiontest/animals/recalc.cptv")
 
-	recorder := new(NoWriteRecorder)
+	recorder := new(recorder.NoWriteRecorder)
 
-	processor := NewMotionProcessor(config, nil, recorder)
+	processor := motion.NewMotionProcessor(&config.Motion, &config.Recorder, nil, recorder)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
 		for _, frame := range frames {
-			processor.processFrame(frame)
+			processor.ProcessFrame(frame)
 		}
 	}
 }

@@ -1,4 +1,4 @@
-package main
+package throttle
 
 // TokenBucket represents a bucket you can add or remove tokens from.   It will always have
 // between 0 and size tokens in it (inclusive)

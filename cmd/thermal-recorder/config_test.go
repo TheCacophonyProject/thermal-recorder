@@ -7,10 +7,15 @@ import (
 	"runtime"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"gopkg.in/yaml.v2"
+
+	"github.com/TheCacophonyProject/thermal-recorder/motion"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
+	"github.com/TheCacophonyProject/thermal-recorder/throttle"
+	"github.com/TheCacophonyProject/window"
 )
 
 func TestAllDefaults(t *testing.T) {
@@ -22,11 +27,13 @@ func TestAllDefaults(t *testing.T) {
 		DeviceName:   "",
 		FrameInput:   "/var/run/lepton-frames",
 		OutputDir:    "/var/spool/cptv",
-		MinSecs:      10,
-		MaxSecs:      600,
-		PreviewSecs:  3,
 		MinDiskSpace: 200,
-		Motion: MotionConfig{
+		Recorder: recorder.RecorderConfig{
+			MinSecs:     10,
+			MaxSecs:     600,
+			PreviewSecs: 3,
+		},
+		Motion: motion.MotionConfig{
 			TempThresh:        2900,
 			DeltaThresh:       50,
 			CountThresh:       3,
@@ -37,7 +44,7 @@ func TestAllDefaults(t *testing.T) {
 			TriggerFrames:     2,
 			WarmerOnly:        true,
 		},
-		Throttler: ThrottlerConfig{
+		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: true,
 			ThrottleAfter:   600,
 			SparseAfter:     3600,
@@ -68,9 +75,14 @@ func TestAllProgramDefaultsMatchDefaultYamlFile(t *testing.T) {
 	configDefaults, err := ParseConfig([]byte(""), []byte(""))
 	require.NoError(t, err)
 
-	configYAML := GetDefaultConfigFromFile()
+	defaultConfig := GetDefaultConfig()
+	var configYAML Config
+	yaml.UnmarshalStrict(defaultConfig, &configYAML)
 
-	assert.Equal(t, configDefaults, configYAML)
+	// ignore errors in turret since they aren't in use atm
+	configDefaults.Turret = configYAML.Turret
+
+	assert.Equal(t, configDefaults, &configYAML)
 }
 
 func TestAllSet(t *testing.T) {
@@ -78,12 +90,13 @@ func TestAllSet(t *testing.T) {
 	config := []byte(`
 frame-input: "/some/sock"
 output-dir: "/some/where"
-min-secs: 2
-max-secs: 10
-preview-secs: 5
-window-start: 17:10
-window-end: 07:20
 min-disk-space: 321
+recorder:
+    min-secs: 2
+    max-secs: 10
+    preview-secs: 5
+    window-start: 17:10
+    window-end: 07:20
 motion:
     temp-thresh: 2000
     delta-thresh: 20
@@ -134,13 +147,15 @@ device-name: "aDeviceName"
 		DeviceName:   "aDeviceName",
 		FrameInput:   "/some/sock",
 		OutputDir:    "/some/where",
-		MinSecs:      2,
-		MaxSecs:      10,
-		PreviewSecs:  5,
-		WindowStart:  time.Date(0, 1, 1, 17, 10, 0, 0, time.UTC),
-		WindowEnd:    time.Date(0, 1, 1, 07, 20, 0, 0, time.UTC),
 		MinDiskSpace: 321,
-		Motion: MotionConfig{
+		Recorder: recorder.RecorderConfig{
+			MinSecs:     2,
+			MaxSecs:     10,
+			PreviewSecs: 5,
+			WindowStart: *window.NewTimeOfDay("17:10"),
+			WindowEnd:   *window.NewTimeOfDay("07:20"),
+		},
+		Motion: motion.MotionConfig{
 			TempThresh:        2000,
 			DeltaThresh:       20,
 			CountThresh:       1,
@@ -151,7 +166,7 @@ device-name: "aDeviceName"
 			TriggerFrames:     1,
 			WarmerOnly:        false,
 		},
-		Throttler: ThrottlerConfig{
+		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: false,
 			ThrottleAfter:   650,
 			SparseAfter:     6500,
@@ -178,38 +193,18 @@ device-name: "aDeviceName"
 	}, *conf)
 }
 
-func TestInvalidWindowStart(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-start: 25:10"), []byte(""))
-	assert.Nil(t, conf)
-	assert.EqualError(t, err, "invalid window-start")
-}
-
-func TestInvalidWindowEnd(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-end: 25:10"), []byte(""))
-	assert.Nil(t, conf)
-	assert.EqualError(t, err, "invalid window-end")
-}
-
-func TestWindowEndWithoutStart(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-end: 09:10"), []byte(""))
-	assert.Nil(t, conf)
-	assert.EqualError(t, err, "window-end is set but window-start isn't")
-}
-
-func TestWindowStartWithoutEnd(t *testing.T) {
-	conf, err := ParseConfig([]byte("window-start: 09:10"), []byte(""))
-	assert.Nil(t, conf)
-	assert.EqualError(t, err, "window-start is set but window-end isn't")
-}
-
-func GetDefaultConfigFromFile() *Config {
+func GetDefaultConfig() []byte {
 	dir := GetBaseDir()
 	config_file := strings.Replace(dir, "cmd/thermal-recorder", "_release/thermal-recorder.yaml", 1)
 	buf, err := ioutil.ReadFile(config_file)
 	if err != nil {
 		panic(err)
 	}
-	config, err := ParseConfig(buf, []byte(""))
+	return buf
+}
+
+func GetDefaultConfigFromFile() *Config {
+	config, err := ParseConfig(GetDefaultConfig(), []byte(""))
 	if err != nil {
 		panic(err)
 	}
@@ -229,4 +224,14 @@ func GetBaseDir() string {
 	}
 
 	return dir
+}
+func TestRecorderErrorsStopConfigParsing(t *testing.T) {
+	configStr := []byte(`
+recorder:
+  min-secs: 10
+  max-secs: 4
+`)
+	conf, err := ParseConfig(configStr, []byte(""))
+	assert.Nil(t, conf)
+	assert.EqualError(t, err, "max-secs should be larger than min-secs")
 }
