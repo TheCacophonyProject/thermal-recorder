@@ -10,7 +10,7 @@ type TestBucket struct {
 	TokenBucket
 }
 
-func (b *TestBucket) hasExactly(tokens uint32) bool {
+func (b *TestBucket) hasExactly(tokens float64) bool {
 	return b.HasTokens(tokens) && !b.HasTokens(tokens+1)
 }
 

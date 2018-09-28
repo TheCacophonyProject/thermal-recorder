@@ -14,14 +14,18 @@ const SPARSE_LENGTH int = 18
 
 var countRecorder CountWritesRecorder
 
-func NewTestThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
-	config := &ThrottlerConfig{
+func DefaultTestThrottleConfig() *ThrottlerConfig {
+	return &ThrottlerConfig{
 		ApplyThrottling: true,
 		ThrottleAfter:   3,
 		SparseAfter:     11,
 		SparseLength:    2,
+		RefillRate:      1.0,
 	}
-	return &countRecorder, NewThrottledRecorder(&countRecorder, config, 1)
+}
+
+func NewTestThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
+	return &countRecorder, NewThrottledRecorder(&countRecorder, DefaultTestThrottleConfig(), 1)
 }
 
 type CountWritesRecorder struct {
@@ -149,4 +153,28 @@ func TestCanHaveNoSparseRecordings(t *testing.T) {
 
 	PlayRecordingFrames(recorder, 20)
 	assert.Equal(t, 0, baseRecorder.writes)
+}
+
+func TestUsingDifferentRefillRates(t *testing.T) {
+	config := DefaultTestThrottleConfig()
+	config.RefillRate = 3
+
+	recorder := NewThrottledRecorder(&countRecorder, config, 1)
+	// fill bucket to trigger sparse recording
+	PlayRecordingFrames(recorder, THROTTLE_FRAMES)
+	PlayNonRecordingFrames(recorder, 5)
+
+	// Sparse count restarts with start of this recording
+	PlayRecordingFrames(recorder, 60)
+	assert.Equal(t, 15, countRecorder.writes)
+
+	config.RefillRate = .3
+	recorder = NewThrottledRecorder(&countRecorder, config, 1)
+	// fill bucket to trigger sparse recording
+	PlayRecordingFrames(recorder, THROTTLE_FRAMES)
+	PlayNonRecordingFrames(recorder, 31)
+
+	// Sparse count restarts with start of this recording
+	PlayRecordingFrames(recorder, 60)
+	assert.Equal(t, 9, countRecorder.writes)
 }

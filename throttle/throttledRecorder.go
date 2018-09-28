@@ -24,11 +24,12 @@ type ThrottledRecorder struct {
 	mainBucket            TokenBucket
 	sparseBucket          TokenBucket
 	recording             bool
-	minRecordingLength    uint32
-	sparseRecordingLength uint32
+	minRecordingLength    float64
+	sparseRecordingLength float64
 	askedToWriteFrame     bool
 	throttledFrames       uint32
 	frameCount            uint32
+	refillRate            float64
 }
 
 func NewThrottledRecorder(baseRecorder recorder.Recorder, config *ThrottlerConfig, minSeconds int) *ThrottledRecorder {
@@ -40,14 +41,15 @@ func NewThrottledRecorder(baseRecorder recorder.Recorder, config *ThrottlerConfi
 		sparseFrames = minFrames
 	}
 
-	mainBucketSize := uint32(config.ThrottleAfter * framesHz)
-	supBucketSize := uint32(config.SparseAfter * framesHz)
+	mainBucketSize := float64(config.ThrottleAfter * framesHz)
+	supBucketSize := float64(config.SparseAfter * framesHz)
 	return &ThrottledRecorder{
 		recorder:              baseRecorder,
 		mainBucket:            TokenBucket{tokens: mainBucketSize, size: mainBucketSize},
 		sparseBucket:          TokenBucket{size: supBucketSize},
-		minRecordingLength:    uint32(minFrames),
-		sparseRecordingLength: uint32(sparseFrames),
+		minRecordingLength:    float64(minFrames),
+		sparseRecordingLength: float64(sparseFrames),
+		refillRate:            config.RefillRate,
 	}
 }
 
@@ -56,7 +58,7 @@ func (throttler *ThrottledRecorder) NextFrame() {
 		throttler.mainBucket.RemoveTokens(1)
 		throttler.sparseBucket.AddTokens(1)
 	} else {
-		throttler.mainBucket.AddTokens(1)
+		throttler.mainBucket.AddTokens(throttler.refillRate)
 	}
 	throttler.askedToWriteFrame = false
 }
