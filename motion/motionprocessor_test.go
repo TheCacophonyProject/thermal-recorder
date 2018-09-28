@@ -5,8 +5,9 @@ import (
 	"testing"
 
 	"github.com/TheCacophonyProject/lepton3"
-	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
 type TestRecorder struct {

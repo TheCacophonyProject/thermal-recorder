@@ -5,8 +5,9 @@ import (
 	"log"
 
 	"github.com/TheCacophonyProject/lepton3"
-	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/window"
+
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
 func NewMotionProcessor(motionConf *MotionConfig,

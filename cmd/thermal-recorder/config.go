@@ -3,10 +3,11 @@ package main
 import (
 	"io/ioutil"
 
+	yaml "gopkg.in/yaml.v2"
+
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
-	yaml "gopkg.in/yaml.v2"
 )
 
 type Config struct {

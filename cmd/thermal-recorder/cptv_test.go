@@ -7,9 +7,10 @@ import (
 	"os"
 	"testing"
 
+	"github.com/stretchr/testify/assert"
+
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
-	"github.com/stretchr/testify/assert"
 )
 
 func CurrentConfig() *Config {
