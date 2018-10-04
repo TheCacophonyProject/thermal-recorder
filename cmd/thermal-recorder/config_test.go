@@ -65,6 +65,7 @@ func TestAllDefaults(t *testing.T) {
 			ThrottleAfter:   600,
 			SparseAfter:     3600,
 			SparseLength:    30,
+			RefillRate:      1,
 		},
 		Turret: TurretConfig{
 			Active: false,
@@ -128,6 +129,7 @@ throttler:
     throttle-after-secs: 650
     sparse-after-secs: 6500
     sparse-length-secs: 300
+    refill-rate: 0.2
 leds:
     recording: "RecordingPIN"
     running: "RunningPIN"
@@ -187,6 +189,7 @@ device-name: "aDeviceName"
 			ThrottleAfter:   650,
 			SparseAfter:     6500,
 			SparseLength:    300,
+			RefillRate:      0.2,
 		},
 		Turret: TurretConfig{
 			Active: true,

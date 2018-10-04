@@ -88,3 +88,7 @@ throttler:
     # if value is less than the min recording length then it will set to min recording length
     sparse-length-secs: 30
 
+    # refill rate controls how soon normal recording resumes once throttling is active. Compared with
+    #'1.0', a value of '2.0' means that normal recording resumes in half the time,
+    # while a value '0.5' will means throttling remains active for double the time.
+    refill-rate: 1.0
