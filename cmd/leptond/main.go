@@ -38,6 +38,11 @@ const (
 	frameLogInterval         = 60 * 5 * framesHz
 
 	framesPerSdNotify = 5 * framesHz
+
+	// ffcInterval is how often to force Flat Field Correction (FFC)
+	// By default, the camera will do this every 5 minutes but we want
+	// to be in control so do it every 4.5 minutes.
+	ffcInterval = ((5 * 60) - 30) * framesHz
 )
 
 var version = "<not set>"
@@ -88,12 +93,9 @@ func runMain() error {
 	logConfig(conf)
 
 	log.Print("dialing frame output socket")
-	conn, err := net.DialUnix("unixpacket", nil, &net.UnixAddr{
-		Net:  "unixgram",
-		Name: conf.FrameOutput,
-	})
+	conn, err := dialOutput(conf.FrameOutput)
 	if err != nil {
-		return errors.New("error: connecting to frame output socket failed")
+		return err
 	}
 	defer conn.Close()
 
@@ -102,6 +104,9 @@ func runMain() error {
 		return err
 	}
 
+	// Camera power is cycled *after* an output connection has been
+	// established to avoid continually rebooting the camera if the
+	// downstream process is not running.
 	if !args.Quick {
 		if err := cycleCameraPower(conf.PowerPin); err != nil {
 			return err
@@ -129,21 +134,49 @@ func runMain() error {
 		}
 
 		err := runCamera(conf, camera, conn)
-		if err != nil {
+
+		// Drop output connection to indicate that the frames have
+		// stopped.
+		conn.Close()
+
+		if err == nil {
+			// Run FFC
+			log.Print("starting FFC")
+			camera.RunFFC()
+			camera.Close()
+			log.Print("waiting for FFC to complete")
+			time.Sleep(9 * time.Second)
+			log.Print("FFC done")
+		} else {
+			// Failed I/O with camera.
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
 				return err
 			}
 			log.Printf("recording error: %v", err)
+			camera.Close()
+
+			if err := cycleCameraPower(conf.PowerPin); err != nil {
+				return err
+			}
 		}
 
-		log.Print("closing camera")
-		camera.Close()
-
-		err = cycleCameraPower(conf.PowerPin)
+		conn, err = dialOutput(conf.FrameOutput)
 		if err != nil {
 			return err
 		}
 	}
+}
+
+func dialOutput(name string) (*net.UnixConn, error) {
+	log.Print("dialing frame output socket")
+	conn, err := net.DialUnix("unixpacket", nil, &net.UnixAddr{
+		Net:  "unixgram",
+		Name: name,
+	})
+	if err != nil {
+		return nil, errors.New("error: connecting to frame output socket failed")
+	}
+	return conn, err
 }
 
 func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error {
@@ -151,10 +184,17 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 
 	log.Print("reading frames")
 	frame := new(lepton3.RawFrame)
+
 	notifyCount := 0
+	frameCount := 0
 	for {
 		if err := camera.NextFrame(frame); err != nil {
 			return &nextFrameErr{err}
+		}
+
+		frameCount++
+		if frameCount >= ffcInterval {
+			return nil
 		}
 
 		if notifyCount++; notifyCount >= framesPerSdNotify {
