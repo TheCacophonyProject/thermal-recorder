@@ -139,7 +139,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 	totalFrames := 0
 
 	cptvRecorder := NewCPTVFileRecorder(conf)
-	defer cptvRecorder.Stop()
+	defer cptvRecorder.StopRecording()
 	var recorder recorder.Recorder = cptvRecorder
 
 	var throttledRecorder *throttle.ThrottledRecorder
