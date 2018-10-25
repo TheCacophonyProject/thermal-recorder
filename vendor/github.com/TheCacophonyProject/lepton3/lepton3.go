@@ -8,6 +8,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
+	"io"
 	"math"
 	"time"
 
@@ -87,34 +88,31 @@ func (d *Lepton3) SetLogFunc(log func(string)) {
 	d.log = log
 }
 
+// SetRadiometry enables or disables radiometry mode. If enabled, the
+// camera will attempt to automatically compensate for ambient
+// temperature changes.
 func (d *Lepton3) SetRadiometry(enable bool) error {
-	d.log("opening I2C bus")
-	i2cBus, err := i2creg.Open("")
+	cciDev, err := openCCI()
 	if err != nil {
 		return err
 	}
-	defer i2cBus.Close()
+	defer cciDev.Close()
 
-	d.log("opening CCI")
-	cciDev, err := cci.New(i2cBus)
-	if err != nil {
-		return fmt.Errorf("cci.New: %v", err)
-	}
-
-	d.log(fmt.Sprintf("setting radiometry to %v", enable))
 	if err := cciDev.SetRadiometry(enable); err != nil {
 		return fmt.Errorf("SetRadiometry: %v", err)
 	}
-
-	d.log("checking radiometry setting is correct")
-	value, err := cciDev.GetRadiometry()
-	if err != nil {
-		return fmt.Errorf("GetRadiometry: %v", err)
-	}
-	if value != enable {
-		return fmt.Errorf("radiometry state failed to change")
-	}
 	return nil
+}
+
+// RunFFC forces the camera to run a Flat Field Correction
+// recalibration.
+func (d *Lepton3) RunFFC() error {
+	cciDev, err := openCCI()
+	if err != nil {
+		return err
+	}
+	defer cciDev.Close()
+	return cciDev.RunFFC()
 }
 
 // Open initialises the SPI connection and starts streaming packets
@@ -274,4 +272,26 @@ func validatePacket(packet []byte) (int, error) {
 	// XXX CRC checks
 
 	return packetNum, nil
+}
+
+func openCCI() (*closingCCIDev, error) {
+	i2cBus, err := i2creg.Open("")
+	if err != nil {
+		return nil, err
+	}
+
+	cciDev, err := cci.New(i2cBus)
+	if err != nil {
+		i2cBus.Close()
+		return nil, fmt.Errorf("cci.New: %v", err)
+	}
+	return &closingCCIDev{
+		Dev:    cciDev,
+		Closer: i2cBus,
+	}, nil
+}
+
+type closingCCIDev struct {
+	*cci.Dev
+	io.Closer
 }
