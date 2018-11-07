@@ -33,6 +33,7 @@ type Builder struct {
 	w *gzip.Writer
 }
 
+// WriteHeader writes a CPTV header to the current Writer
 func (b *Builder) WriteHeader(f *FieldWriter) error {
 	_, err := b.w.Write(append(
 		[]byte(magic),
@@ -48,6 +49,7 @@ func (b *Builder) WriteHeader(f *FieldWriter) error {
 	return err
 }
 
+// WriteFrame writes a CPTV frame to the current Writer
 func (b *Builder) WriteFrame(f *FieldWriter, frameData []byte) error {
 	// Frame header
 	_, err := b.w.Write([]byte{frameSection, byte(f.fieldCount)})
@@ -66,6 +68,7 @@ func (b *Builder) WriteFrame(f *FieldWriter, frameData []byte) error {
 	return err
 }
 
+// Close closes the current Writer
 func (b *Builder) Close() error {
 	if err := b.w.Flush(); err != nil {
 		return err

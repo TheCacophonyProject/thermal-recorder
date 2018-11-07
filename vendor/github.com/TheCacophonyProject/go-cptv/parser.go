@@ -41,6 +41,7 @@ type Parser struct {
 	r nReader
 }
 
+// Header parses a CPTV file header from the open file.
 func (p *Parser) Header() (Fields, error) {
 	if magicRead, err := p.r.ReadN(4); err != nil {
 		return nil, err
@@ -59,6 +60,8 @@ func (p *Parser) Header() (Fields, error) {
 	return readFieldsN(p.r)
 }
 
+// Frame parses a CPTV frame section header from the open file and returns
+// a subreader that allows access to the frame bytes.
 func (p *Parser) Frame() (Fields, io.Reader, error) {
 	if err := p.checkByte("section", frameSection); err != nil {
 		return nil, nil, err
@@ -72,7 +75,7 @@ func (p *Parser) Frame() (Fields, io.Reader, error) {
 		return nil, nil, err
 	}
 
-	// Return a subreader which is only allows access to the bytes for
+	// Return a subreader which only allows access to the bytes for
 	// the frame.
 	frameReader := &io.LimitedReader{
 		R: p.r.Reader,
@@ -81,6 +84,8 @@ func (p *Parser) Frame() (Fields, io.Reader, error) {
 	return fields, frameReader, nil
 }
 
+// checkByte reads a byte from the file and checks it against an 'expected'
+// value. 'label' is used for the error report only
 func (p *Parser) checkByte(label string, expected byte) error {
 	actual, err := p.r.ReadByte()
 	if err != nil {

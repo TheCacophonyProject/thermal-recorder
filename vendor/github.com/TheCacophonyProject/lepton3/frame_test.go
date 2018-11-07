@@ -6,24 +6,32 @@ package lepton3
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
 func TestFrameCopy(t *testing.T) {
 	frame := new(Frame)
-	frame[0][0] = 1
-	frame[9][7] = 2
-	frame[FrameRows-1][0] = 3
-	frame[0][FrameCols-1] = 4
-	frame[FrameRows-1][FrameCols-1] = 5
+
+	// Pixel values.
+	frame.Pix[0][0] = 1
+	frame.Pix[9][7] = 2
+	frame.Pix[FrameRows-1][0] = 3
+	frame.Pix[0][FrameCols-1] = 4
+	frame.Pix[FrameRows-1][FrameCols-1] = 5
+	// Status values.
+	frame.Status.TimeOn = 10 * time.Second
+	frame.Status.FrameCount = 123
+	frame.Status.TempC = 23.1
 
 	frame2 := new(Frame)
-
 	frame2.Copy(frame)
-	assert.Equal(t, 1, int(frame[0][0]))
-	assert.Equal(t, 2, int(frame[9][7]))
-	assert.Equal(t, 3, int(frame[FrameRows-1][0]))
-	assert.Equal(t, 4, int(frame[0][FrameCols-1]))
-	assert.Equal(t, 5, int(frame[FrameRows-1][FrameCols-1]))
+
+	assert.Equal(t, 1, int(frame2.Pix[0][0]))
+	assert.Equal(t, 2, int(frame2.Pix[9][7]))
+	assert.Equal(t, 3, int(frame2.Pix[FrameRows-1][0]))
+	assert.Equal(t, 4, int(frame2.Pix[0][FrameCols-1]))
+	assert.Equal(t, 5, int(frame2.Pix[FrameRows-1][FrameCols-1]))
+	assert.Equal(t, frame.Status, frame2.Status)
 }

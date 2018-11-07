@@ -19,6 +19,8 @@ import (
 	"os"
 )
 
+// NewFileWriter creates file 'filename' and returns a new FileWriter
+// with underlying buffer (bufio) Writer
 func NewFileWriter(filename string) (*FileWriter, error) {
 	f, err := os.Create(filename)
 	if err != nil {
@@ -40,10 +42,12 @@ type FileWriter struct {
 	f  *os.File
 }
 
+// Name returns the name of the open File
 func (fw *FileWriter) Name() string {
 	return fw.f.Name()
 }
 
+// Close flushes the buffered writer and closes the open file
 func (fw *FileWriter) Close() {
 	fw.Writer.Close()
 	fw.bw.Flush()

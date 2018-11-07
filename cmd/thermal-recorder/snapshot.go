@@ -50,7 +50,7 @@ func newSnapshot(dir string) error {
 	var valMax uint16
 	var valMin uint16 = math.MaxUint16
 	var id int
-	for _, row := range f {
+	for _, row := range f.Pix {
 		for _, val := range row {
 			id += int(val)
 			valMax = maxUint16(valMax, val)
@@ -65,7 +65,7 @@ func newSnapshot(dir string) error {
 	previousSnapshotID = id
 
 	var norm = math.MaxUint16 / (valMax - valMin)
-	for y, row := range f {
+	for y, row := range f.Pix {
 		for x, val := range row {
 			g16.SetGray16(x, y, color.Gray16{Y: (val - valMin) * norm})
 		}

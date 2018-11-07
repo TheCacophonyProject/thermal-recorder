@@ -65,11 +65,11 @@ func (c *Compressor) Next(curr *lepton3.Frame) (uint8, []byte) {
 			i += c.cols - 1
 		}
 		for x := 0; x < c.cols; x++ {
-			c.frameDelta[i] = int32(curr[y][x]) - int32(c.prevFrame[y][x])
+			c.frameDelta[i] = int32(curr.Pix[y][x]) - int32(c.prevFrame.Pix[y][x])
 			// Now that prevFrame[y][x] has been used, copy the value
 			// for the current frame in for the next call to Next().
 			// TODO: it might be fast to copy() rows separately.
-			c.prevFrame[y][x] = curr[y][x]
+			c.prevFrame.Pix[y][x] = curr.Pix[y][x]
 			if y&1 == 0 {
 				i++
 			} else {
@@ -155,11 +155,11 @@ func (d *Decompressor) Next(bitWidth uint8, compressed ByteReaderReader, out *le
 	// Add to delta frame to previous frame.
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			out[y][x] = uint16(int32(d.prevFrame[y][x]) + d.deltas[y][x])
+			out.Pix[y][x] = uint16(int32(d.prevFrame.Pix[y][x]) + d.deltas[y][x])
 			// Now that prevFrame[y][x] has been used, copy the new
 			// value in for the next call to Next() to use.
 			// TODO: it might be fast to copy() rows separately.
-			d.prevFrame[y][x] = out[y][x]
+			d.prevFrame.Pix[y][x] = out.Pix[y][x]
 		}
 	}
 	return nil

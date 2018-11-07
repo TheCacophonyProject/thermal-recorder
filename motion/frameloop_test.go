@@ -36,7 +36,7 @@ func NewFrameLoopTestClass(frames int) *FrameLoopTestClass {
 		count:     1,
 	}
 	if frames > 0 {
-		frameLoop.Current()[0][0] = frameLoop.count
+		frameLoop.Current().Pix[0][0] = frameLoop.count
 	}
 	frameLoop.AddFrames(frames - 1)
 	return frameLoop
@@ -45,7 +45,7 @@ func NewFrameLoopTestClass(frames int) *FrameLoopTestClass {
 func (fl *FrameLoopTestClass) Move() *lepton3.Frame {
 	frame := fl.FrameLoop.Move()
 	fl.count++
-	frame[0][0] = fl.count
+	frame.Pix[0][0] = fl.count
 	return frame
 }
 
@@ -56,7 +56,7 @@ func (fl *FrameLoopTestClass) AddFrames(numberFrames int) {
 }
 
 func getId(frame *lepton3.Frame) int {
-	return int(frame[0][0])
+	return int(frame.Pix[0][0])
 }
 
 func getHistoryIds(frameLoop *FrameLoopTestClass) []int {
@@ -70,11 +70,11 @@ func getHistoryIds(frameLoop *FrameLoopTestClass) []int {
 
 func TestFrameLoopLoopsRoundFrames(t *testing.T) {
 	frameLoop := NewFrameLoop(FIVE_FRAME_LOOP)
-	frameLoop.Current()[0][0] = uint16(1)
-	frameLoop.Move()[0][0] = uint16(2)
-	frameLoop.Move()[0][0] = uint16(3)
-	frameLoop.Move()[0][0] = uint16(4)
-	frameLoop.Move()[0][0] = uint16(5)
+	frameLoop.Current().Pix[0][0] = uint16(1)
+	frameLoop.Move().Pix[0][0] = uint16(2)
+	frameLoop.Move().Pix[0][0] = uint16(3)
+	frameLoop.Move().Pix[0][0] = uint16(4)
+	frameLoop.Move().Pix[0][0] = uint16(5)
 
 	assert.Equal(t, 1, getId(frameLoop.Move()))
 	assert.Equal(t, 2, getId(frameLoop.Move()))

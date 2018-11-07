@@ -38,42 +38,6 @@ func writeFrames(frames []*lepton3.Frame) error {
 
 ### Reading CPTV Files
 
-```go
-
-import (
-    "fmt"
-    "os"
-
-    "github.com/TheCacophonyProject/go-cptv"
-    "github.com/TheCacophonyProject/lepton3"
-)
+See [cptvtool](https://github.com/TheCacophonyProject/go-cptv/tree/master/cptvtool) for a read example.
 
 
-func readFrames() ([]*lepton3.Frame, error) {
-    f, err := os.Open("some.cptv")
-    if err != nil {
-        return nil, err
-    }
-    defer f.Close()
-
-    r, err := cptv.NewReader(f)
-    if err != nil {
-        return nil, err
-    }
-    fmt.Println("timestamp:", r.Timestamp())
-    fmt.Println("device:", r.DeviceName())
-
-    var out []*lepton3.Frame
-    for {
-        frame := new(lepton3.Frame)
-        err := r.ReadFrame(frame)
-        if err != nil {
-            if err == io.EOF {
-                return out, nil
-            }
-            return err
-        }
-        out = append(out, frame)
-    }
-}
-```

@@ -26,6 +26,7 @@ type Options struct {
 	Speed     int64  `arg:"-s,help:SPI speed in MHz"`
 	Directory string `arg:"-d,help:Directory to write output files"`
 	PowerPin  string `arg:"-p,help:Optional pin to set to power on camera"`
+	Verbose   bool   `arg:"-v,help:Verbose output"`
 	Output    string `arg:"positional,required,help:png or none"`
 }
 
@@ -66,7 +67,11 @@ func runMain() error {
 		}
 	}
 
-	camera := lepton3.New(opts.Speed)
+	camera, err := lepton3.New(opts.Speed)
+	if err != nil {
+		return err
+	}
+
 	if err := camera.SetRadiometry(true); err != nil {
 		return err
 	}
@@ -91,9 +96,12 @@ func runMain() error {
 		}
 		fmt.Printf(".")
 
-		if opts.Output == "png" {
-			rawFrame.ToFrame(frame)
+		rawFrame.ToFrame(frame)
+		if opts.Verbose {
+			fmt.Printf("%+v\n", frame.Status)
+		}
 
+		if opts.Output == "png" {
 			filename := filepath.Join(opts.Directory, fmt.Sprintf("%05d.png", i))
 			err := dumpToPNG(filename, frame)
 			if err != nil {
