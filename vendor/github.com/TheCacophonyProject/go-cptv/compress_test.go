@@ -109,7 +109,7 @@ func makeTestFrame() *lepton3.Frame {
 	const maxVal = 8196
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			out[y][x] = uint16(((y * x) % (maxVal - minVal)) + minVal)
+			out.Pix[y][x] = uint16(((y * x) % (maxVal - minVal)) + minVal)
 		}
 	}
 	return out
@@ -119,7 +119,7 @@ func makeOffsetFrame(in *lepton3.Frame) *lepton3.Frame {
 	out := new(lepton3.Frame)
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			out[y][x] = in[y][x] + uint16(x)
+			out.Pix[y][x] = in.Pix[y][x] + uint16(x)
 		}
 	}
 	return out

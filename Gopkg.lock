@@ -5,13 +5,13 @@
   branch = "master"
   name = "github.com/TheCacophonyProject/go-cptv"
   packages = ["."]
-  revision = "c20b943db215789bbfddbea1e7a2a08f128b94e7"
+  revision = "894e02f14f90dedb883bc5eb2a09e6f7dc763da5"
 
 [[projects]]
   branch = "master"
   name = "github.com/TheCacophonyProject/lepton3"
   packages = ["."]
-  revision = "c979564ef5f8db3d8cff8381b4493d79841dd6bf"
+  revision = "24af961474c7feb0c8f92911c371e18c0fccfb0c"
 
 [[projects]]
   branch = "master"

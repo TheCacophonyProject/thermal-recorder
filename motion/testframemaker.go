@@ -63,12 +63,12 @@ func (tfm *TestFrameMaker) makeFrame() *lepton3.Frame {
 	if tfm.BackgroundVal != 0 {
 		for y := 0; y < lepton3.FrameRows; y++ {
 			for x := 0; x < lepton3.FrameCols; x++ {
-				frame[y][x] = uint16(tfm.BackgroundVal)
+				frame.Pix[y][x] = uint16(tfm.BackgroundVal)
 			}
 		}
 	}
 
-	frame[0][0] = tfm.frameCounter
+	frame.Pix[0][0] = tfm.frameCounter
 	tfm.frameCounter++
 	return frame
 }
@@ -78,15 +78,15 @@ func (tfm *TestFrameMaker) makeFrameWithBrightSport(position int) *lepton3.Frame
 
 	brightness16 := uint16(tfm.BackgroundVal + tfm.BrightSpotVal)
 
-	frame[position][position] = brightness16
-	frame[position+1][position] = brightness16
-	frame[position+2][position] = brightness16
-	frame[position][position+1] = brightness16
-	frame[position+1][position+1] = brightness16
-	frame[position+2][position+1] = brightness16
-	frame[position][position+2] = brightness16
-	frame[position+1][position+2] = brightness16
-	frame[position+2][position+2] = brightness16
+	frame.Pix[position][position] = brightness16
+	frame.Pix[position+1][position] = brightness16
+	frame.Pix[position+2][position] = brightness16
+	frame.Pix[position][position+1] = brightness16
+	frame.Pix[position+1][position+1] = brightness16
+	frame.Pix[position+2][position+1] = brightness16
+	frame.Pix[position][position+2] = brightness16
+	frame.Pix[position+1][position+2] = brightness16
+	frame.Pix[position+2][position+2] = brightness16
 
 	return frame
 }

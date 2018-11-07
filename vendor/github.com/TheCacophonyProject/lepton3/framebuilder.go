@@ -1,4 +1,4 @@
-// Copyright 2017 The Cacophony Project. All rights reserved.
+// Copyright 2018 The Cacophony Project. All rights reserved.
 // Use of this source code is governed by the Apache License Version 2.0;
 // see the LICENSE file for further details.
 
@@ -10,21 +10,22 @@ import (
 
 func newFrameBuilder() *frameBuilder {
 	f := &frameBuilder{
-		segmentPackets: make([][]byte, packetsPerSegment),
-		framePackets:   make([][]byte, packetsPerFrame),
+		segmentBuf: make([]byte, packetsPerSegment*vospiDataSize),
+		frameBuf:   make([]byte, packetsPerFrame*vospiDataSize),
 	}
 	f.reset()
 	return f
 }
 
 type frameBuilder struct {
-	packetNum      int
-	segmentNum     int
-	segmentPackets [][]byte
-	framePackets   [][]byte
+	segmentBuf []byte
+	frameBuf   []byte
+	packetNum  int
+	segmentNum int
 }
 
 func (f *frameBuilder) reset() {
+	f.frameBuf = f.frameBuf[:0]
 	f.packetNum = -1
 	f.segmentNum = 0
 }
@@ -34,25 +35,24 @@ func (f *frameBuilder) nextPacket(packetNum int, packet []byte) (bool, error) {
 		return false, fmt.Errorf("out of order packet: %d -> %d", f.packetNum, packetNum)
 	}
 
-	// Store the packet data in current segment
-	f.segmentPackets[packetNum] = packet[vospiHeaderSize:]
+	copy(f.segmentBuf[packetNum*vospiDataSize:], packet[vospiHeaderSize:])
 
 	switch packetNum {
 	case segmentPacketNum:
+		// This is the packet that has the segment number set.
 		segmentNum := int(packet[0] >> 4)
 		if segmentNum > 4 {
 			return false, fmt.Errorf("invalid segment number: %d", segmentNum)
 		}
 		if segmentNum > 0 && segmentNum != f.segmentNum+1 {
-			// XXX this might not warrant a resync but certainly ignoring of the segment
+			// TODO this might not warrant a resync but certainly ignoring of the segment
 			return false, fmt.Errorf("out of order segment")
 		}
 		f.segmentNum = segmentNum
 	case maxPacketNum:
+		// End of segment.
 		if f.segmentNum > 0 {
-			// This should be fast as only slice headers for the
-			// segment are being copied, not the packet data itself.
-			copy(f.framePackets[(f.segmentNum-1)*packetsPerSegment:], f.segmentPackets)
+			f.frameBuf = append(f.frameBuf, f.segmentBuf...)
 		}
 		if f.segmentNum == 4 {
 			// Complete frame!
@@ -71,7 +71,5 @@ func (f *frameBuilder) sequential(packetNum int) bool {
 }
 
 func (f *frameBuilder) output(outFrame *RawFrame) {
-	for packetNum, packet := range f.framePackets {
-		copy(outFrame[packetNum*vospiDataSize:], packet)
-	}
+	copy(outFrame[:], f.frameBuf)
 }

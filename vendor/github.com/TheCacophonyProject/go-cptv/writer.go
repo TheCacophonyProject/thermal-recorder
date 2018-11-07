@@ -21,6 +21,7 @@ import (
 	"github.com/TheCacophonyProject/lepton3"
 )
 
+// NewWriter creates and returns a new Writer component
 func NewWriter(w io.Writer) *Writer {
 	return &Writer{
 		bldr: NewBuilder(w),
@@ -35,6 +36,7 @@ type Writer struct {
 	t0   time.Time
 }
 
+// WriteHeader writes a CPTV file header
 func (w *Writer) WriteHeader(deviceName string) error {
 	w.t0 = time.Now()
 	fields := NewFieldWriter()
@@ -54,6 +56,7 @@ func (w *Writer) WriteHeader(deviceName string) error {
 	return w.bldr.WriteHeader(fields)
 }
 
+// WriteFrame writes a CPTV frame
 func (w *Writer) WriteFrame(frame *lepton3.Frame) error {
 	dt := uint64(time.Since(w.t0))
 	bitWidth, compFrame := w.comp.Next(frame)
@@ -64,6 +67,7 @@ func (w *Writer) WriteFrame(frame *lepton3.Frame) error {
 	return w.bldr.WriteFrame(fields, compFrame)
 }
 
+// Close closes the CPTV file
 func (w *Writer) Close() error {
 	return w.bldr.Close()
 }

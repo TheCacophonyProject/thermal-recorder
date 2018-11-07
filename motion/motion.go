@@ -94,11 +94,11 @@ func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
 func (d *motionDetector) setFloor(f, out *lepton3.Frame) *lepton3.Frame {
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			v := f[y][x]
+			v := f.Pix[y][x]
 			if v < d.tempThresh {
-				out[y][x] = d.tempThresh
+				out.Pix[y][x] = d.tempThresh
 			} else {
-				out[y][x] = v
+				out.Pix[y][x] = v
 			}
 		}
 	}
@@ -110,8 +110,8 @@ func (d *motionDetector) CountPixelsTwoCompare(f1 *lepton3.Frame, f2 *lepton3.Fr
 	var deltaCount int
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			v1 := f1[y][x]
-			v2 := f2[y][x]
+			v1 := f1.Pix[y][x]
+			v2 := f2.Pix[y][x]
 			if (v1 > 0) || (v2 > 0) {
 				nonzeroCount++
 				if (v1 > d.deltaThresh) && (v2 > d.deltaThresh) {
@@ -128,7 +128,7 @@ func (d *motionDetector) CountPixels(f1 *lepton3.Frame) (nonZeros, deltas int) {
 	var deltaCount int
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			v1 := f1[y][x]
+			v1 := f1.Pix[y][x]
 			if v1 > 0 {
 				nonzeroCount++
 				if v1 > d.deltaThresh {
@@ -173,7 +173,7 @@ func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, 
 func absDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame {
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			out[y][x] = absDiff(a[y][x], b[y][x])
+			out.Pix[y][x] = absDiff(a.Pix[y][x], b.Pix[y][x])
 		}
 	}
 	return out
@@ -182,7 +182,7 @@ func absDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame {
 func warmerDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame {
 	for y := 0; y < lepton3.FrameRows; y++ {
 		for x := 0; x < lepton3.FrameCols; x++ {
-			out[y][x] = warmerDiff(a[y][x], b[y][x])
+			out.Pix[y][x] = warmerDiff(a.Pix[y][x], b.Pix[y][x])
 		}
 	}
 	return out

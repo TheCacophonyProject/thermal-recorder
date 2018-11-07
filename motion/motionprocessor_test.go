@@ -48,7 +48,7 @@ func (tr *TestRecorder) StartRecording() error {
 }
 
 func (tr *TestRecorder) WriteFrame(frame *lepton3.Frame) error {
-	tr.frameIds[tr.index] = int(frame[0][0])
+	tr.frameIds[tr.index] = int(frame.Pix[0][0])
 	tr.index++
 	return nil
 }

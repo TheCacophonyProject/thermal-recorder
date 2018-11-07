@@ -40,22 +40,22 @@ func makeFrame(position, background, brightSpot int) *lepton3.Frame {
 	if background != 0 {
 		for y := 0; y < lepton3.FrameRows; y++ {
 			for x := 0; x < lepton3.FrameCols; x++ {
-				frame[y][x] = uint16(background)
+				frame.Pix[y][x] = uint16(background)
 			}
 		}
 	}
 
 	brightness16 := uint16(background + brightSpot)
 
-	frame[position][position] = brightness16
-	frame[position+1][position] = brightness16
-	frame[position+2][position] = brightness16
-	frame[position][position+1] = brightness16
-	frame[position+1][position+1] = brightness16
-	frame[position+2][position+1] = brightness16
-	frame[position][position+2] = brightness16
-	frame[position+1][position+2] = brightness16
-	frame[position+2][position+2] = brightness16
+	frame.Pix[position][position] = brightness16
+	frame.Pix[position+1][position] = brightness16
+	frame.Pix[position+2][position] = brightness16
+	frame.Pix[position][position+1] = brightness16
+	frame.Pix[position+1][position+1] = brightness16
+	frame.Pix[position+2][position+1] = brightness16
+	frame.Pix[position][position+2] = brightness16
+	frame.Pix[position+1][position+2] = brightness16
+	frame.Pix[position+2][position+2] = brightness16
 
 	return frame
 }

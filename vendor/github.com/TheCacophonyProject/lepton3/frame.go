@@ -11,28 +11,38 @@ import (
 // RawFrame hold the raw bytes for single frame. This is helpful for
 // transferring frames around. It can be converted to the more useful
 // Frame.
-type RawFrame [2 * FrameRows * FrameCols]byte
+type RawFrame [packetsPerFrame * vospiDataSize]byte
 
 // Frame represents the thermal readings for a single frame.
-type Frame [FrameRows][FrameCols]uint16
+type Frame struct {
+	Pix    [FrameRows][FrameCols]uint16
+	Status Telemetry
+}
 
 // FramesHz define the approximate number of frames per second emitted by the Lepton 3 camera.
 const FramesHz = 9
 
 // ToFrame converts a RawFrame to a Frame.
-func (rf *RawFrame) ToFrame(out *Frame) {
+func (rf *RawFrame) ToFrame(out *Frame) error {
+	if err := ParseTelemetry(rf[:], &out.Status); err != nil {
+		return err
+	}
+
+	rawPix := rf[telemetryPacketCount*vospiDataSize:]
 	i := 0
 	for y := 0; y < FrameRows; y++ {
 		for x := 0; x < FrameCols; x++ {
-			out[y][x] = binary.BigEndian.Uint16(rf[i : i+2])
+			out.Pix[y][x] = binary.BigEndian.Uint16(rawPix[i : i+2])
 			i += 2
 		}
 	}
+	return nil
 }
 
 // Copy sets current frame as other frame
 func (fr *Frame) Copy(orig *Frame) {
+	fr.Status = orig.Status
 	for y := 0; y < FrameRows; y++ {
-		copy(fr[y][:], orig[y][:])
+		copy(fr.Pix[y][:], orig.Pix[y][:])
 	}
 }

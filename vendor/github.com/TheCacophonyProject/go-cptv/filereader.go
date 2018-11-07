@@ -46,7 +46,7 @@ type FileReader struct {
 	f  *os.File
 }
 
-// Name returns the name of the FileReader
+// Name returns the name of the file being read
 func (fr *FileReader) Name() string {
 	return fr.f.Name()
 }
