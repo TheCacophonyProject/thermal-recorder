@@ -79,7 +79,6 @@ func MotionTestConfig() *MotionConfig {
 	config.TempThresh = 3000
 	config.DeltaThresh = 50
 	config.CountThresh = 3
-	config.NonzeroMaxPercent = 50
 	config.FrameCompareGap = 12
 	config.Verbose = false
 	config.TriggerFrames = 1

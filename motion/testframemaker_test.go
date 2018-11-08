@@ -17,15 +17,19 @@
 package motion
 
 import (
+	"time"
+
 	"github.com/TheCacophonyProject/lepton3"
 )
 
+// TODO - this is very similar to frameGen in motion_test.go. Merge them.
 type TestFrameMaker struct {
 	frameCounter       uint16
 	processor          *MotionProcessor
 	BackgroundVal      int
 	BrightSpotVal      int
 	brightSpotPosition int
+	now                time.Duration
 }
 
 func MakeTestFrameMaker(motionProcessor *MotionProcessor) *TestFrameMaker {
@@ -33,6 +37,7 @@ func MakeTestFrameMaker(motionProcessor *MotionProcessor) *TestFrameMaker {
 		processor:     motionProcessor,
 		BackgroundVal: 3300,
 		BrightSpotVal: 100,
+		now:           time.Minute,
 	}
 }
 
@@ -59,6 +64,8 @@ func (tfm *TestFrameMaker) PlayFrame(frame *lepton3.Frame) {
 
 func (tfm *TestFrameMaker) makeFrame() *lepton3.Frame {
 	frame := new(lepton3.Frame)
+	frame.Status.TimeOn = tfm.now
+	tfm.now += frameInterval
 
 	if tfm.BackgroundVal != 0 {
 		for y := 0; y < lepton3.FrameRows; y++ {

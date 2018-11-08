@@ -62,8 +62,7 @@ func TestCptvAnimalRecordings(t *testing.T) {
 		"hedgehog.cptv": "(3:32)(45:end)",
 		"possum02.cptv": "(1:end)",
 		"rat.cptv":      "(1:6)",
-		"rat02.cptv":    "(1:14)(61:92)",
-		"recalc.cptv":   "(1:497)",
+		"rat02.cptv":    "(1:23)(57:93)",
 	}
 
 	CompareDetectedPeriods(t, expectedResults, actualResults)
@@ -102,9 +101,9 @@ func TestCptvNoiseRecordings(t *testing.T) {
 
 	expectedResults := map[string]string{
 		"noise_01.cptv": "None",
-		"noise_02.cptv": "None",
+		"noise_02.cptv": "(1:53)",
 		"noise_03.cptv": "(75:79)",
-		"noise_05.cptv": "(19:76)(90:94)",
+		"noise_05.cptv": "(60:76)(90:94)",
 		"skyline.cptv":  "None",
 	}
 

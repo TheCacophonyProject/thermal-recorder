@@ -17,67 +17,22 @@
 package motion
 
 import (
+	"fmt"
 	"testing"
+	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/stretchr/testify/assert"
 )
-
-func defaultMotionParams() MotionConfig {
-	return MotionConfig{
-		TempThresh:        3000,
-		DeltaThresh:       30,
-		CountThresh:       8,
-		NonzeroMaxPercent: 50,
-		FrameCompareGap:   3,
-		WarmerOnly:        false,
-	}
-}
-
-func makeFrame(position, background, brightSpot int) *lepton3.Frame {
-	frame := new(lepton3.Frame)
-
-	if background != 0 {
-		for y := 0; y < lepton3.FrameRows; y++ {
-			for x := 0; x < lepton3.FrameCols; x++ {
-				frame.Pix[y][x] = uint16(background)
-			}
-		}
-	}
-
-	brightness16 := uint16(background + brightSpot)
-
-	frame.Pix[position][position] = brightness16
-	frame.Pix[position+1][position] = brightness16
-	frame.Pix[position+2][position] = brightness16
-	frame.Pix[position][position+1] = brightness16
-	frame.Pix[position+1][position+1] = brightness16
-	frame.Pix[position+2][position+1] = brightness16
-	frame.Pix[position][position+2] = brightness16
-	frame.Pix[position+1][position+2] = brightness16
-	frame.Pix[position+2][position+2] = brightness16
-
-	return frame
-}
-
-func MovingBoxDetections(detector *motionDetector, frames, background, brightSpot int) ([]int, []bool) {
-	results := make([]bool, frames)
-	pixels := make([]int, frames)
-
-	for i := range results {
-		results[i], pixels[i] = detector.pixelsChanged(makeFrame(10+i, background, i*brightSpot))
-	}
-	return pixels, results
-}
 
 func TestRevertsToUsingSmallerFrameIntervalWhenNotEnoughFrames_OneFrame(t *testing.T) {
 	config := defaultMotionParams()
 	config.UseOneDiffOnly = true
 	detector := NewMotionDetector(config)
 
-	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 100)
-	assert.Equal(t, []int{-1, 9, 9, 9, 18}, pixels)
-	assert.Equal(t, []bool{false, true, true, true, true}, detecteds)
+	detects, pixels := newFrameGen(detector).Movement(5)
+	assert.Equal(t, []bool{false, true, true, true, true}, detects)
+	assert.Equal(t, []int{0, 9, 9, 9, 18}, pixels)
 }
 
 func TestNoMotionDetectedIfNothingHasChanged(t *testing.T) {
@@ -85,18 +40,18 @@ func TestNoMotionDetectedIfNothingHasChanged(t *testing.T) {
 	config.UseOneDiffOnly = true
 	detector := NewMotionDetector(config)
 
-	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 0)
-	assert.Equal(t, []int{-1, 0, 0, 0, 0}, pixels)
-	assert.Equal(t, []bool{false, false, false, false, false}, detecteds)
+	detects, pixels := newFrameGen(detector).NoMovement(5)
+	assertAllFalse(t, detects)
+	assertAllZero(t, pixels)
 }
 
 func TestIfUsingTwoFramesItOnlyCountsWhereBothFramesHaveChanged(t *testing.T) {
 	config := defaultMotionParams()
 	detector := NewMotionDetector(config)
 
-	pixels, detecteds := MovingBoxDetections(detector, 6, 3300, 100)
-	assert.Equal(t, []int{-1, 0, 4, 4, 5, 9}, pixels)
-	assert.Equal(t, []bool{false, false, false, false, false, true}, detecteds)
+	detects, pixels := newFrameGen(detector).Movement(6)
+	assert.Equal(t, []bool{false, false, false, false, false, true}, detects)
+	assert.Equal(t, []int{0, 0, 4, 4, 5, 9}, pixels)
 }
 
 func TestChangeCountThresh(t *testing.T) {
@@ -104,34 +59,128 @@ func TestChangeCountThresh(t *testing.T) {
 	config.CountThresh = 4
 	detector := NewMotionDetector(config)
 
-	pixels, detecteds := MovingBoxDetections(detector, 6, 3300, 100)
-	assert.Equal(t, []int{-1, 0, 4, 4, 5, 9}, pixels)
-	assert.Equal(t, []bool{false, false, true, true, true, true}, detecteds)
+	detects, pixels := newFrameGen(detector).Movement(6)
+	assert.Equal(t, []bool{false, false, true, true, true, true}, detects)
+	assert.Equal(t, []int{0, 0, 4, 4, 5, 9}, pixels)
 }
 
-func TestSomethingMovingWhileRecalculation_TwoPoints(t *testing.T) {
+func TestSomethingMovingDuringFFC(t *testing.T) {
 	config := defaultMotionParams()
+	config.UseOneDiffOnly = true
 	config.CountThresh = 4
 	detector := NewMotionDetector(config)
 
-	pixels, detecteds := MovingBoxDetections(detector, 6, 3300, 100)
-	assert.Equal(t, []int{-1, 0, 4, 4, 5, 9}, pixels)
+	gen := newFrameGen(detector)
 
-	pixels, detecteds = MovingBoxDetections(detector, 6, 3800, 100)
-	assert.Equal(t, []int{-2, -1, 4, 4, 5, 9}, pixels)
-	assert.Equal(t, []bool{false, false, true, true, true, true}, detecteds)
+	// Fill frame loop.
+	detects, pixels := gen.NoMovement(6)
+	assertAllFalse(t, detects)
+	assertAllZero(t, pixels)
+
+	// Trigger FFC.
+	gen.FFC()
+
+	// Because of the FFC, motion should not be reported for the next
+	// 10s, even though something warm is moving.
+	detects, pixels = gen.Movement(10 * lepton3.FramesHz)
+	assertAllFalse(t, detects)
+	assertAllZero(t, pixels)
+
+	// Motion is reported again after the FFC period.
+	gen.NoMovement(3)
+	detects, pixels = gen.Movement(5)
+	assert.Equal(t, []bool{false, true, true, true, true}, detects)
+	assert.Equal(t, []int{0, 9, 9, 9, 18}, pixels)
 }
 
-func TestIfRecalculationNothingMoving_TwoPoints(t *testing.T) {
-	config := defaultMotionParams()
-	detector := NewMotionDetector(config)
+func defaultMotionParams() MotionConfig {
+	return MotionConfig{
+		TempThresh:      3000,
+		DeltaThresh:     30,
+		CountThresh:     8,
+		FrameCompareGap: 3,
+		WarmerOnly:      false,
+	}
+}
 
-	// fill buffer
-	pixels, detecteds := MovingBoxDetections(detector, 5, 3300, 0)
-	assert.Equal(t, []int{-1, 0, 0, 0, 0}, pixels)
+const frameInterval = time.Second / 9
 
-	// recalibration
-	pixels, detecteds = MovingBoxDetections(detector, 5, 3800, 0)
-	assert.Equal(t, []int{-2, -1, 0, 0, 0}, pixels)
-	assert.Equal(t, []bool{false, false, false, false, false}, detecteds)
+func newFrameGen(detector *motionDetector) *frameGen {
+	return &frameGen{
+		detector:    detector,
+		now:         time.Minute,
+		lastFFCTime: time.Second,
+	}
+}
+
+type frameGen struct {
+	detector    *motionDetector
+	now         time.Duration
+	lastFFCTime time.Duration
+}
+
+func (g *frameGen) FFC() {
+	g.lastFFCTime = g.now
+}
+
+func (g *frameGen) NoMovement(frames int) ([]bool, []int) {
+	results := make([]bool, frames)
+	pixels := make([]int, frames)
+
+	for i := range results {
+		frame := g.makeFrame(3300, 0, 0)
+		results[i], pixels[i] = g.detector.pixelsChanged(frame)
+	}
+	return results, pixels
+}
+
+func (g *frameGen) Movement(frames int) ([]bool, []int) {
+	results := make([]bool, frames)
+	pixels := make([]int, frames)
+
+	for i := range results {
+		frame := g.makeFrame(3300, 10+i, i*100)
+		results[i], pixels[i] = g.detector.pixelsChanged(frame)
+	}
+	return results, pixels
+}
+
+func (g *frameGen) makeFrame(background, warmPosition, warmTempOffset int) *lepton3.Frame {
+	frame := new(lepton3.Frame)
+	frame.Status.TimeOn = g.now
+	frame.Status.LastFFCTime = g.lastFFCTime
+	g.now += frameInterval
+
+	// Set background
+	for y := 0; y < lepton3.FrameRows; y++ {
+		for x := 0; x < lepton3.FrameCols; x++ {
+			frame.Pix[y][x] = uint16(background)
+		}
+	}
+
+	// Overlay a warm spot
+	warmTemp := uint16(background + warmTempOffset)
+	for y := warmPosition; y <= warmPosition+2; y++ {
+		for x := warmPosition; x <= warmPosition+2; x++ {
+			fmt.Println(y, x, warmTemp)
+			frame.Pix[y][x] = warmTemp
+		}
+	}
+	return frame
+}
+
+func assertAllFalse(t *testing.T, b []bool) {
+	for _, v := range b {
+		if !assert.Equal(t, false, v) {
+			return
+		}
+	}
+}
+
+func assertAllZero(t *testing.T, n []int) {
+	for _, v := range n {
+		if !assert.Equal(t, 0, v) {
+			return
+		}
+	}
 }

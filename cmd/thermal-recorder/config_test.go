@@ -50,15 +50,14 @@ func TestAllDefaults(t *testing.T) {
 			PreviewSecs: 3,
 		},
 		Motion: motion.MotionConfig{
-			TempThresh:        2900,
-			DeltaThresh:       50,
-			CountThresh:       3,
-			NonzeroMaxPercent: 50,
-			FrameCompareGap:   45,
-			UseOneDiffOnly:    true,
-			Verbose:           false,
-			TriggerFrames:     2,
-			WarmerOnly:        true,
+			TempThresh:      2900,
+			DeltaThresh:     50,
+			CountThresh:     3,
+			FrameCompareGap: 45,
+			UseOneDiffOnly:  true,
+			Verbose:         false,
+			TriggerFrames:   2,
+			WarmerOnly:      true,
 		},
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: true,
@@ -118,7 +117,6 @@ motion:
     temp-thresh: 2000
     delta-thresh: 20
     count-thresh: 1
-    nonzero-max-percent: 20
     frame-compare-gap: 90
     one-diff-only: false
     trigger-frames: 1
@@ -174,15 +172,14 @@ device-name: "aDeviceName"
 			WindowEnd:   *window.NewTimeOfDay("07:20"),
 		},
 		Motion: motion.MotionConfig{
-			TempThresh:        2000,
-			DeltaThresh:       20,
-			CountThresh:       1,
-			NonzeroMaxPercent: 20,
-			FrameCompareGap:   90,
-			UseOneDiffOnly:    false,
-			Verbose:           true,
-			TriggerFrames:     1,
-			WarmerOnly:        false,
+			TempThresh:      2000,
+			DeltaThresh:     20,
+			CountThresh:     1,
+			FrameCompareGap: 90,
+			UseOneDiffOnly:  false,
+			Verbose:         true,
+			TriggerFrames:   1,
+			WarmerOnly:      false,
 		},
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: false,

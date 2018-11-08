@@ -42,11 +42,6 @@ motion:
     # motion detection event will be triggered.
     count-thresh: 3
 
-    # Suppress motion detection if more than this percentage of the
-    # frame appears to change. This helps avoid false positives when
-    # the camera is recalibrating.
-    nonzero-max-percent: 50
-
     # When working out which pixels have changed it tries to compare
     # the current frame with one recorded this many frames ago. If there
     # aren't this many frames (eg since a recalibration) then it will use

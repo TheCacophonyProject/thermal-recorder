@@ -23,6 +23,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
@@ -161,6 +162,7 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 	}
 	defer file.Close()
 
+	now := time.Minute
 	frame := new(lepton3.Frame)
 	for {
 		if err := reader.ReadFrame(frame); err != nil {
@@ -173,6 +175,12 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 			}
 			return listener
 		}
+
+		// These CPTV files don't include timestamps so fake them for
+		// now. Without doing this the FFC detection logic gets messed
+		// up.
+		frame.Status.TimeOn = now
+
 		processor.ProcessFrame(frame)
 		listener.frameCount++
 	}
