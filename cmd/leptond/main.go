@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os/exec"
 	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
@@ -182,13 +183,28 @@ func cycleCameraPower(pinName string) error {
 		return nil
 	}
 
+	// It turns out when GPIO23 is low the camera's Vin->GND voltage
+	// was only dropping to 2.5V instead of 0V. It seems the camera is
+	// still getting some kind of power via other pins. This seems to
+	// sometimes make the camera fail to reset properly (more likely
+	// in some devices than others).
+	//
+	// Uninstalling the SPI driver disables more of the camera's pins
+	// and allows the voltage to drop to 1.2V, allowing the camera to
+	// reset reliably.
+	//
+	// Side note: uninstalling the I2C driver as well allows Vin to go
+	// to 0V but we can't practically uninstall it without breaking
+	// the RTC and ATtiny.
+	uninstallSPIDriver()
+
 	pin := gpioreg.ByName(pinName)
 
 	log.Print("turning camera power off")
 	if err := pin.Out(gpio.Low); err != nil {
 		return fmt.Errorf("failed to set camera power pin low: %v", err)
 	}
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 
 	log.Print("turning camera power on")
 	if err := pin.Out(gpio.High); err != nil {
@@ -198,5 +214,24 @@ func cycleCameraPower(pinName string) error {
 	log.Print("waiting for camera startup")
 	time.Sleep(8 * time.Second)
 	log.Print("camera should be ready")
+
+	installSPIDriver()
+
+	log.Print("host reinitialisation")
+	if _, err := host.Init(); err != nil {
+		return err
+	}
 	return nil
+}
+
+func uninstallSPIDriver() {
+	log.Print("uninstalling spi driver")
+	exec.Command("modprobe", "-r", "spi_bcm2835").Run()
+	time.Sleep(2 * time.Second)
+}
+
+func installSPIDriver() {
+	log.Print("installing spi driver")
+	exec.Command("modprobe", "spi_bcm2835").Run()
+	time.Sleep(8 * time.Second)
 }
