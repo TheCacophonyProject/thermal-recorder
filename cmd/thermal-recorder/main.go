@@ -83,14 +83,14 @@ func runMain() error {
 		return err
 	}
 
+	logConfig(conf)
+
 	if args.TestCptvFile != "" {
 		conf.Motion.Verbose = args.Verbose
 		results := NewCPTVPlaybackTester(conf).Detect(args.TestCptvFile)
 		log.Printf("Detected: %-16s Recorded: %-16s Motion frames: %d/%d", results.motionDetectedFrames, results.recordedFrames, results.motionDetectedCount, results.frameCount)
 		return nil
 	}
-
-	logConfig(conf)
 
 	log.Println("starting d-bus service")
 	err = startService(conf.OutputDir)
@@ -146,7 +146,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 
 	if conf.Throttler.ApplyThrottling {
 		minRecordingLength := conf.Recorder.MinSecs + conf.Recorder.PreviewSecs
-		throttledRecorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength)
+		throttledRecorder = throttle.NewThrottledRecorder(cptvRecorder, new(throttle.ThrottledEventRecorder), &conf.Throttler, minRecordingLength)
 		recorder = throttledRecorder
 	}
 

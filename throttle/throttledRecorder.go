@@ -35,8 +35,10 @@ import (
 // detecting movement).  This bucket is completely emptied whenever a new recording starts.   It is filled whenever
 // the recorder is asked to record.  This results in a new recording only after device has been throttled for a
 // given time period.
+
 type ThrottledRecorder struct {
 	recorder              recorder.Recorder
+	listener              ThrottledEventListener
 	mainBucket            TokenBucket
 	sparseBucket          TokenBucket
 	recording             bool
@@ -48,7 +50,14 @@ type ThrottledRecorder struct {
 	refillRate            float64
 }
 
-func NewThrottledRecorder(baseRecorder recorder.Recorder, config *ThrottlerConfig, minSeconds int) *ThrottledRecorder {
+type ThrottledEventListener interface {
+	WhenThrottled()
+}
+
+func NewThrottledRecorder(baseRecorder recorder.Recorder,
+	eventListener ThrottledEventListener,
+	config *ThrottlerConfig,
+	minSeconds int) *ThrottledRecorder {
 	framesHz := uint16(lepton3.FramesHz)
 	sparseFrames := config.SparseLength * framesHz
 	minFrames := uint16(minSeconds) * framesHz
@@ -61,6 +70,7 @@ func NewThrottledRecorder(baseRecorder recorder.Recorder, config *ThrottlerConfi
 	supBucketSize := float64(config.SparseAfter * framesHz)
 	return &ThrottledRecorder{
 		recorder:              baseRecorder,
+		listener:              eventListener,
 		mainBucket:            TokenBucket{tokens: mainBucketSize, size: mainBucketSize},
 		sparseBucket:          TokenBucket{size: supBucketSize},
 		minRecordingLength:    float64(minFrames),
@@ -96,6 +106,7 @@ func (throttler *ThrottledRecorder) StartRecording() error {
 	} else {
 		throttler.recording = false
 		log.Print("Recording throttled")
+		throttler.listener.WhenThrottled()
 		return nil
 	}
 }
@@ -122,6 +133,10 @@ func (throttler *ThrottledRecorder) WriteFrame(frame *lepton3.Frame) error {
 		if throttler.mainBucket.HasTokens(1) {
 			return throttler.recorder.WriteFrame(frame)
 		} else {
+			if throttler.throttledFrames == 0 && throttler.listener != nil {
+				log.Printf("throttling eventing")
+				throttler.listener.WhenThrottled()
+			}
 			throttler.throttledFrames++
 		}
 	}
