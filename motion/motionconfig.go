@@ -24,6 +24,7 @@ type MotionConfig struct {
 	UseOneDiffOnly  bool   `yaml:"one-diff-only"`
 	TriggerFrames   int    `yaml:"trigger-frames"`
 	WarmerOnly      bool   `yaml:"warmer-only"`
+	EdgePixels      int    `yaml:"edge-pixels"`
 	Verbose         bool   `yaml:"verbose"`
 }
 
@@ -37,6 +38,7 @@ func DefaultMotionConfig() MotionConfig {
 		TriggerFrames:   2,
 		UseOneDiffOnly:  true,
 		WarmerOnly:      true,
+		EdgePixels:      1,
 	}
 }
 

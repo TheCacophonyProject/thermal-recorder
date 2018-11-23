@@ -63,6 +63,10 @@ motion:
     # Otherwise there are ghost pixels where the animal used to be but isn't now.
     warmer-only: true
 
+    # The number of outermost pixels on each edge (top, left, right, bottom) to ignore
+    # when running motion detection.
+    edge-pixels: 1
+
     # Verbose gives lots of information on which pixels are detected as changed.
     verbose: false
 
