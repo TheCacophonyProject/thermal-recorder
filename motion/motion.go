@@ -40,6 +40,9 @@ func NewMotionDetector(args MotionConfig) *motionDetector {
 	d.tempThresh = args.TempThresh
 	d.verbose = args.Verbose
 	d.warmerOnly = args.WarmerOnly
+	d.start = args.EdgePixels
+	d.columnStop = lepton3.FrameCols - args.EdgePixels
+	d.rowStop = lepton3.FrameRows - args.EdgePixels
 
 	return d
 }
@@ -55,6 +58,9 @@ type motionDetector struct {
 	framesGap     uint64
 	verbose       bool
 	warmerOnly    bool
+	start         int
+	rowStop       int
+	columnStop    int
 }
 
 func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
@@ -72,9 +78,9 @@ func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
 
 	diffFrame := d.diffFrames.Current()
 	if d.warmerOnly {
-		warmerDiffFrames(processedFrame, compareFrame, diffFrame)
+		d.warmerDiffFrames(processedFrame, compareFrame, diffFrame)
 	} else {
-		absDiffFrames(processedFrame, compareFrame, diffFrame)
+		d.absDiffFrames(processedFrame, compareFrame, diffFrame)
 	}
 	prevDiffFrame := d.diffFrames.Move()
 
@@ -100,8 +106,8 @@ func isAffectedByFFC(f *lepton3.Frame) bool {
 }
 
 func (d *motionDetector) setFloor(f, out *lepton3.Frame) *lepton3.Frame {
-	for y := 0; y < lepton3.FrameRows; y++ {
-		for x := 0; x < lepton3.FrameCols; x++ {
+	for y := d.start; y < d.rowStop; y++ {
+		for x := d.start; x < d.columnStop; x++ {
 			v := f.Pix[y][x]
 			if v < d.tempThresh {
 				out.Pix[y][x] = d.tempThresh
@@ -115,8 +121,8 @@ func (d *motionDetector) setFloor(f, out *lepton3.Frame) *lepton3.Frame {
 
 func (d *motionDetector) CountPixelsTwoCompare(f1 *lepton3.Frame, f2 *lepton3.Frame) (deltas int) {
 	var deltaCount int
-	for y := 0; y < lepton3.FrameRows; y++ {
-		for x := 0; x < lepton3.FrameCols; x++ {
+	for y := d.start; y < d.rowStop; y++ {
+		for x := d.start; x < d.columnStop; x++ {
 			v1 := f1.Pix[y][x]
 			v2 := f2.Pix[y][x]
 			if (v1 > d.deltaThresh) && (v2 > d.deltaThresh) {
@@ -129,8 +135,8 @@ func (d *motionDetector) CountPixelsTwoCompare(f1 *lepton3.Frame, f2 *lepton3.Fr
 
 func (d *motionDetector) CountPixels(f1 *lepton3.Frame) (deltas int) {
 	var deltaCount int
-	for y := 0; y < lepton3.FrameRows; y++ {
-		for x := 0; x < lepton3.FrameCols; x++ {
+	for y := d.start; y < d.rowStop; y++ {
+		for x := d.start; x < d.columnStop; x++ {
 			v1 := f1.Pix[y][x]
 			if v1 > d.deltaThresh {
 				if d.verbose {
@@ -157,18 +163,18 @@ func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, 
 	return deltaCount >= d.countThresh, deltaCount
 }
 
-func absDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame {
-	for y := 0; y < lepton3.FrameRows; y++ {
-		for x := 0; x < lepton3.FrameCols; x++ {
+func (d *motionDetector) absDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame {
+	for y := d.start; y < d.rowStop; y++ {
+		for x := d.start; x < d.columnStop; x++ {
 			out.Pix[y][x] = absDiff(a.Pix[y][x], b.Pix[y][x])
 		}
 	}
 	return out
 }
 
-func warmerDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame {
-	for y := 0; y < lepton3.FrameRows; y++ {
-		for x := 0; x < lepton3.FrameCols; x++ {
+func (d *motionDetector) warmerDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame {
+	for y := d.start; y < d.rowStop; y++ {
+		for x := d.start; x < d.columnStop; x++ {
 			out.Pix[y][x] = warmerDiff(a.Pix[y][x], b.Pix[y][x])
 		}
 	}

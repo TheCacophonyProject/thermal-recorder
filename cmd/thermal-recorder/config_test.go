@@ -58,6 +58,7 @@ func TestAllDefaults(t *testing.T) {
 			Verbose:         false,
 			TriggerFrames:   2,
 			WarmerOnly:      true,
+			EdgePixels:      1,
 		},
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: true,
@@ -121,6 +122,7 @@ motion:
     one-diff-only: false
     trigger-frames: 1
     verbose: true
+    edge-pixels: 3
     warmer-only: false
 throttler:
     apply-throttling: false
@@ -180,6 +182,7 @@ device-name: "aDeviceName"
 			Verbose:         true,
 			TriggerFrames:   1,
 			WarmerOnly:      false,
+			EdgePixels:      3,
 		},
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: false,

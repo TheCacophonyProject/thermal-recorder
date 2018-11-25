@@ -62,7 +62,7 @@ func TestCptvAnimalRecordings(t *testing.T) {
 		"hedgehog.cptv": "(3:32)(45:end)",
 		"possum02.cptv": "(1:end)",
 		"rat.cptv":      "(1:6)",
-		"rat02.cptv":    "(1:23)(57:93)",
+		"rat02.cptv":    "(1:23)(57:90)",
 	}
 
 	CompareDetectedPeriods(t, expectedResults, actualResults)
@@ -103,8 +103,21 @@ func TestCptvNoiseRecordings(t *testing.T) {
 		"noise_01.cptv": "None",
 		"noise_02.cptv": "(1:53)",
 		"noise_03.cptv": "(75:79)",
-		"noise_05.cptv": "(60:76)(90:94)",
+		"noise_05.cptv": "(60:62)(91:94)",
 		"skyline.cptv":  "None",
+	}
+
+	CompareDetectedPeriods(t, expectedResults, actualResults)
+}
+
+func TestCptvFunnyEdgeNoise(t *testing.T) {
+	config := CurrentConfig()
+	config.Motion.DeltaThresh = 40
+
+	actualResults := NewCPTVPlaybackTester(config).TestAllCPTVFiles(GetBaseDir() + "/motiontest/edge")
+
+	expectedResults := map[string]string{
+		"20181123-022114.cptv": "None",
 	}
 
 	CompareDetectedPeriods(t, expectedResults, actualResults)
@@ -113,8 +126,8 @@ func TestCptvNoiseRecordings(t *testing.T) {
 // DoTestResearchAnimalRecordings - change this to test to run though different scenarios of test
 // calculations.   It will output the results to /motiontest/results
 func DoTestResearchAnimalRecordings(t *testing.T) {
-	testname := "cut off - animals2"
-	searchDir := GetBaseDir() + "/motiontest/animals"
+	testname := "lines "
+	searchDir := GetBaseDir() + "/motiontest/adhoc/lines"
 
 	f, err := os.Create(GetBaseDir() + "/motiontest/results/" + testname)
 	if err != nil {
@@ -124,21 +137,16 @@ func DoTestResearchAnimalRecordings(t *testing.T) {
 	writer := bufio.NewWriter(f)
 
 	config := CurrentConfig()
-	config.Motion.TempThresh = 2900
-	ExperimentAndWriteResultsToFile(testname+"2900", config, searchDir, writer)
+	config.Motion.EdgePixels = 0
+	config.Motion.DeltaThresh = 40
+	config.Motion.Verbose = true
 
-	config.Motion.TempThresh = 2800
-	ExperimentAndWriteResultsToFile(testname+"2800", config, searchDir, writer)
+	ExperimentAndWriteResultsToFile(testname+"0", config, searchDir, writer)
 
-	config.Motion.TempThresh = 2700
-	ExperimentAndWriteResultsToFile(testname+"2700", config, searchDir, writer)
+	config.Motion.EdgePixels = 1
+	ExperimentAndWriteResultsToFile(testname+"1", config, searchDir, writer)
 
-	config.Motion.TempThresh = 2500
-	ExperimentAndWriteResultsToFile(testname+"2500", config, searchDir, writer)
-
-	ExperimentAndWriteResultsToFile("Current config", CurrentConfig(), searchDir, writer)
-
-	ExperimentAndWriteResultsToFile("Old default", OldDefaultConfig(), searchDir, writer)
+	t.Fail()
 }
 
 func ExperimentAndWriteResultsToFile(name string, config *Config, dir string, writer *bufio.Writer) {

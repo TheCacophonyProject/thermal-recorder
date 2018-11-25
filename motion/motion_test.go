@@ -18,6 +18,7 @@ package motion
 
 import (
 	"fmt"
+	"log"
 	"testing"
 	"time"
 
@@ -64,6 +65,64 @@ func TestChangeCountThresh(t *testing.T) {
 	assert.Equal(t, []int{0, 0, 4, 4, 5, 9}, pixels)
 }
 
+func TestIgnoresEdgePixel(t *testing.T) {
+	config := defaultMotionParams()
+	config.EdgePixels = 1
+	detector := NewMotionDetector(config)
+
+	detects, pixels := newFrameGen(detector).MovementInColumn(0, 4)
+	assert.Equal(t, []bool{false, false, false, false}, detects)
+	assert.Equal(t, []int{0, 0, 0, 0}, pixels)
+
+	detects, pixels = newFrameGen(detector).MovementInColumn(lepton3.FrameCols-1, 4)
+	assert.Equal(t, []bool{false, false, false, false}, detects)
+	assert.Equal(t, []int{0, 0, 0, 0}, pixels)
+
+	detects, pixels = newFrameGen(detector).MovementInRow(0, 4)
+	assert.Equal(t, []bool{false, false, false, false}, detects)
+	assert.Equal(t, []int{0, 0, 0, 0}, pixels)
+
+	detects, pixels = newFrameGen(detector).MovementInRow(lepton3.FrameRows-1, 4)
+	assert.Equal(t, []bool{false, false, false, false}, detects)
+	assert.Equal(t, []int{0, 0, 0, 0}, pixels)
+}
+
+func TestDetectsAfterEdgePixel(t *testing.T) {
+	config := defaultMotionParams()
+	config.EdgePixels = 1
+	config.WarmerOnly = true
+	config.CountThresh = 4
+	detector := NewMotionDetector(config)
+
+	detects, pixels := newFrameGen(detector).MovementInColumn(1, 4)
+	assert.Equal(t, []bool{false, false, true, true}, detects)
+	assert.Equal(t, []int{0, 0, 6, 6}, pixels)
+
+	detects, pixels = newFrameGen(detector).MovementInColumn(lepton3.FrameCols-2, 4)
+	assert.Equal(t, []bool{false, true, true, true}, detects)
+	assert.Equal(t, []int{0, 6, 6, 6}, pixels)
+
+	detects, pixels = newFrameGen(detector).MovementInRow(1, 4)
+	assert.Equal(t, []bool{false, true, true, true}, detects)
+	assert.Equal(t, []int{0, 6, 6, 6}, pixels)
+
+	detects, pixels = newFrameGen(detector).MovementInRow(lepton3.FrameRows-2, 4)
+	assert.Equal(t, []bool{false, true, true, true}, detects)
+	assert.Equal(t, []int{0, 6, 6, 6}, pixels)
+}
+
+func TestCanChangeEdgePixelsValue(t *testing.T) {
+	config := defaultMotionParams()
+	config.EdgePixels = 0
+	config.WarmerOnly = true
+	config.CountThresh = 4
+	detector := NewMotionDetector(config)
+
+	detects, pixels := newFrameGen(detector).MovementInColumn(0, 4)
+	assert.Equal(t, []bool{false, false, true, true}, detects)
+	assert.Equal(t, []int{0, 0, 6, 6}, pixels)
+}
+
 func TestSomethingMovingDuringFFC(t *testing.T) {
 	config := defaultMotionParams()
 	config.UseOneDiffOnly = true
@@ -100,6 +159,7 @@ func defaultMotionParams() MotionConfig {
 		CountThresh:     8,
 		FrameCompareGap: 3,
 		WarmerOnly:      false,
+		EdgePixels:      1,
 	}
 }
 
@@ -128,7 +188,7 @@ func (g *frameGen) NoMovement(frames int) ([]bool, []int) {
 	pixels := make([]int, frames)
 
 	for i := range results {
-		frame := g.makeFrame(3300, 0, 0)
+		frame := g.makeSpot(3300, 0, 0)
 		results[i], pixels[i] = g.detector.pixelsChanged(frame)
 	}
 	return results, pixels
@@ -139,13 +199,36 @@ func (g *frameGen) Movement(frames int) ([]bool, []int) {
 	pixels := make([]int, frames)
 
 	for i := range results {
-		frame := g.makeFrame(3300, 10+i, i*100)
+		frame := g.makeSpot(3300, 10+i, i*100)
 		results[i], pixels[i] = g.detector.pixelsChanged(frame)
 	}
 	return results, pixels
 }
 
-func (g *frameGen) makeFrame(background, warmPosition, warmTempOffset int) *lepton3.Frame {
+func (g *frameGen) MovementInColumn(col, frames int) ([]bool, []int) {
+	results := make([]bool, frames)
+	pixels := make([]int, frames)
+
+	for i := range results {
+		log.Println(i)
+		frame := g.makeColSpot(3300, 10+5*(i+1), col, (i+1)*100)
+		results[i], pixels[i] = g.detector.pixelsChanged(frame)
+	}
+	return results, pixels
+}
+
+func (g *frameGen) MovementInRow(row, frames int) ([]bool, []int) {
+	results := make([]bool, frames)
+	pixels := make([]int, frames)
+
+	for i := range results {
+		frame := g.makeRowSpot(3300, row, 10+5*(i+1), (i+1)*100)
+		results[i], pixels[i] = g.detector.pixelsChanged(frame)
+	}
+	return results, pixels
+}
+
+func (g *frameGen) setupFrame(background int) *lepton3.Frame {
 	frame := new(lepton3.Frame)
 	frame.Status.TimeOn = g.now
 	frame.Status.LastFFCTime = g.lastFFCTime
@@ -158,6 +241,13 @@ func (g *frameGen) makeFrame(background, warmPosition, warmTempOffset int) *lept
 		}
 	}
 
+	return frame
+}
+
+func (g *frameGen) makeSpot(background, warmPosition, warmTempOffset int) *lepton3.Frame {
+
+	frame := g.setupFrame(background)
+
 	// Overlay a warm spot
 	warmTemp := uint16(background + warmTempOffset)
 	for y := warmPosition; y <= warmPosition+2; y++ {
@@ -165,6 +255,30 @@ func (g *frameGen) makeFrame(background, warmPosition, warmTempOffset int) *lept
 			fmt.Println(y, x, warmTemp)
 			frame.Pix[y][x] = warmTemp
 		}
+	}
+	return frame
+}
+
+func (g *frameGen) makeColSpot(background, startRow, col, warmTempOffset int) *lepton3.Frame {
+
+	frame := g.setupFrame(background)
+
+	// Overlay a some of column
+	warmTemp := uint16(background + warmTempOffset)
+	for y := startRow; y <= startRow+10; y++ {
+		frame.Pix[y][col] = warmTemp
+	}
+	return frame
+}
+
+func (g *frameGen) makeRowSpot(background, row, startCol, warmTempOffset int) *lepton3.Frame {
+
+	frame := g.setupFrame(background)
+
+	// Overlay a some of column
+	warmTemp := uint16(background + warmTempOffset)
+	for x := startCol; x <= startCol+10; x++ {
+		frame.Pix[row][x] = warmTemp
 	}
 	return frame
 }
