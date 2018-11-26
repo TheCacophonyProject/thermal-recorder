@@ -1,8 +1,17 @@
 language: go
 
 go:
-  - "1.9.x"
   - "1.10.x"
+  - "1.11.x"
 
 script:
   - go vet ./... && go test ./...
+
+# calls goreleaser
+deploy:
+- provider: script
+  skip_cleanup: true
+  script: curl -sL https://git.io/goreleaser | bash
+  on:
+    tags: true
+    go: "1.11.x"
