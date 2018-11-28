@@ -28,23 +28,35 @@ import (
 
 	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
+	yaml "gopkg.in/yaml.v2"
 )
 
 func NewCPTVFileRecorder(config *Config) *CPTVFileRecorder {
-	writer := new(CPTVFileRecorder)
-	writer.outputDir = config.OutputDir
-	writer.conf = config
-	return writer
+	motionYAML, err := yaml.Marshal(config.Motion)
+	if err != nil {
+		panic(fmt.Sprintf("failed to convert motion config to YAML: %v", err))
+	}
+	return &CPTVFileRecorder{
+		outputDir: config.OutputDir,
+		header: cptv.Header{
+			DeviceName:   config.DeviceName,
+			PreviewSecs:  config.Recorder.PreviewSecs,
+			MotionConfig: string(motionYAML),
+		},
+		minDiskSpace: config.MinDiskSpace,
+	}
 }
 
 type CPTVFileRecorder struct {
-	writer    *cptv.FileWriter
-	outputDir string
-	conf      *Config
+	outputDir    string
+	header       cptv.Header
+	minDiskSpace uint64
+
+	writer *cptv.FileWriter
 }
 
 func (cfr *CPTVFileRecorder) CheckCanRecord() error {
-	enoughSpace, err := checkDiskSpace(cfr.conf.MinDiskSpace, cfr.outputDir)
+	enoughSpace, err := checkDiskSpace(cfr.minDiskSpace, cfr.outputDir)
 	if err != nil {
 		return fmt.Errorf("Problem with checking disk space: %v", err)
 	} else if !enoughSpace {
@@ -57,16 +69,18 @@ func (fw *CPTVFileRecorder) StartRecording() error {
 	filename := filepath.Join(fw.outputDir, newRecordingTempName())
 	log.Printf("recording started: %s", filename)
 
-	var err error
-	if fw.writer, err = cptv.NewFileWriter(filename); err != nil {
+	writer, err := cptv.NewFileWriter(filename)
+	if err != nil {
 		return err
 	}
 
-	if err = fw.writer.WriteHeader(fw.conf.DeviceName); err != nil {
-		fw.Stop()
+	if err = writer.WriteHeader(fw.header); err != nil {
+		writer.Close()
+		return err
 	}
 
-	return err
+	fw.writer = writer
+	return nil
 }
 
 func (fw *CPTVFileRecorder) StopRecording() error {
