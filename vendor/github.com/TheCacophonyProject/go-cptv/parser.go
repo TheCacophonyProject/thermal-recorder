@@ -38,7 +38,8 @@ func NewParser(r io.Reader) (*Parser, error) {
 // Parser is the low-level type for pulling apart the sections and
 // fields of a CPTV file. See Reader for a high-level interface.
 type Parser struct {
-	r nReader
+	r       nReader
+	version int
 }
 
 // Header parses a CPTV file header from the open file.
@@ -49,9 +50,14 @@ func (p *Parser) Header() (Fields, error) {
 		return nil, errors.New("magic not found")
 	}
 
-	if err := p.checkByte("version", version); err != nil {
+	versionByte, err := p.r.ReadByte()
+	if err != nil {
 		return nil, err
 	}
+	if versionByte == 0 || versionByte > version {
+		return nil, errors.New("unsupported CPTV version")
+	}
+	p.version = int(versionByte)
 
 	if err := p.checkByte("section", headerSection); err != nil {
 		return nil, err
