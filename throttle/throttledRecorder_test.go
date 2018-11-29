@@ -30,6 +30,7 @@ const MIN_FRAMES_PER_RECORDING int = 9
 const SPARSE_LENGTH int = 18
 
 var countRecorder CountWritesRecorder
+var throttledRecorder ThrottledCounter
 
 func DefaultTestThrottleConfig() *ThrottlerConfig {
 	return &ThrottlerConfig{
@@ -42,15 +43,16 @@ func DefaultTestThrottleConfig() *ThrottlerConfig {
 }
 
 type ThrottledCounter struct {
-	count int
+	throttledEvents int
 }
 
-func (tc ThrottledCounter) WhenThrottled() {
-	tc.count++
+func (tc *ThrottledCounter) WhenThrottled() {
+	tc.throttledEvents++
 }
 
 func NewTestThrottledRecorder() (*CountWritesRecorder, *ThrottledRecorder) {
-	return &countRecorder, NewThrottledRecorder(&countRecorder, new(ThrottledCounter), DefaultTestThrottleConfig(), 1)
+	throttledRecorder.throttledEvents = 0
+	return &countRecorder, NewThrottledRecorder(&countRecorder, &throttledRecorder, DefaultTestThrottleConfig(), 1)
 }
 
 type CountWritesRecorder struct {
@@ -91,9 +93,10 @@ func TestOnlyWritesUntilBucketIsFull(t *testing.T) {
 
 	PlayRecordingFrames(recorder, 50)
 	assert.Equal(t, THROTTLE_FRAMES, baseRecorder.writes)
+	assert.Equal(t, 1, throttledRecorder.throttledEvents)
 }
 
-func TestCanRecordTwice(t *testing.T) {
+func TestCanRecordTwiceWithoutThrottling(t *testing.T) {
 	baseRecorder, recorder := NewTestThrottledRecorder()
 
 	PlayRecordingFrames(recorder, 10)
@@ -202,4 +205,28 @@ func TestUsingDifferentRefillRates(t *testing.T) {
 	// Sparse count restarts with start of this recording
 	PlayRecordingFrames(recorder, 60)
 	assert.Equal(t, 9, countRecorder.writes)
+}
+
+func TestSendsEventsWhenThrottlingOccursDuringRecording(t *testing.T) {
+
+	_, recorder := NewTestThrottledRecorder()
+
+	PlayRecordingFrames(recorder, 10)
+	assert.Equal(t, 0, throttledRecorder.throttledEvents)
+
+	PlayRecordingFrames(recorder, 40)
+	assert.Equal(t, 1, throttledRecorder.throttledEvents)
+}
+
+func TestSendsEventsWhenRecordingDoesntEvenStart(t *testing.T) {
+
+	_, recorder := NewTestThrottledRecorder()
+
+	PlayRecordingFrames(recorder, 50)
+	assert.Equal(t, 1, throttledRecorder.throttledEvents)
+
+	PlayNonRecordingFrames(recorder, MIN_FRAMES_PER_RECORDING-2)
+
+	PlayRecordingFrames(recorder, 50)
+	assert.Equal(t, 2, throttledRecorder.throttledEvents)
 }

@@ -92,6 +92,8 @@ func runMain() error {
 		return nil
 	}
 
+	logConfig(conf)
+
 	log.Println("starting d-bus service")
 	err = startService(conf.OutputDir)
 	if err != nil {

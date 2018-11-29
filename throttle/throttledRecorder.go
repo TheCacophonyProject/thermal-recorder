@@ -105,8 +105,10 @@ func (throttler *ThrottledRecorder) StartRecording() error {
 		return throttler.recorder.StartRecording()
 	} else {
 		throttler.recording = false
-		log.Print("Recording throttled")
-		throttler.listener.WhenThrottled()
+		log.Print("Recording not started - currently throttled")
+		if throttler.listener != nil {
+			throttler.listener.WhenThrottled()
+		}
 		return nil
 	}
 }
@@ -134,7 +136,7 @@ func (throttler *ThrottledRecorder) WriteFrame(frame *lepton3.Frame) error {
 			return throttler.recorder.WriteFrame(frame)
 		} else {
 			if throttler.throttledFrames == 0 && throttler.listener != nil {
-				log.Printf("throttling eventing")
+				log.Printf("Recording throttled.")
 				throttler.listener.WhenThrottled()
 			}
 			throttler.throttledFrames++
