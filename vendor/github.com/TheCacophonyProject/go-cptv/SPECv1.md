@@ -42,7 +42,7 @@ A field is represented as follows:
 The data format always starts with:
 
 * 4 magic bytes: "CPTV"
-* 1 byte: version code (1 at this stage)
+* 1 byte: version code: 1
 
 ## Header
 

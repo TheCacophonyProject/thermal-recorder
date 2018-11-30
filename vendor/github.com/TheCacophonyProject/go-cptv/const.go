@@ -16,20 +16,23 @@ package cptv
 
 const (
 	magic        = "CPTV"
-	version byte = 0x01
+	version byte = 0x02
 
 	headerSection = 'H'
 	frameSection  = 'F'
 
 	// Header field keys
-	Timestamp   byte = 'T'
-	XResolution byte = 'X'
-	YResolution byte = 'Y'
-	Compression byte = 'C'
-	DeviceName  byte = 'D'
+	Timestamp    byte = 'T'
+	XResolution  byte = 'X'
+	YResolution  byte = 'Y'
+	Compression  byte = 'C'
+	DeviceName   byte = 'D'
+	MotionConfig byte = 'M'
+	PreviewSecs  byte = 'P'
 
 	// Frame field keys
-	Offset    byte = 't'
-	BitWidth  byte = 'w'
-	FrameSize byte = 'f'
+	TimeOn      byte = 't'
+	BitWidth    byte = 'w'
+	FrameSize   byte = 'f'
+	LastFFCTime byte = 'c'
 )

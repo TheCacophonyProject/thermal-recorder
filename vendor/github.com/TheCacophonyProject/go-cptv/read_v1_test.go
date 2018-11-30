@@ -15,27 +15,38 @@
 package cptv
 
 import (
-	"bytes"
+	"io"
 	"testing"
+	"time"
 
+	"github.com/TheCacophonyProject/lepton3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
-func TestReaderFrameCount(t *testing.T) {
-	frame := makeTestFrame()
-	cptvBytes := new(bytes.Buffer)
-
-	w := NewWriter(cptvBytes)
-	require.NoError(t, w.WriteHeader("nz43"))
-	require.NoError(t, w.WriteFrame(frame))
-	require.NoError(t, w.WriteFrame(frame))
-	require.NoError(t, w.WriteFrame(frame))
-	require.NoError(t, w.Close())
-
-	r, err := NewReader(cptvBytes)
+func TestReadV1File(t *testing.T) {
+	r, err := NewFileReader("v1.cptv")
 	require.NoError(t, err)
-	c, err := r.FrameCount()
-	require.NoError(t, err)
-	assert.Equal(t, 3, c)
+	defer r.Close()
+
+	require.Equal(t, 1, r.Version())
+	assert.Equal(t, "livingsprings03", r.DeviceName())
+	assert.Equal(t, time.Date(2018, 9, 6, 9, 21, 25, 0, time.UTC), r.Timestamp().UTC().Truncate(time.Second))
+
+	frame := new(lepton3.Frame)
+	count := 0
+	for {
+		err := r.ReadFrame(frame)
+		if err == io.EOF {
+			break
+		}
+		require.NoError(t, err)
+
+		// Unsupported fields in v1.
+		assert.Equal(t, time.Duration(0), frame.Status.TimeOn)
+		assert.Equal(t, time.Duration(0), frame.Status.LastFFCTime)
+
+		count++
+	}
+	assert.Equal(t, 100, count)
 }

@@ -4,8 +4,10 @@
 
 This package implements a Go package for generating and consuming
 Cacophony Project Thermal Video (CPTV) files. For more details on
-these files see the [specification](https://github.com/TheCacophonyProject/go-cptv/blob/master/SPEC.md).
+these files see the specifications:
 
+* v1: (https://github.com/TheCacophonyProject/go-cptv/blob/master/SPECv1.md)
+* v2: (https://github.com/TheCacophonyProject/go-cptv/blob/master/SPECv2.md) (implementation in progress)
 
 ## Example Usage
 
@@ -39,5 +41,3 @@ func writeFrames(frames []*lepton3.Frame) error {
 ### Reading CPTV Files
 
 See [cptvtool](https://github.com/TheCacophonyProject/go-cptv/tree/master/cptvtool) for a read example.
-
-
