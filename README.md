@@ -7,12 +7,14 @@ project's own CPTV format.
 
 ## Releases
 
-The software uses the [GoReleaser](https://goreleaser.com) tool to
-automate releases. To produce a release:
+Releases are built using TravisCI. To create a release:
 
 * Tag the release with an annotated tag. For example:
   `git tag -a "v1.4" -m "1.4 release"`
 * Push the tag to Github: `git push origin v1.4`
-* Travis should run automatically and create the release.
+* TravisCI will see the pushed tag, run the tests, create a release
+  package and create a
+  [Github Release](https://github.com/TheCacophonyProject/thermal-recorder/releases).
 
-The configuration for GoReleaser can be found in `.goreleaser.yml`.
+For more about the mechanics of how releases work, see `travis.yml`
+and `.goreleaser.yml`.
