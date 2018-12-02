@@ -47,6 +47,11 @@ type Reader struct {
 	header Fields
 }
 
+// Version returns the version number of the CPTV file.
+func (r *Reader) Version() int {
+	return r.parser.version
+}
+
 // Timestamp returns the CPTV timestamp. A zero time is returned if
 // the field wasn't present (shouldn't happen).
 func (r *Reader) Timestamp() time.Time {
@@ -62,6 +67,20 @@ func (r *Reader) DeviceName() string {
 	return name
 }
 
+// PreviewSecs returns the number of seconds included in the recording
+// before motion was detected. Returns 0 if this field is not included.
+func (r *Reader) PreviewSecs() int {
+	secs, _ := r.header.Uint8(PreviewSecs)
+	return int(secs)
+}
+
+// MotionConfig returns the YAML configuration for the motion detector
+// that was in use when this CPTV file was recorded.
+func (r *Reader) MotionConfig() string {
+	conf, _ := r.header.String(MotionConfig)
+	return conf
+}
+
 // ReadFrame extracts and decompresses the next frame in a CPTV
 // recording. At the end of the recording an io.EOF error will be
 // returned.
@@ -74,6 +93,20 @@ func (r *Reader) ReadFrame(out *lepton3.Frame) error {
 	if err != nil {
 		return err
 	}
+
+	// This field is garbage below v2 so ignore it for older files.
+	if r.parser.version >= 2 {
+		timeOn, err := fields.Uint32(TimeOn)
+		if err == nil {
+			out.Status.TimeOn = millisToDuration(timeOn)
+		}
+	}
+
+	lastFFCTime, err := fields.Uint32(LastFFCTime)
+	if err == nil {
+		out.Status.LastFFCTime = millisToDuration(lastFFCTime)
+	}
+
 	return r.decomp.Next(bitWidth, &nReader{frameReader}, out)
 }
 
@@ -93,4 +126,8 @@ func (r *Reader) FrameCount() (int, error) {
 		count++
 	}
 	return count, nil
+}
+
+func millisToDuration(ms uint32) time.Duration {
+	return time.Duration(ms) * time.Millisecond
 }
