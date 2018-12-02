@@ -171,7 +171,7 @@ func TestCanHaveNoSparseRecordings(t *testing.T) {
 		SparseAfter:     11,
 		SparseLength:    0,
 	}
-	recorder := NewThrottledRecorder(baseRecorder, new(ThrottledCounter), config, 1)
+	recorder := NewThrottledRecorder(baseRecorder, nil, config, 1)
 
 	PlayRecordingFrames(recorder, 50)
 	assert.Equal(t, THROTTLE_FRAMES, baseRecorder.writes)
@@ -187,7 +187,7 @@ func TestUsingDifferentRefillRates(t *testing.T) {
 	config := DefaultTestThrottleConfig()
 	config.RefillRate = 3
 
-	recorder := NewThrottledRecorder(&countRecorder, new(ThrottledCounter), config, 1)
+	recorder := NewThrottledRecorder(&countRecorder, nil, config, 1)
 	// fill bucket to trigger sparse recording
 	PlayRecordingFrames(recorder, THROTTLE_FRAMES)
 	PlayNonRecordingFrames(recorder, 5)
@@ -197,7 +197,7 @@ func TestUsingDifferentRefillRates(t *testing.T) {
 	assert.Equal(t, 15, countRecorder.writes)
 
 	config.RefillRate = .3
-	recorder = NewThrottledRecorder(&countRecorder, new(ThrottledCounter), config, 1)
+	recorder = NewThrottledRecorder(&countRecorder, nil, config, 1)
 	// fill bucket to trigger sparse recording
 	PlayRecordingFrames(recorder, THROTTLE_FRAMES)
 	PlayNonRecordingFrames(recorder, 31)
