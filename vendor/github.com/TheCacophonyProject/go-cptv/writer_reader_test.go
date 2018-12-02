@@ -25,15 +25,79 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestWriterAndReader(t *testing.T) {
+func TestRoundTripHeaderDefaults(t *testing.T) {
+	cptvBytes := new(bytes.Buffer)
+
+	w := NewWriter(cptvBytes)
+	require.NoError(t, w.WriteHeader(Header{}))
+	require.NoError(t, w.Close())
+
+	r, err := NewReader(cptvBytes)
+	require.NoError(t, err)
+	assert.Equal(t, 2, r.Version())
+	assert.True(t, time.Since(r.Timestamp()) < time.Minute) // "now" was used
+	assert.Equal(t, "", r.DeviceName())
+	assert.Equal(t, 0, r.PreviewSecs())
+	assert.Equal(t, "", r.MotionConfig())
+}
+
+func TestRoundTripHeader(t *testing.T) {
+	ts := time.Date(2016, 5, 4, 3, 2, 1, 0, time.UTC)
+	cptvBytes := new(bytes.Buffer)
+
+	w := NewWriter(cptvBytes)
+	header := Header{
+		Timestamp:    ts,
+		DeviceName:   "nz42",
+		PreviewSecs:  8,
+		MotionConfig: "keep on movin",
+	}
+	require.NoError(t, w.WriteHeader(header))
+	require.NoError(t, w.Close())
+
+	r, err := NewReader(cptvBytes)
+	require.NoError(t, err)
+	assert.Equal(t, ts, r.Timestamp().UTC())
+	assert.Equal(t, "nz42", r.DeviceName())
+	assert.Equal(t, 8, r.PreviewSecs())
+	assert.Equal(t, "keep on movin", r.MotionConfig())
+}
+
+func TestReaderFrameCount(t *testing.T) {
+	frame := makeTestFrame()
+	cptvBytes := new(bytes.Buffer)
+
+	w := NewWriter(cptvBytes)
+	require.NoError(t, w.WriteHeader(Header{}))
+	require.NoError(t, w.WriteFrame(frame))
+	require.NoError(t, w.WriteFrame(frame))
+	require.NoError(t, w.WriteFrame(frame))
+	require.NoError(t, w.Close())
+
+	r, err := NewReader(cptvBytes)
+	require.NoError(t, err)
+	c, err := r.FrameCount()
+	require.NoError(t, err)
+	assert.Equal(t, 3, c)
+}
+
+func TestFrameRoundTrip(t *testing.T) {
 	frame0 := makeTestFrame()
+	frame0.Status.TimeOn = 60 * time.Second
+	frame0.Status.LastFFCTime = 30 * time.Second
+
 	frame1 := makeOffsetFrame(frame0)
+	frame1.Status.TimeOn = 61 * time.Second
+	frame1.Status.LastFFCTime = 31 * time.Second
+
 	frame2 := makeOffsetFrame(frame1)
+	frame2.Status.TimeOn = 62 * time.Second
+	frame2.Status.LastFFCTime = 32 * time.Second
 
 	cptvBytes := new(bytes.Buffer)
 
 	w := NewWriter(cptvBytes)
-	require.NoError(t, w.WriteHeader("nz42"))
+	require.NoError(t, w.WriteHeader(Header{}))
 	require.NoError(t, w.WriteFrame(frame0))
 	require.NoError(t, w.WriteFrame(frame1))
 	require.NoError(t, w.WriteFrame(frame2))
@@ -41,8 +105,6 @@ func TestWriterAndReader(t *testing.T) {
 
 	r, err := NewReader(cptvBytes)
 	require.NoError(t, err)
-	assert.Equal(t, "nz42", r.DeviceName())
-	assert.True(t, time.Since(r.Timestamp()) < time.Minute)
 
 	frameD := new(lepton3.Frame)
 	require.NoError(t, r.ReadFrame(frameD))
