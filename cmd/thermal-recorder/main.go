@@ -83,6 +83,8 @@ func runMain() error {
 		return err
 	}
 
+	logConfig(conf)
+
 	if args.TestCptvFile != "" {
 		conf.Motion.Verbose = args.Verbose
 		results := NewCPTVPlaybackTester(conf).Detect(args.TestCptvFile)
@@ -146,7 +148,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 
 	if conf.Throttler.ApplyThrottling {
 		minRecordingLength := conf.Recorder.MinSecs + conf.Recorder.PreviewSecs
-		throttledRecorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength)
+		throttledRecorder = throttle.NewThrottledRecorder(cptvRecorder, new(throttle.ThrottledEventRecorder), &conf.Throttler, minRecordingLength)
 		recorder = throttledRecorder
 	}
 
