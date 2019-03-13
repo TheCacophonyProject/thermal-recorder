@@ -68,6 +68,8 @@ After these a number of fields will exist.
 | ------------  | ------   | ----- | ------- | ---------------------------------------------
 | Motion config | Variable | 'M'   | string  | Motion detection configuration in YAML
 | Preview secs  | 1        | 'P'   | uint8   | Number of seconds of recording before motion event was detected
+| Latitude      | 4        | 'L'   | float32 | Latitude of device location
+| Longitude     | 4        | 'O'   | float32 | Longitude of device location
 
 ## Frames
 

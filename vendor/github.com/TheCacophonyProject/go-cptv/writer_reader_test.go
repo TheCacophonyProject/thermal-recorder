@@ -39,6 +39,9 @@ func TestRoundTripHeaderDefaults(t *testing.T) {
 	assert.Equal(t, "", r.DeviceName())
 	assert.Equal(t, 0, r.PreviewSecs())
 	assert.Equal(t, "", r.MotionConfig())
+	assert.Equal(t, float32(0.0), r.Latitude())
+	assert.Equal(t, float32(0.0), r.Longitude())
+
 }
 
 func TestRoundTripHeader(t *testing.T) {
@@ -51,6 +54,8 @@ func TestRoundTripHeader(t *testing.T) {
 		DeviceName:   "nz42",
 		PreviewSecs:  8,
 		MotionConfig: "keep on movin",
+		Latitude:     -36.86667,
+		Longitude:    174.76667,
 	}
 	require.NoError(t, w.WriteHeader(header))
 	require.NoError(t, w.Close())
@@ -61,6 +66,9 @@ func TestRoundTripHeader(t *testing.T) {
 	assert.Equal(t, "nz42", r.DeviceName())
 	assert.Equal(t, 8, r.PreviewSecs())
 	assert.Equal(t, "keep on movin", r.MotionConfig())
+	assert.Equal(t, float32(-36.86667), r.Latitude())
+	assert.Equal(t, float32(174.76667), r.Longitude())
+
 }
 
 func TestReaderFrameCount(t *testing.T) {

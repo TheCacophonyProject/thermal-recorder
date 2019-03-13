@@ -81,6 +81,20 @@ func (r *Reader) MotionConfig() string {
 	return conf
 }
 
+// Latitude returns the latitude part of the location of the device
+// when this CPTV file was recorded.
+func (r *Reader) Latitude() float32 {
+	lat, _ := r.header.Float32(Latitude)
+	return lat
+}
+
+// Longitude returns the longitude part of the location of the device
+// when this CPTV file was recorded.
+func (r *Reader) Longitude() float32 {
+	long, _ := r.header.Float32(Longitude)
+	return long
+}
+
 // ReadFrame extracts and decompresses the next frame in a CPTV
 // recording. At the end of the recording an io.EOF error will be
 // returned.

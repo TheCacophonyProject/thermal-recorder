@@ -29,6 +29,8 @@ const (
 	DeviceName   byte = 'D'
 	MotionConfig byte = 'M'
 	PreviewSecs  byte = 'P'
+	Latitude     byte = 'L'
+	Longitude    byte = 'O'
 
 	// Frame field keys
 	TimeOn      byte = 't'

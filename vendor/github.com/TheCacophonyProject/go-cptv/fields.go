@@ -19,6 +19,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
 	"time"
 )
 
@@ -109,6 +110,15 @@ func (f Fields) String(key byte) (string, error) {
 	return string(buf), nil
 }
 
+// Float32 returns the field at 'key' as a float32
+func (f Fields) Float32(key byte) (float32, error) {
+	buf, err := f.get(key, 4)
+	if err != nil {
+		return 0, err
+	}
+	return math.Float32frombits(binary.LittleEndian.Uint32(buf)), nil
+}
+
 // get returns the field at 'key' as a byte array after checking
 // its size vs expectedLen
 func (f Fields) get(key byte, expectedLen int) ([]byte, error) {
@@ -184,4 +194,12 @@ func (f *FieldWriter) String(code byte, v string) error {
 	f.fieldCount++
 
 	return nil
+}
+
+// Float32 writes a float32 field with key 'code' and value 'v'
+func (f *FieldWriter) Float32(code byte, v float32) {
+	b := []byte{4, code, 0, 0, 0, 0}
+	binary.LittleEndian.PutUint32(b[2:], math.Float32bits(v))
+	f.data = append(f.data, b...)
+	f.fieldCount++
 }
