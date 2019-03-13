@@ -42,6 +42,8 @@ type Header struct {
 	DeviceName   string
 	PreviewSecs  int
 	MotionConfig string
+	Latitude     float32
+	Longitude    float32
 }
 
 // WriteHeader writes a CPTV file header
@@ -71,6 +73,9 @@ func (w *Writer) WriteHeader(header Header) error {
 			return err
 		}
 	}
+
+	fields.Float32(Latitude, header.Latitude)
+	fields.Float32(Longitude, header.Longitude)
 
 	return w.bldr.WriteHeader(fields)
 }
