@@ -34,7 +34,7 @@ import (
 	"github.com/TheCacophonyProject/window"
 )
 
-var locationFileName = "../../_release/location.yaml"
+var locationFileName = "test_data/location.yaml"
 
 func TestAllDefaults(t *testing.T) {
 	conf, err := ParseConfig([]byte(""), []byte(""), locationFileName)
