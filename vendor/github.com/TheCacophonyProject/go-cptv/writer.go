@@ -74,8 +74,12 @@ func (w *Writer) WriteHeader(header Header) error {
 		}
 	}
 
-	fields.Float32(Latitude, header.Latitude)
-	fields.Float32(Longitude, header.Longitude)
+	if header.Latitude != 0.0 {
+		fields.Float32(Latitude, header.Latitude)
+	}
+	if header.Longitude != 0.0 {
+		fields.Float32(Longitude, header.Longitude)
+	}
 
 	return w.bldr.WriteHeader(fields)
 }
