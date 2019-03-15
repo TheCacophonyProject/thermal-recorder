@@ -18,6 +18,7 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
 
 	yaml "gopkg.in/yaml.v2"
 
@@ -35,6 +36,8 @@ type Config struct {
 	Motion       motion.MotionConfig
 	Turret       TurretConfig
 	Throttler    throttle.ThrottlerConfig
+	Latitude     float32
+	Longitude    float32
 }
 
 type ServoConfig struct {
@@ -54,6 +57,12 @@ type TurretConfig struct {
 
 type uploaderConfig struct {
 	DeviceName string `yaml:"device-name"`
+}
+
+// locationConfig is a struct to store our location values in.
+type locationConfig struct {
+	Latitude  float32 `yaml:"latitude"`
+	Longitude float32 `yaml:"longitude"`
 }
 
 func (conf *Config) Validate() error {
@@ -98,7 +107,26 @@ var defaultConfig = Config{
 	},
 }
 
-func ParseConfigFiles(recorderFilename, uploaderFilename string) (*Config, error) {
+// ParseLocationFile retrieves values from the location data file.
+func parseLocationFile(filepath string) (*locationConfig, error) {
+
+	// Create a default location config
+	location := &locationConfig{}
+
+	inBuf, err := ioutil.ReadFile(filepath)
+	if os.IsNotExist(err) {
+		return location, nil
+	} else if err != nil {
+		return nil, err
+	}
+
+	if err := yaml.Unmarshal(inBuf, location); err != nil {
+		return nil, err
+	}
+	return location, nil
+}
+
+func ParseConfigFiles(recorderFilename, uploaderFilename, locationFileName string) (*Config, error) {
 	buf, err := ioutil.ReadFile(recorderFilename)
 	if err != nil {
 		return nil, err
@@ -107,10 +135,10 @@ func ParseConfigFiles(recorderFilename, uploaderFilename string) (*Config, error
 	if err != nil {
 		return nil, err
 	}
-	return ParseConfig(buf, uploaderBuf)
+	return ParseConfig(buf, uploaderBuf, locationFileName)
 }
 
-func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
+func ParseConfig(buf, uploaderBuf []byte, locationFileName string) (*Config, error) {
 	conf := defaultConfig
 	if err := yaml.Unmarshal(buf, &conf); err != nil {
 		return nil, err
@@ -119,7 +147,13 @@ func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 	if err := yaml.Unmarshal(uploaderBuf, &uploaderConf); err != nil {
 		return nil, err
 	}
+	location, err := parseLocationFile(locationFileName)
+	if err != nil {
+		return nil, err
+	}
 
+	conf.Latitude = location.Latitude
+	conf.Longitude = location.Longitude
 	conf.DeviceName = uploaderConf.DeviceName
 
 	if err := conf.Validate(); err != nil {

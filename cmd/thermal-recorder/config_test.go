@@ -34,13 +34,17 @@ import (
 	"github.com/TheCacophonyProject/window"
 )
 
+var locationFileName = "../../_release/location.yaml"
+
 func TestAllDefaults(t *testing.T) {
-	conf, err := ParseConfig([]byte(""), []byte(""))
+	conf, err := ParseConfig([]byte(""), []byte(""), locationFileName)
 	require.NoError(t, err)
 	require.NoError(t, conf.Validate())
 
 	assert.Equal(t, Config{
 		DeviceName:   "",
+		Latitude:     -36,
+		Longitude:    174,
 		FrameInput:   "/var/run/lepton-frames",
 		OutputDir:    "/var/spool/cptv",
 		MinDiskSpace: 200,
@@ -89,7 +93,7 @@ func TestAllDefaults(t *testing.T) {
 }
 
 func TestAllProgramDefaultsMatchDefaultYamlFile(t *testing.T) {
-	configDefaults, err := ParseConfig([]byte(""), []byte(""))
+	configDefaults, err := ParseConfig([]byte(""), []byte(""), "")
 	require.NoError(t, err)
 
 	defaultConfig := GetDefaultConfig()
@@ -157,12 +161,14 @@ turret:
 device-name: "aDeviceName"
 `)
 
-	conf, err := ParseConfig(config, uploaderConfig)
+	conf, err := ParseConfig(config, uploaderConfig, locationFileName)
 	require.NoError(t, err)
 	require.NoError(t, conf.Validate())
 
 	assert.Equal(t, Config{
 		DeviceName:   "aDeviceName",
+		Latitude:     -36,
+		Longitude:    174,
 		FrameInput:   "/some/sock",
 		OutputDir:    "/some/where",
 		MinDiskSpace: 321,
@@ -214,8 +220,13 @@ device-name: "aDeviceName"
 
 func GetDefaultConfig() []byte {
 	dir := GetBaseDir()
-	config_file := strings.Replace(dir, "cmd/thermal-recorder", "_release/thermal-recorder.yaml", 1)
-	buf, err := ioutil.ReadFile(config_file)
+	// For 'Nix use this line.
+	configFile := strings.Replace(dir, "cmd/thermal-recorder", "_release/thermal-recorder.yaml", 1)
+
+	// For Windows, the next line works.  Slashes around the other way..
+	//configFile := strings.Replace(dir, "cmd\\thermal-recorder", "_release\\thermal-recorder.yaml", 1)
+
+	buf, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		panic(err)
 	}
@@ -223,7 +234,7 @@ func GetDefaultConfig() []byte {
 }
 
 func GetDefaultConfigFromFile() *Config {
-	config, err := ParseConfig(GetDefaultConfig(), []byte(""))
+	config, err := ParseConfig(GetDefaultConfig(), []byte(""), locationFileName)
 	if err != nil {
 		panic(err)
 	}
@@ -250,7 +261,7 @@ recorder:
   min-secs: 10
   max-secs: 4
 `)
-	conf, err := ParseConfig(configStr, []byte(""))
+	conf, err := ParseConfig(configStr, []byte(""), "")
 	assert.Nil(t, conf)
 	assert.EqualError(t, err, "max-secs should be larger than min-secs")
 }
