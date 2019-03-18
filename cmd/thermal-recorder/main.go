@@ -46,6 +46,7 @@ var (
 type Args struct {
 	ConfigFile         string `arg:"-c,--config" help:"path to configuration file"`
 	UploaderConfigFile string `arg:"-u,--uploader-config" help:"path to uploader config file"`
+	LocationFile       string `arg:"-l, --location" help:"path to location file"`
 	Timestamps         bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
 	TestCptvFile       string `arg:"-f, --testfile" help:"Run a CPTV file through to see what the results are"`
 	Verbose            bool   `arg:"-v, --verbose" help:"Make logging more verbose"`
@@ -59,6 +60,7 @@ func procArgs() Args {
 	var args Args
 	args.ConfigFile = "/etc/thermal-recorder.yaml"
 	args.UploaderConfigFile = "/etc/thermal-uploader.yaml"
+	args.LocationFile = "/etc/cacophony/location.yaml"
 	arg.MustParse(&args)
 	return args
 }
@@ -78,7 +80,7 @@ func runMain() error {
 	}
 
 	log.Printf("running version: %s", version)
-	conf, err := ParseConfigFiles(args.ConfigFile, args.UploaderConfigFile)
+	conf, err := ParseConfigFiles(args.ConfigFile, args.UploaderConfigFile, args.LocationFile)
 	if err != nil {
 		return err
 	}

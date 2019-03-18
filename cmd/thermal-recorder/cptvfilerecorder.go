@@ -42,6 +42,8 @@ func NewCPTVFileRecorder(config *Config) *CPTVFileRecorder {
 			DeviceName:   config.DeviceName,
 			PreviewSecs:  config.Recorder.PreviewSecs,
 			MotionConfig: string(motionYAML),
+			Latitude:     config.Latitude,
+			Longitude:    config.Longitude,
 		},
 		minDiskSpace: config.MinDiskSpace,
 	}
