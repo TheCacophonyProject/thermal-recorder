@@ -36,6 +36,10 @@ import (
 
 var locationFileName = "test_data/location.yaml"
 
+func init() {
+	locationFileName = filepath.Join(GetBaseDir(), "test_data", "location.yaml")
+}
+
 func TestAllDefaults(t *testing.T) {
 	conf, err := ParseConfig([]byte(""), []byte(""), locationFileName)
 	require.NoError(t, err)
@@ -220,12 +224,7 @@ device-name: "aDeviceName"
 
 func GetDefaultConfig() []byte {
 	dir := GetBaseDir()
-	// For 'Nix use this line.
-	configFile := strings.Replace(dir, "cmd/thermal-recorder", "_release/thermal-recorder.yaml", 1)
-
-	// For Windows, the next line works.  Slashes around the other way..
-	//configFile := strings.Replace(dir, "cmd\\thermal-recorder", "_release\\thermal-recorder.yaml", 1)
-
+	configFile := strings.Replace(dir, filepath.Join("cmd/thermal-recorder"), filepath.Join("_release/thermal-recorder.yaml"), 1)
 	buf, err := ioutil.ReadFile(configFile)
 	if err != nil {
 		panic(err)

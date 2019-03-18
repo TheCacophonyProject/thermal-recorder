@@ -140,7 +140,6 @@ func deleteTempFiles(directory string) error {
 }
 
 func checkDiskSpace(mb uint64, dir string) (bool, error) {
-	// These are 'Nix specific calls.  For testing on Windows, just return true, nil.
 	var fs syscall.Statfs_t
 	if err := syscall.Statfs(dir, &fs); err != nil {
 		return false, err
