@@ -12,3 +12,8 @@
 [[constraint]]
   name = "github.com/TheCacophonyProject/go-cptv"
   branch = "master"
+
+
+[[constraint]]
+  name = "github.com/kelvins/sunrisesunset"
+  branch = "master"

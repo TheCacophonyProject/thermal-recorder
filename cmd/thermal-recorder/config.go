@@ -19,6 +19,7 @@ package main
 import (
 	"io/ioutil"
 
+	"github.com/TheCacophonyProject/thermal-recorder/location"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
@@ -35,6 +36,7 @@ type Config struct {
 	Motion       motion.MotionConfig
 	Turret       TurretConfig
 	Throttler    throttle.ThrottlerConfig
+	Location     location.LocationConfig
 }
 
 type ServoConfig struct {
@@ -64,6 +66,11 @@ func (conf *Config) Validate() error {
 	if err := conf.Motion.Validate(); err != nil {
 		return err
 	}
+
+	if err := conf.Location.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -78,6 +85,7 @@ var defaultConfig = Config{
 	Recorder:     recorder.DefaultRecorderConfig(),
 	Motion:       motion.DefaultMotionConfig(),
 	Throttler:    throttle.DefaultThrottlerConfig(),
+	Location:     location.DefaultLocationConfig(),
 	Turret: TurretConfig{
 		Active: false,
 		PID:    []float64{0.05, 0, 0},
@@ -98,7 +106,7 @@ var defaultConfig = Config{
 	},
 }
 
-func ParseConfigFiles(recorderFilename, uploaderFilename string) (*Config, error) {
+func ParseConfigFiles(recorderFilename, uploaderFilename, locationFileName string) (*Config, error) {
 	buf, err := ioutil.ReadFile(recorderFilename)
 	if err != nil {
 		return nil, err
@@ -107,10 +115,15 @@ func ParseConfigFiles(recorderFilename, uploaderFilename string) (*Config, error
 	if err != nil {
 		return nil, err
 	}
-	return ParseConfig(buf, uploaderBuf)
+	locationBuf, err := ioutil.ReadFile(locationFileName)
+	if err != nil {
+		return nil, err
+	}
+
+	return ParseConfig(buf, uploaderBuf, locationBuf)
 }
 
-func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
+func ParseConfig(buf, uploaderBuf, locationBuf []byte) (*Config, error) {
 	conf := defaultConfig
 	if err := yaml.Unmarshal(buf, &conf); err != nil {
 		return nil, err
@@ -121,6 +134,9 @@ func ParseConfig(buf, uploaderBuf []byte) (*Config, error) {
 	}
 
 	conf.DeviceName = uploaderConf.DeviceName
+	if err := yaml.Unmarshal(locationBuf, &conf.Location); err != nil {
+		return nil, err
+	}
 
 	if err := conf.Validate(); err != nil {
 		return nil, err

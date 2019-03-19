@@ -19,48 +19,55 @@ package motion
 import (
 	"errors"
 	"log"
+	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
-	"github.com/TheCacophonyProject/window"
-
+	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
+	"github.com/TheCacophonyProject/window"
+	"github.com/nathan-osman/go-sunrise"
 )
 
 func NewMotionProcessor(motionConf *MotionConfig,
 	recorderConf *recorder.RecorderConfig,
+	locationConf *location.LocationConfig,
 	listener RecordingListener,
 	recorder recorder.Recorder) *MotionProcessor {
-
 	return &MotionProcessor{
-		minFrames:      recorderConf.MinSecs * lepton3.FramesHz,
-		maxFrames:      recorderConf.MaxSecs * lepton3.FramesHz,
-		motionDetector: NewMotionDetector(*motionConf),
-		frameLoop:      NewFrameLoop(recorderConf.PreviewSecs*lepton3.FramesHz + motionConf.TriggerFrames),
-		isRecording:    false,
-		window:         *window.New(recorderConf.WindowStart.Time, recorderConf.WindowEnd.Time),
-		listener:       listener,
-		conf:           recorderConf,
-		triggerFrames:  motionConf.TriggerFrames,
-		recorder:       recorder,
+		minFrames:           recorderConf.MinSecs * lepton3.FramesHz,
+		maxFrames:           recorderConf.MaxSecs * lepton3.FramesHz,
+		motionDetector:      NewMotionDetector(*motionConf),
+		frameLoop:           NewFrameLoop(recorderConf.PreviewSecs*lepton3.FramesHz + motionConf.TriggerFrames),
+		isRecording:         false,
+		window:              *window.New(recorderConf.WindowStart.Time, recorderConf.WindowEnd.Time),
+		listener:            listener,
+		conf:                recorderConf,
+		triggerFrames:       motionConf.TriggerFrames,
+		recorder:            recorder,
+		locationConfig:      locationConf,
+		sunriseSunsetWindow: recorderConf.UseSunriseSunsetWindow,
 	}
 }
 
 type MotionProcessor struct {
-	minFrames      int
-	maxFrames      int
-	framesWritten  int
-	motionDetector *motionDetector
-	frameLoop      *FrameLoop
-	isRecording    bool
-	totalFrames    int
-	writeUntil     int
-	lastLogFrame   int
-	window         window.Window
-	conf           *recorder.RecorderConfig
-	listener       RecordingListener
-	triggerFrames  int
-	triggered      int
-	recorder       recorder.Recorder
+	minFrames           int
+	maxFrames           int
+	framesWritten       int
+	motionDetector      *motionDetector
+	frameLoop           *FrameLoop
+	isRecording         bool
+	totalFrames         int
+	writeUntil          int
+	lastLogFrame        int
+	window              window.Window
+	conf                *recorder.RecorderConfig
+	listener            RecordingListener
+	triggerFrames       int
+	triggered           int
+	recorder            recorder.Recorder
+	locationConfig      *location.LocationConfig
+	sunriseSunsetWindow bool
+	nextSunriseCheck    time.Time
 }
 
 type RecordingListener interface {
@@ -132,7 +139,22 @@ func (mp *MotionProcessor) GetRecentFrame(frame *lepton3.Frame) *lepton3.Frame {
 	return mp.frameLoop.CopyRecent(frame)
 }
 
+// setSunriseSunsetWindow sets the recording window based of todays sunset and sunrise location
+func (mp *MotionProcessor) setSunriseSunsetWindow() {
+	if mp.sunriseSunsetWindow {
+		curTime := time.Now()
+		if mp.nextSunriseCheck.Before(curTime) {
+			location := curTime.Location()
+			year, month, day := curTime.Date()
+			rise, set := sunrise.SunriseSunset(mp.locationConfig.Latitude, mp.locationConfig.Longitude, year, month, day)
+			mp.window = *window.New(set.In(location), rise.In(location))
+			mp.nextSunriseCheck = time.Date(year, month, day, 0, 0, 0, 0, location).AddDate(0, 0, 1)
+		}
+	}
+}
+
 func (mp *MotionProcessor) canStartWriting() error {
+	mp.setSunriseSunsetWindow()
 	if !mp.window.Active() {
 		return errors.New("motion detected but outside of recording window")
 	} else {

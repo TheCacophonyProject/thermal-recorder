@@ -22,12 +22,12 @@ import (
 	"os"
 
 	"github.com/TheCacophonyProject/lepton3"
-	arg "github.com/alexflint/go-arg"
-	"periph.io/x/periph/host"
-
+	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
+	arg "github.com/alexflint/go-arg"
+	"periph.io/x/periph/host"
 )
 
 const (
@@ -49,6 +49,7 @@ type Args struct {
 	Timestamps         bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
 	TestCptvFile       string `arg:"-f, --testfile" help:"Run a CPTV file through to see what the results are"`
 	Verbose            bool   `arg:"-v, --verbose" help:"Make logging more verbose"`
+	LocationConfigFile string `arg:"-l, --location" help:"path to location config file"`
 }
 
 func (Args) Version() string {
@@ -59,6 +60,7 @@ func procArgs() Args {
 	var args Args
 	args.ConfigFile = "/etc/thermal-recorder.yaml"
 	args.UploaderConfigFile = "/etc/thermal-uploader.yaml"
+	args.LocationConfigFile = location.DefaultConfig()
 	arg.MustParse(&args)
 	return args
 }
@@ -78,7 +80,7 @@ func runMain() error {
 	}
 
 	log.Printf("running version: %s", version)
-	conf, err := ParseConfigFiles(args.ConfigFile, args.UploaderConfigFile)
+	conf, err := ParseConfigFiles(args.ConfigFile, args.UploaderConfigFile, args.LocationConfigFile)
 	if err != nil {
 		return err
 	}
@@ -152,7 +154,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 		recorder = throttledRecorder
 	}
 
-	processor = motion.NewMotionProcessor(&conf.Motion, &conf.Recorder, nil, recorder)
+	processor = motion.NewMotionProcessor(&conf.Motion, &conf.Recorder, &conf.Location, nil, recorder)
 
 	rawFrame := new(lepton3.RawFrame)
 

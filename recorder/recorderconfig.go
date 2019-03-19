@@ -23,11 +23,12 @@ import (
 )
 
 type RecorderConfig struct {
-	MinSecs     int              `yaml:"min-secs"`
-	MaxSecs     int              `yaml:"max-secs"`
-	PreviewSecs int              `yaml:"preview-secs"`
-	WindowStart window.TimeOfDay `yaml:"window-start"`
-	WindowEnd   window.TimeOfDay `yaml:"window-end"`
+	MinSecs                int              `yaml:"min-secs"`
+	MaxSecs                int              `yaml:"max-secs"`
+	PreviewSecs            int              `yaml:"preview-secs"`
+	UseSunriseSunsetWindow bool             `yaml:"sunrise-sunset"`
+	WindowStart            window.TimeOfDay `yaml:"window-start"`
+	WindowEnd              window.TimeOfDay `yaml:"window-end"`
 }
 
 func DefaultRecorderConfig() RecorderConfig {

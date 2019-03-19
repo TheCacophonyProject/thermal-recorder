@@ -22,6 +22,8 @@ recorder:
     # Time to record before motion was detected.
     preview-secs: 3
 
+    # Start & End time by Sunrise and Sunset
+    # sunrise-sunset:true
     # Start time for recording window (optional)
     # window-start: 17:00
 

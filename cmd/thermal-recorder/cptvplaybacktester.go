@@ -154,7 +154,7 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 
 	recorder := new(recorder.NoWriteRecorder)
 
-	processor := motion.NewMotionProcessor(&cpt.config.Motion, &cpt.config.Recorder, listener, recorder)
+	processor := motion.NewMotionProcessor(&cpt.config.Motion, &cpt.config.Recorder, &cpt.config.Location, listener, recorder)
 
 	file, reader, err := motionTesterLoadFile(filename)
 	if err != nil {
