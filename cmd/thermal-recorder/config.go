@@ -20,12 +20,12 @@ import (
 	"io/ioutil"
 	"os"
 
-	"github.com/TheCacophonyProject/thermal-recorder/throttle"
 	yaml "gopkg.in/yaml.v2"
 
 	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
+	"github.com/TheCacophonyProject/thermal-recorder/throttle"
 )
 
 type Config struct {

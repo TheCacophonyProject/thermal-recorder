@@ -144,24 +144,22 @@ func (mp *MotionProcessor) GetRecentFrame(frame *lepton3.Frame) *lepton3.Frame {
 
 // setSunriseSunsetWindow sets the recording window based of todays sunset and sunrise location
 func (mp *MotionProcessor) setSunriseSunsetWindow() {
-	if !mp.sunriseSunsetWindow {
+	if !mp.sunriseSunsetWindow || curTime.Before(mp.nextSunriseCheck) {
 		return
 	}
 	curTime := time.Now()
-	if mp.nextSunriseCheck.Before(curTime) {
-		sunriseOffset := time.Duration(mp.sunriseOffset) * time.Minute
-		sunsetOffset := time.Duration(mp.sunsetOffset) * time.Minute
+	sunriseOffset := time.Duration(mp.sunriseOffset) * time.Minute
+	sunsetOffset := time.Duration(mp.sunsetOffset) * time.Minute
 
-		location := curTime.Location()
-		year, month, day := curTime.Date()
+	location := curTime.Location()
+	year, month, day := curTime.Date()
 
-		rise, set := sunrise.SunriseSunset(float64(mp.locationConfig.Latitude), float64(mp.locationConfig.Longitude), year, month, day)
-		rise = rise.Add(sunriseOffset)
-		set = set.Add(sunsetOffset)
+	rise, set := sunrise.SunriseSunset(float64(mp.locationConfig.Latitude), float64(mp.locationConfig.Longitude), year, month, day)
+	rise = rise.Add(sunriseOffset)
+	set = set.Add(sunsetOffset)
 
-		mp.window = *window.New(set.In(location), rise.In(location))
-		mp.nextSunriseCheck = time.Date(year, month, day, 0, 0, 0, 0, location).AddDate(0, 0, 1)
-	}
+	mp.window = *window.New(set.In(location), rise.In(location))
+	mp.nextSunriseCheck = time.Date(year, month, day, 0, 0, 0, 0, location).AddDate(0, 0, 1)
 }
 
 func (mp *MotionProcessor) canStartWriting() error {
