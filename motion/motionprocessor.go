@@ -144,10 +144,10 @@ func (mp *MotionProcessor) GetRecentFrame(frame *lepton3.Frame) *lepton3.Frame {
 
 // setSunriseSunsetWindow sets the recording window based of todays sunset and sunrise location
 func (mp *MotionProcessor) setSunriseSunsetWindow() {
+	curTime := time.Now()
 	if !mp.sunriseSunsetWindow || curTime.Before(mp.nextSunriseCheck) {
 		return
 	}
-	curTime := time.Now()
 	sunriseOffset := time.Duration(mp.sunriseOffset) * time.Minute
 	sunsetOffset := time.Duration(mp.sunsetOffset) * time.Minute
 
