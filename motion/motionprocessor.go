@@ -149,7 +149,7 @@ func (mp *MotionProcessor) setSunriseSunsetWindow() {
 			location := curTime.Location()
 			year, month, day := curTime.Date()
 
-			rise, set := sunrise.SunriseSunset(mp.locationConfig.Latitude, mp.locationConfig.Longitude, year, month, day)
+			rise, set := sunrise.SunriseSunset(float64(mp.locationConfig.Latitude), float64(mp.locationConfig.Longitude), year, month, day)
 			rise = rise.Add(delay)
 
 			set = set.Add(delay)

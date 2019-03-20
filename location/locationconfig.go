@@ -25,8 +25,8 @@ const (
 )
 
 type LocationConfig struct {
-	Latitude  float64 `yaml:"latitude"`
-	Longitude float64 `yaml:"longitude"`
+	Latitude  float32 `yaml:"latitude"`
+	Longitude float32 `yaml:"longitude"`
 }
 
 func DefaultConfig() string {

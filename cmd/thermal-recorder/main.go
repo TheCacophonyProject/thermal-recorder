@@ -81,6 +81,7 @@ func runMain() error {
 
 	log.Printf("running version: %s", version)
 	conf, err := ParseConfigFiles(args.ConfigFile, args.UploaderConfigFile, args.LocationConfigFile)
+
 	if err != nil {
 		return err
 	}
@@ -186,6 +187,8 @@ func logConfig(conf *Config) {
 	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
 	log.Printf("throttler: %+v", conf.Throttler)
+	log.Printf("location latitude: %v", conf.Location.Latitude)
+	log.Printf("location longitude: %v", conf.Location.Longitude)
 	if conf.Recorder.UseSunriseSunsetWindow {
 		log.Printf("recording window using sunrise sunset with delay of %v minutes", conf.Recorder.SunriseSunsetDelay)
 	} else if !conf.Recorder.WindowStart.IsZero() {
