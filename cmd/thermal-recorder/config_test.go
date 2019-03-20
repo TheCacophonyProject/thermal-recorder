@@ -28,27 +28,25 @@ import (
 	"github.com/stretchr/testify/require"
 	"gopkg.in/yaml.v2"
 
+	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
 	"github.com/TheCacophonyProject/window"
 )
 
-var locationFileName = "test_data/location.yaml"
+const (
+	testDir = "test_data"
+)
 
-func init() {
-	locationFileName = filepath.Join(GetBaseDir(), "test_data", "location.yaml")
-}
+var testLocationFileName = filepath.Join(GetBaseDir(), testDir, "location.yaml")
+var testConfigFile = filepath.Join(GetBaseDir(), testDir, "config.yaml")
+var testUploaderFile = filepath.Join(GetBaseDir(), testDir, "uploader-config.yaml")
 
-func TestAllDefaults(t *testing.T) {
-	conf, err := ParseConfig([]byte(""), []byte(""), locationFileName)
-	require.NoError(t, err)
-	require.NoError(t, conf.Validate())
-
-	assert.Equal(t, Config{
+func getExpectedDefaultConfig() Config {
+	return Config{
 		DeviceName:   "",
-		Latitude:     -36,
-		Longitude:    174,
+		Location:     location.DefaultLocationConfig(),
 		FrameInput:   "/var/run/lepton-frames",
 		OutputDir:    "/var/spool/cptv",
 		MinDiskSpace: 200,
@@ -93,86 +91,39 @@ func TestAllDefaults(t *testing.T) {
 				StartAng: 90,
 			},
 		},
-	}, *conf)
+	}
+}
+
+func TestAllDefaults(t *testing.T) {
+	conf, err := ParseConfig([]byte(""), []byte(""), []byte(""))
+	expected := getExpectedDefaultConfig()
+	require.NoError(t, err)
+	require.NoError(t, conf.Validate())
+
+	assert.Equal(t, expected, *conf)
 }
 
 func TestAllProgramDefaultsMatchDefaultYamlFile(t *testing.T) {
-	configDefaults, err := ParseConfig([]byte(""), []byte(""), "")
+	configDefaults, err := ParseConfig([]byte(""), []byte(""), []byte(""))
 	require.NoError(t, err)
 
 	defaultConfig := GetDefaultConfig()
 	var configYAML Config
 	yaml.UnmarshalStrict(defaultConfig, &configYAML)
-
 	// ignore errors in turret since they aren't in use atm
 	configDefaults.Turret = configYAML.Turret
 
+	configYAML.Location = location.DefaultLocationConfig()
 	assert.Equal(t, configDefaults, &configYAML)
 }
 
-func TestAllSet(t *testing.T) {
-	// All config set at non-default values.
-	config := []byte(`
-frame-input: "/some/sock"
-output-dir: "/some/where"
-min-disk-space: 321
-recorder:
-    min-secs: 2
-    max-secs: 10
-    preview-secs: 5
-    window-start: 17:10
-    window-end: 07:20
-motion:
-    temp-thresh: 2000
-    delta-thresh: 20
-    count-thresh: 1
-    frame-compare-gap: 90
-    one-diff-only: false
-    trigger-frames: 1
-    verbose: true
-    edge-pixels: 3
-    warmer-only: false
-throttler:
-    apply-throttling: false
-    throttle-after-secs: 650
-    sparse-after-secs: 6500
-    sparse-length-secs: 300
-    refill-rate: 0.2
-leds:
-    recording: "RecordingPIN"
-    running: "RunningPIN"
-turret:
-    active: true
-    pid:
-      - 1
-      - 2
-      - 3
-    servo-x:
-      active: false
-      pin: "pin"
-      min-ang: 0
-      max-ang: 180
-      start-ang: 30
-    servo-y:
-      active: true
-      pin: "pin1"
-      min-ang: 10
-      max-ang: 190
-      start-ang: 40
-`)
-
-	uploaderConfig := []byte(`
-device-name: "aDeviceName"
-`)
-
-	conf, err := ParseConfig(config, uploaderConfig, locationFileName)
-	require.NoError(t, err)
-	require.NoError(t, conf.Validate())
-
-	assert.Equal(t, Config{
-		DeviceName:   "aDeviceName",
-		Latitude:     -36,
-		Longitude:    174,
+func getExpectedAllSetConfig() Config {
+	return Config{
+		DeviceName: "aDeviceName",
+		Location: location.LocationConfig{
+			Latitude:  -36,
+			Longitude: 174,
+		},
 		FrameInput:   "/some/sock",
 		OutputDir:    "/some/where",
 		MinDiskSpace: 321,
@@ -219,25 +170,26 @@ device-name: "aDeviceName"
 				StartAng: 40,
 			},
 		},
-	}, *conf)
+	}
+}
+
+func TestAllSet(t *testing.T) {
+	conf, err := ParseConfigFiles(testConfigFile, testUploaderFile, testLocationFileName)
+	expected := getExpectedAllSetConfig()
+	require.NoError(t, err)
+	require.NoError(t, conf.Validate())
+	assert.Equal(t, expected, *conf)
 }
 
 func GetDefaultConfig() []byte {
-	dir := GetBaseDir()
-	configFile := strings.Replace(dir, filepath.Join("cmd/thermal-recorder"), filepath.Join("_release/thermal-recorder.yaml"), 1)
-	buf, err := ioutil.ReadFile(configFile)
-	if err != nil {
-		panic(err)
-	}
-	return buf
+	locationBuf, _ := ioutil.ReadFile(GetDefaultConfigFile())
+	return locationBuf
 }
 
-func GetDefaultConfigFromFile() *Config {
-	config, err := ParseConfig(GetDefaultConfig(), []byte(""), locationFileName)
-	if err != nil {
-		panic(err)
-	}
-	return config
+func GetDefaultConfigFile() string {
+	dir := GetBaseDir()
+	configFile := strings.Replace(dir, filepath.Join("cmd/thermal-recorder"), filepath.Join("_release/thermal-recorder.yaml"), 1)
+	return configFile
 }
 
 func GetBaseDir() string {
@@ -254,13 +206,18 @@ func GetBaseDir() string {
 
 	return dir
 }
+
+func getRecorerErrorConfig() Config {
+	return Config{
+		Recorder: recorder.RecorderConfig{
+			MinSecs: 10,
+			MaxSecs: 4,
+		},
+	}
+}
+
 func TestRecorderErrorsStopConfigParsing(t *testing.T) {
-	configStr := []byte(`
-recorder:
-  min-secs: 10
-  max-secs: 4
-`)
-	conf, err := ParseConfig(configStr, []byte(""), "")
-	assert.Nil(t, conf)
+	conf := getRecorerErrorConfig()
+	err := conf.Validate()
 	assert.EqualError(t, err, "max-secs should be larger than min-secs")
 }

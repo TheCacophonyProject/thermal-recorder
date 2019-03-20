@@ -60,7 +60,7 @@ func procArgs() Args {
 	var args Args
 	args.ConfigFile = "/etc/thermal-recorder.yaml"
 	args.UploaderConfigFile = "/etc/thermal-uploader.yaml"
-	args.LocationConfigFile = location.DefaultConfig()
+	args.LocationConfigFile = location.DefaultLocationFile()
 	arg.MustParse(&args)
 	return args
 }

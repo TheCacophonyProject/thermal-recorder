@@ -30,12 +30,11 @@ import (
 )
 
 func CurrentConfig() *Config {
-	config := GetDefaultConfigFromFile()
-
+	configDefaults, _ := ParseConfig(GetDefaultConfig(), []byte(""), []byte(""))
 	// Use smaller min secs to detect more clearly when we stop detecting.
-	config.Recorder.MinSecs = 1
+	configDefaults.Recorder.MinSecs = 1
 
-	return config
+	return configDefaults
 }
 
 func OldDefaultConfig() *Config {
@@ -183,7 +182,7 @@ func BenchmarkMotionDetection(b *testing.B) {
 
 	recorder := new(recorder.NoWriteRecorder)
 
-	processor := motion.NewMotionProcessor(&config.Motion, &config.Recorder, nil, recorder)
+	processor := motion.NewMotionProcessor(&config.Motion, &config.Recorder, &config.Location, nil, recorder)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {

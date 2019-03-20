@@ -29,7 +29,7 @@ type LocationConfig struct {
 	Longitude float32 `yaml:"longitude"`
 }
 
-func DefaultConfig() string {
+func DefaultLocationFile() string {
 	return defaultConfig
 }
 
