@@ -27,7 +27,7 @@ type RecorderConfig struct {
 	MaxSecs                int              `yaml:"max-secs"`
 	PreviewSecs            int              `yaml:"preview-secs"`
 	UseSunriseSunsetWindow bool             `yaml:"sunrise-sunset"`
-	SunriseOffset          int              `yaml:"sunrise-offset'`
+	SunriseOffset          int              `yaml:"sunrise-offset"`
 	SunsetOffset           int              `yaml:"sunset-offset"`
 	WindowStart            window.TimeOfDay `yaml:"window-start"`
 	WindowEnd              window.TimeOfDay `yaml:"window-end"`
