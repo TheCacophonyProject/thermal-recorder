@@ -94,8 +94,6 @@ func runMain() error {
 		return nil
 	}
 
-	logConfig(conf)
-
 	log.Println("starting d-bus service")
 	err = startService(conf.OutputDir)
 	if err != nil {
@@ -188,7 +186,9 @@ func logConfig(conf *Config) {
 	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
 	log.Printf("throttler: %+v", conf.Throttler)
-	if !conf.Recorder.WindowStart.IsZero() {
+	if conf.Recorder.UseSunriseSunsetWindow {
+		log.Printf("recording window using sunrise sunset with delay of %v minutes", conf.Recorder.SunriseSunsetDelay)
+	} else if !conf.Recorder.WindowStart.IsZero() {
 		log.Printf("recording window: %02d:%02d to %02d:%02d",
 			conf.Recorder.WindowStart.Hour(), conf.Recorder.WindowStart.Minute(),
 			conf.Recorder.WindowEnd.Hour(), conf.Recorder.WindowEnd.Minute())

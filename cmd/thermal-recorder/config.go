@@ -115,10 +115,7 @@ func ParseConfigFiles(recorderFilename, uploaderFilename, locationFileName strin
 	if err != nil {
 		return nil, err
 	}
-	locationBuf, err := ioutil.ReadFile(locationFileName)
-	if err != nil {
-		return nil, err
-	}
+	locationBuf, _ := ioutil.ReadFile(locationFileName)
 
 	return ParseConfig(buf, uploaderBuf, locationBuf)
 }
@@ -132,8 +129,8 @@ func ParseConfig(buf, uploaderBuf, locationBuf []byte) (*Config, error) {
 	if err := yaml.Unmarshal(uploaderBuf, &uploaderConf); err != nil {
 		return nil, err
 	}
-
 	conf.DeviceName = uploaderConf.DeviceName
+
 	if err := yaml.Unmarshal(locationBuf, &conf.Location); err != nil {
 		return nil, err
 	}

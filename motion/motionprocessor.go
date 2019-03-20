@@ -46,6 +46,7 @@ func NewMotionProcessor(motionConf *MotionConfig,
 		recorder:            recorder,
 		locationConfig:      locationConf,
 		sunriseSunsetWindow: recorderConf.UseSunriseSunsetWindow,
+		sunriseSunsetDelay:  recorderConf.SunriseSunsetDelay,
 	}
 }
 
@@ -67,6 +68,7 @@ type MotionProcessor struct {
 	recorder            recorder.Recorder
 	locationConfig      *location.LocationConfig
 	sunriseSunsetWindow bool
+	sunriseSunsetDelay  int
 	nextSunriseCheck    time.Time
 }
 
@@ -85,7 +87,6 @@ func (mp *MotionProcessor) Process(rawFrame *lepton3.RawFrame) {
 
 func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 	mp.totalFrames++
-
 	if mp.motionDetector.Detect(frame) {
 		if mp.listener != nil {
 			mp.listener.MotionDetected()
@@ -144,9 +145,14 @@ func (mp *MotionProcessor) setSunriseSunsetWindow() {
 	if mp.sunriseSunsetWindow {
 		curTime := time.Now()
 		if mp.nextSunriseCheck.Before(curTime) {
+			delay := time.Duration(mp.sunriseSunsetDelay) * time.Minute
 			location := curTime.Location()
 			year, month, day := curTime.Date()
+
 			rise, set := sunrise.SunriseSunset(mp.locationConfig.Latitude, mp.locationConfig.Longitude, year, month, day)
+			rise = rise.Add(delay)
+
+			set = set.Add(delay)
 			mp.window = *window.New(set.In(location), rise.In(location))
 			mp.nextSunriseCheck = time.Date(year, month, day, 0, 0, 0, 0, location).AddDate(0, 0, 1)
 		}
