@@ -1,0 +1,46 @@
+frame-input: "/some/sock"
+output-dir: "/some/where"
+min-disk-space: 321
+recorder:
+    min-secs: 2
+    max-secs: 10
+    preview-secs: 5
+    window-start: 17:10
+    window-end: 07:20
+motion:
+    temp-thresh: 2000
+    delta-thresh: 20
+    count-thresh: 1
+    frame-compare-gap: 90
+    one-diff-only: false
+    trigger-frames: 1
+    verbose: true
+    edge-pixels: 3
+    warmer-only: false
+throttler:
+    apply-throttling: false
+    throttle-after-secs: 650
+    sparse-after-secs: 6500
+    sparse-length-secs: 300
+    refill-rate: 0.2
+leds:
+    recording: "RecordingPIN"
+    running: "RunningPIN"
+turret:
+    active: true
+    pid:
+      - 1
+      - 2
+      - 3
+    servo-x:
+      active: false
+      pin: "pin"
+      min-ang: 0
+      max-ang: 180
+      start-ang: 30
+    servo-y:
+      active: true
+      pin: "pin1"
+      min-ang: 10
+      max-ang: 190
+      start-ang: 40
