@@ -21,13 +21,14 @@ import (
 	"net"
 	"os"
 
+	arg "github.com/alexflint/go-arg"
+	"periph.io/x/periph/host"
+
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
-	arg "github.com/alexflint/go-arg"
-	"periph.io/x/periph/host"
 )
 
 const (
@@ -190,7 +191,7 @@ func logConfig(conf *Config) {
 	log.Printf("location latitude: %v", conf.Location.Latitude)
 	log.Printf("location longitude: %v", conf.Location.Longitude)
 	if conf.Recorder.UseSunriseSunsetWindow {
-		log.Printf("recording window using sunrise sunset with delay of %v minutes", conf.Recorder.SunriseSunsetDelay)
+		log.Printf("recording window using sunrise sunset with a sunrise offset of %v minutes a sunet offset of %v minutes", conf.Recorder.SunriseOffset, conf.Recorder.SunsetOffset)
 	} else if !conf.Recorder.WindowStart.IsZero() {
 		log.Printf("recording window: %02d:%02d to %02d:%02d",
 			conf.Recorder.WindowStart.Hour(), conf.Recorder.WindowStart.Minute(),

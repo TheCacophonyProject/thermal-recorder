@@ -21,11 +21,12 @@ import (
 	"log"
 	"time"
 
+	"github.com/nathan-osman/go-sunrise"
+
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/window"
-	"github.com/nathan-osman/go-sunrise"
 )
 
 func NewMotionProcessor(motionConf *MotionConfig,
@@ -46,7 +47,8 @@ func NewMotionProcessor(motionConf *MotionConfig,
 		recorder:            recorder,
 		locationConfig:      locationConf,
 		sunriseSunsetWindow: recorderConf.UseSunriseSunsetWindow,
-		sunriseSunsetDelay:  recorderConf.SunriseSunsetDelay,
+		sunriseOffset:       recorderConf.SunriseOffset,
+		sunsetOffset:        recorderConf.SunsetOffset,
 	}
 }
 
@@ -68,7 +70,8 @@ type MotionProcessor struct {
 	recorder            recorder.Recorder
 	locationConfig      *location.LocationConfig
 	sunriseSunsetWindow bool
-	sunriseSunsetDelay  int
+	sunriseOffset       int
+	sunsetOffset        int
 	nextSunriseCheck    time.Time
 }
 
@@ -81,7 +84,6 @@ type RecordingListener interface {
 func (mp *MotionProcessor) Process(rawFrame *lepton3.RawFrame) {
 	frame := mp.frameLoop.Current()
 	rawFrame.ToFrame(frame)
-
 	mp.internalProcess(frame)
 }
 
@@ -142,20 +144,23 @@ func (mp *MotionProcessor) GetRecentFrame(frame *lepton3.Frame) *lepton3.Frame {
 
 // setSunriseSunsetWindow sets the recording window based of todays sunset and sunrise location
 func (mp *MotionProcessor) setSunriseSunsetWindow() {
-	if mp.sunriseSunsetWindow {
-		curTime := time.Now()
-		if mp.nextSunriseCheck.Before(curTime) {
-			delay := time.Duration(mp.sunriseSunsetDelay) * time.Minute
-			location := curTime.Location()
-			year, month, day := curTime.Date()
+	if !mp.sunriseSunsetWindow {
+		return
+	}
+	curTime := time.Now()
+	if mp.nextSunriseCheck.Before(curTime) {
+		sunriseOffset := time.Duration(mp.sunriseOffset) * time.Minute
+		sunsetOffset := time.Duration(mp.sunsetOffset) * time.Minute
 
-			rise, set := sunrise.SunriseSunset(float64(mp.locationConfig.Latitude), float64(mp.locationConfig.Longitude), year, month, day)
-			rise = rise.Add(delay)
+		location := curTime.Location()
+		year, month, day := curTime.Date()
 
-			set = set.Add(delay)
-			mp.window = *window.New(set.In(location), rise.In(location))
-			mp.nextSunriseCheck = time.Date(year, month, day, 0, 0, 0, 0, location).AddDate(0, 0, 1)
-		}
+		rise, set := sunrise.SunriseSunset(float64(mp.locationConfig.Latitude), float64(mp.locationConfig.Longitude), year, month, day)
+		rise = rise.Add(sunriseOffset)
+		set = set.Add(sunsetOffset)
+
+		mp.window = *window.New(set.In(location), rise.In(location))
+		mp.nextSunriseCheck = time.Date(year, month, day, 0, 0, 0, 0, location).AddDate(0, 0, 1)
 	}
 }
 

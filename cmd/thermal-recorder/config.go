@@ -18,13 +18,14 @@ package main
 
 import (
 	"io/ioutil"
+	"os"
 
-	"github.com/TheCacophonyProject/thermal-recorder/location"
+	"github.com/TheCacophonyProject/thermal-recorder/throttle"
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
-	"github.com/TheCacophonyProject/thermal-recorder/throttle"
 )
 
 type Config struct {
@@ -111,11 +112,16 @@ func ParseConfigFiles(recorderFilename, uploaderFilename, locationFileName strin
 	if err != nil {
 		return nil, err
 	}
+
 	uploaderBuf, err := ioutil.ReadFile(uploaderFilename)
 	if err != nil {
 		return nil, err
 	}
-	locationBuf, _ := ioutil.ReadFile(locationFileName)
+
+	locationBuf, err := ioutil.ReadFile(locationFileName)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
 
 	return ParseConfig(buf, uploaderBuf, locationBuf)
 }

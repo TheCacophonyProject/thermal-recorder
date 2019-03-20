@@ -44,14 +44,14 @@ func (conf *LocationConfig) Validate() error {
 		return errors.New("Latitude cannot be nil")
 	}
 	if conf.Latitude < -maxLatitude || conf.Latitude > maxLatitude {
-		return errors.New("Latitude outisde of normal range")
+		return errors.New("Latitude outside of normal range")
 	}
 
 	if &conf.Longitude == nil {
 		return errors.New("Longitude cannot be nil")
 	}
 	if conf.Longitude < -maxLongitude || conf.Longitude > maxLongitude {
-		return errors.New("Longitude outisde of normal range")
+		return errors.New("Longitude outside of normal range")
 	}
 	return nil
 }
