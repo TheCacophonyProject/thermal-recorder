@@ -23,10 +23,10 @@ recorder:
     preview-secs: 3
 
     # Start & End time by Sunrise and Sunset
-    # sunrise-sunset:true
+    # sunrise-sunset: true
 
     # Amount of minutes to add/subtract from sunrise and sunset time
-    # sunrise-sunset-delay:  30
+    # sunrise-sunset-delay: 30
 
     # Start time for recording window (optional)
     # window-start: 17:00
