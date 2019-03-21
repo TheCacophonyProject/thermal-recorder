@@ -3,96 +3,133 @@
 
 [[projects]]
   branch = "master"
+  digest = "1:d2f4e46aa632a93b9207279c6bc59e23ef8a388eb391e307e3f0eb81331f41d5"
   name = "github.com/TheCacophonyProject/go-cptv"
   packages = ["."]
+  pruneopts = ""
   revision = "9de6478a3ff6a8aa67e071621af6cf977d27cdb7"
 
 [[projects]]
   branch = "master"
+  digest = "1:7169b0e9b7094bc79f71996bd0ba5a2a44a76a6acaf486fa6d2f66877502ee94"
   name = "github.com/TheCacophonyProject/lepton3"
   packages = ["."]
+  pruneopts = ""
   revision = "24af961474c7feb0c8f92911c371e18c0fccfb0c"
 
 [[projects]]
   branch = "master"
+  digest = "1:43277b78dc1bc6791212482966f639e9f39956cfd58175d23a17feabac9dde07"
   name = "github.com/TheCacophonyProject/window"
   packages = ["."]
+  pruneopts = ""
   revision = "4e43785eca90dbe76573ecc47352b9ab1912d93e"
 
 [[projects]]
   branch = "master"
+  digest = "1:c3041f49cae4ad48d7a5ad28a19b57a60e26284cff0af4d4bba3b7ec116e79da"
   name = "github.com/alexflint/go-arg"
   packages = ["."]
+  pruneopts = ""
   revision = "f7c0423bd11ee80ab81d25c6d46f492998af8547"
 
 [[projects]]
   branch = "master"
+  digest = "1:d685b3da1fa270912d06e97f577632540a52fcf26048a3a46215c3ce5218e56f"
   name = "github.com/alexflint/go-scalar"
   packages = ["."]
+  pruneopts = ""
   revision = "e80c3b7ed292b052c7083b6fd7154a8422c33f65"
 
 [[projects]]
+  digest = "1:1a99671bb8620f32c88d20f65c7069a8c3745d1533bd486b9c0c538a1d981a5c"
   name = "github.com/coreos/go-systemd"
   packages = ["daemon"]
+  pruneopts = ""
   revision = "39ca1b05acc7ad1220e09f133283b8859a8b71ab"
   version = "v17"
 
 [[projects]]
+  digest = "1:56c130d885a4aacae1dd9c7b71cfe39912c7ebc1ff7d2b46083c8812996dc43b"
   name = "github.com/davecgh/go-spew"
   packages = ["spew"]
+  pruneopts = ""
   revision = "346938d642f2ec3594ed81d874461961cd0faa76"
   version = "v1.1.0"
 
 [[projects]]
   branch = "master"
+  digest = "1:41b6701cfa2e05add20d7e08480a44a586910eef50290eedd58f80054aca6129"
   name = "github.com/felixge/pidctrl"
   packages = ["."]
+  pruneopts = ""
   revision = "7b13bcae7243fe17bbeb7dd5cd8b26675c8db048"
 
 [[projects]]
+  digest = "1:e772845668c277db6fcc8c6fcf31664c74851f6cce4d225be4f4adbee3861057"
   name = "github.com/godbus/dbus"
   packages = [
     ".",
-    "introspect"
+    "introspect",
   ]
+  pruneopts = ""
   revision = "a389bdde4dd695d414e47b755e95e72b7826432c"
   version = "v4.1.0"
 
 [[projects]]
+  branch = "master"
+  digest = "1:4f4aef9b3348433dd5518aabd5f8d8399af54cfc96dac7abb730e61a494280e6"
+  name = "github.com/nathan-osman/go-sunrise"
+  packages = ["."]
+  pruneopts = ""
+  revision = "7c449e7c690b1ad3692d399bb4e49fcf864428d6"
+
+[[projects]]
+  digest = "1:256484dbbcd271f9ecebc6795b2df8cad4c458dd0f5fd82a8c2fa0c29f233411"
   name = "github.com/pmezard/go-difflib"
   packages = ["difflib"]
+  pruneopts = ""
   revision = "792786c7400a136282c1664665ae0a8db921c6c2"
   version = "v1.0.0"
 
 [[projects]]
+  digest = "1:c587772fb8ad29ad4db67575dad25ba17a51f072ff18a22b4f0257a4d9c24f75"
   name = "github.com/stretchr/testify"
   packages = [
     "assert",
-    "require"
+    "require",
   ]
+  pruneopts = ""
   revision = "f35b8ab0b5a2cef36673838d662e249dd9c94686"
   version = "v1.2.2"
 
 [[projects]]
   branch = "master"
+  digest = "1:cef4c63f5c97c27ab65498fd8de6661df17b31e40cd3b4f6f1e217e97f0e23f3"
   name = "golang.org/x/net"
   packages = ["context"]
+  pruneopts = ""
   revision = "4cb1c02c05b0e749b0365f61ae859a8e0cfceed9"
 
 [[projects]]
   branch = "v2"
+  digest = "1:61a650a53e5e865a91ae9581f02990a4b6e3afcb8d280f19b1e67a3c284944e6"
   name = "gopkg.in/tomb.v2"
   packages = ["."]
+  pruneopts = ""
   revision = "d5d1b5820637886def9eef33e03a27a9f166942c"
 
 [[projects]]
+  digest = "1:f0620375dd1f6251d9973b5f2596228cc8042e887cd7f827e4220bc1ce8c30e2"
   name = "gopkg.in/yaml.v2"
   packages = ["."]
+  pruneopts = ""
   revision = "5420a8b6744d3b0345ab293f6fcba19c978f1183"
   version = "v2.2.1"
 
 [[projects]]
   branch = "v2"
+  digest = "1:f5b876cef546803ec83c2b549d78d3688b47981292e7bd7bf1b6b002385d5837"
   name = "periph.io/x/periph"
   packages = [
     ".",
@@ -121,14 +158,31 @@
     "host/pmem",
     "host/rpi",
     "host/sysfs",
-    "host/videocore"
+    "host/videocore",
   ]
+  pruneopts = ""
   revision = "d06ef89e37e829cc301f5babee628e6c6e36d7c5"
   source = "https://github.com/TheCacophonyProject/periph.git"
 
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "ee53d0c411011b6b9a12880b7952e0aed3ba576fafe8034b54d10ec12ce58ba7"
+  input-imports = [
+    "github.com/TheCacophonyProject/go-cptv",
+    "github.com/TheCacophonyProject/lepton3",
+    "github.com/TheCacophonyProject/window",
+    "github.com/alexflint/go-arg",
+    "github.com/coreos/go-systemd/daemon",
+    "github.com/felixge/pidctrl",
+    "github.com/godbus/dbus",
+    "github.com/godbus/dbus/introspect",
+    "github.com/nathan-osman/go-sunrise",
+    "github.com/stretchr/testify/assert",
+    "github.com/stretchr/testify/require",
+    "gopkg.in/yaml.v2",
+    "periph.io/x/periph/conn/gpio",
+    "periph.io/x/periph/conn/gpio/gpioreg",
+    "periph.io/x/periph/host",
+  ]
   solver-name = "gps-cdcl"
   solver-version = 1

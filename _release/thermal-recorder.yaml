@@ -22,6 +22,15 @@ recorder:
     # Time to record before motion was detected.
     preview-secs: 3
 
+    # Start & End time by Sunrise and Sunset
+    # sunrise-sunset: true
+
+    # Amount of minutes to offset sunrise e.g. sunrise + offset
+    # sunrise-offset: 30
+
+    # Amount of minutes to offset sunset e.g. sunset + offset
+    # sunset-offset: 30
+
     # Start time for recording window (optional)
     # window-start: 17:00
 

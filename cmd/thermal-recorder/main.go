@@ -21,10 +21,11 @@ import (
 	"net"
 	"os"
 
-	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
 	"periph.io/x/periph/host"
 
+	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
@@ -46,10 +47,10 @@ var (
 type Args struct {
 	ConfigFile         string `arg:"-c,--config" help:"path to configuration file"`
 	UploaderConfigFile string `arg:"-u,--uploader-config" help:"path to uploader config file"`
-	LocationFile       string `arg:"-l, --location" help:"path to location file"`
 	Timestamps         bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
 	TestCptvFile       string `arg:"-f, --testfile" help:"Run a CPTV file through to see what the results are"`
 	Verbose            bool   `arg:"-v, --verbose" help:"Make logging more verbose"`
+	LocationConfigFile string `arg:"-l, --location" help:"path to location config file"`
 }
 
 func (Args) Version() string {
@@ -60,7 +61,7 @@ func procArgs() Args {
 	var args Args
 	args.ConfigFile = "/etc/thermal-recorder.yaml"
 	args.UploaderConfigFile = "/etc/thermal-uploader.yaml"
-	args.LocationFile = "/etc/cacophony/location.yaml"
+	args.LocationConfigFile = location.DefaultLocationFile()
 	arg.MustParse(&args)
 	return args
 }
@@ -80,7 +81,8 @@ func runMain() error {
 	}
 
 	log.Printf("running version: %s", version)
-	conf, err := ParseConfigFiles(args.ConfigFile, args.UploaderConfigFile, args.LocationFile)
+	conf, err := ParseConfigFiles(args.ConfigFile, args.UploaderConfigFile, args.LocationConfigFile)
+
 	if err != nil {
 		return err
 	}
@@ -93,8 +95,6 @@ func runMain() error {
 		log.Printf("Detected: %-16s Recorded: %-16s Motion frames: %d/%d", results.motionDetectedFrames, results.recordedFrames, results.motionDetectedCount, results.frameCount)
 		return nil
 	}
-
-	logConfig(conf)
 
 	log.Println("starting d-bus service")
 	err = startService(conf.OutputDir)
@@ -154,7 +154,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 		recorder = throttledRecorder
 	}
 
-	processor = motion.NewMotionProcessor(&conf.Motion, &conf.Recorder, nil, recorder)
+	processor = motion.NewMotionProcessor(&conf.Motion, &conf.Recorder, &conf.Location, nil, recorder)
 
 	rawFrame := new(lepton3.RawFrame)
 
@@ -188,7 +188,11 @@ func logConfig(conf *Config) {
 	log.Printf("minimum disk space: %d", conf.MinDiskSpace)
 	log.Printf("motion: %+v", conf.Motion)
 	log.Printf("throttler: %+v", conf.Throttler)
-	if !conf.Recorder.WindowStart.IsZero() {
+	log.Printf("location latitude: %v", conf.Location.Latitude)
+	log.Printf("location longitude: %v", conf.Location.Longitude)
+	if conf.Recorder.UseSunriseSunsetWindow {
+		log.Printf("recording window is based on sunrise and sunset (sunrise offset is %v minutes, sunset offset is %v minutes", conf.Recorder.SunriseOffset, conf.Recorder.SunsetOffset)
+	} else if !conf.Recorder.WindowStart.IsZero() {
 		log.Printf("recording window: %02d:%02d to %02d:%02d",
 			conf.Recorder.WindowStart.Hour(), conf.Recorder.WindowStart.Minute(),
 			conf.Recorder.WindowEnd.Hour(), conf.Recorder.WindowEnd.Minute())

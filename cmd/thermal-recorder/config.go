@@ -22,6 +22,7 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
@@ -36,8 +37,7 @@ type Config struct {
 	Motion       motion.MotionConfig
 	Turret       TurretConfig
 	Throttler    throttle.ThrottlerConfig
-	Latitude     float32
-	Longitude    float32
+	Location     location.LocationConfig
 }
 
 type ServoConfig struct {
@@ -59,12 +59,6 @@ type uploaderConfig struct {
 	DeviceName string `yaml:"device-name"`
 }
 
-// locationConfig is a struct to store our location values in.
-type locationConfig struct {
-	Latitude  float32 `yaml:"latitude"`
-	Longitude float32 `yaml:"longitude"`
-}
-
 func (conf *Config) Validate() error {
 	if err := conf.Recorder.Validate(); err != nil {
 		return err
@@ -73,6 +67,11 @@ func (conf *Config) Validate() error {
 	if err := conf.Motion.Validate(); err != nil {
 		return err
 	}
+
+	if err := conf.Location.Validate(); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -87,6 +86,7 @@ var defaultConfig = Config{
 	Recorder:     recorder.DefaultRecorderConfig(),
 	Motion:       motion.DefaultMotionConfig(),
 	Throttler:    throttle.DefaultThrottlerConfig(),
+	Location:     location.DefaultLocationConfig(),
 	Turret: TurretConfig{
 		Active: false,
 		PID:    []float64{0.05, 0, 0},
@@ -107,38 +107,27 @@ var defaultConfig = Config{
 	},
 }
 
-// ParseLocationFile retrieves values from the location data file.
-func parseLocationFile(filepath string) (*locationConfig, error) {
-
-	// Create a default location config
-	location := &locationConfig{}
-
-	inBuf, err := ioutil.ReadFile(filepath)
-	if os.IsNotExist(err) {
-		return location, nil
-	} else if err != nil {
-		return nil, err
-	}
-
-	if err := yaml.Unmarshal(inBuf, location); err != nil {
-		return nil, err
-	}
-	return location, nil
-}
-
 func ParseConfigFiles(recorderFilename, uploaderFilename, locationFileName string) (*Config, error) {
 	buf, err := ioutil.ReadFile(recorderFilename)
 	if err != nil {
 		return nil, err
 	}
+
 	uploaderBuf, err := ioutil.ReadFile(uploaderFilename)
 	if err != nil {
 		return nil, err
 	}
-	return ParseConfig(buf, uploaderBuf, locationFileName)
+
+	locationBuf, err := ioutil.ReadFile(locationFileName)
+	if err != nil && !os.IsNotExist(err) {
+		return nil, err
+	}
+
+	return ParseConfig(buf, uploaderBuf, locationBuf)
 }
 
-func ParseConfig(buf, uploaderBuf []byte, locationFileName string) (*Config, error) {
+func ParseConfig(buf, uploaderBuf, locationBuf []byte) (*Config, error) {
+
 	conf := defaultConfig
 	if err := yaml.Unmarshal(buf, &conf); err != nil {
 		return nil, err
@@ -147,14 +136,12 @@ func ParseConfig(buf, uploaderBuf []byte, locationFileName string) (*Config, err
 	if err := yaml.Unmarshal(uploaderBuf, &uploaderConf); err != nil {
 		return nil, err
 	}
-	location, err := parseLocationFile(locationFileName)
-	if err != nil {
+
+	conf.DeviceName = uploaderConf.DeviceName
+
+	if err := yaml.Unmarshal(locationBuf, &conf.Location); err != nil {
 		return nil, err
 	}
-
-	conf.Latitude = location.Latitude
-	conf.Longitude = location.Longitude
-	conf.DeviceName = uploaderConf.DeviceName
 
 	if err := conf.Validate(); err != nil {
 		return nil, err

@@ -19,48 +19,60 @@ package motion
 import (
 	"errors"
 	"log"
+	"time"
+
+	"github.com/nathan-osman/go-sunrise"
 
 	"github.com/TheCacophonyProject/lepton3"
-	"github.com/TheCacophonyProject/window"
-
+	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
+	"github.com/TheCacophonyProject/window"
 )
 
 func NewMotionProcessor(motionConf *MotionConfig,
 	recorderConf *recorder.RecorderConfig,
+	locationConf *location.LocationConfig,
 	listener RecordingListener,
 	recorder recorder.Recorder) *MotionProcessor {
-
 	return &MotionProcessor{
-		minFrames:      recorderConf.MinSecs * lepton3.FramesHz,
-		maxFrames:      recorderConf.MaxSecs * lepton3.FramesHz,
-		motionDetector: NewMotionDetector(*motionConf),
-		frameLoop:      NewFrameLoop(recorderConf.PreviewSecs*lepton3.FramesHz + motionConf.TriggerFrames),
-		isRecording:    false,
-		window:         *window.New(recorderConf.WindowStart.Time, recorderConf.WindowEnd.Time),
-		listener:       listener,
-		conf:           recorderConf,
-		triggerFrames:  motionConf.TriggerFrames,
-		recorder:       recorder,
+		minFrames:           recorderConf.MinSecs * lepton3.FramesHz,
+		maxFrames:           recorderConf.MaxSecs * lepton3.FramesHz,
+		motionDetector:      NewMotionDetector(*motionConf),
+		frameLoop:           NewFrameLoop(recorderConf.PreviewSecs*lepton3.FramesHz + motionConf.TriggerFrames),
+		isRecording:         false,
+		window:              *window.New(recorderConf.WindowStart.Time, recorderConf.WindowEnd.Time),
+		listener:            listener,
+		conf:                recorderConf,
+		triggerFrames:       motionConf.TriggerFrames,
+		recorder:            recorder,
+		locationConfig:      locationConf,
+		sunriseSunsetWindow: recorderConf.UseSunriseSunsetWindow,
+		sunriseOffset:       recorderConf.SunriseOffset,
+		sunsetOffset:        recorderConf.SunsetOffset,
 	}
 }
 
 type MotionProcessor struct {
-	minFrames      int
-	maxFrames      int
-	framesWritten  int
-	motionDetector *motionDetector
-	frameLoop      *FrameLoop
-	isRecording    bool
-	totalFrames    int
-	writeUntil     int
-	lastLogFrame   int
-	window         window.Window
-	conf           *recorder.RecorderConfig
-	listener       RecordingListener
-	triggerFrames  int
-	triggered      int
-	recorder       recorder.Recorder
+	minFrames           int
+	maxFrames           int
+	framesWritten       int
+	motionDetector      *motionDetector
+	frameLoop           *FrameLoop
+	isRecording         bool
+	totalFrames         int
+	writeUntil          int
+	lastLogFrame        int
+	window              window.Window
+	conf                *recorder.RecorderConfig
+	listener            RecordingListener
+	triggerFrames       int
+	triggered           int
+	recorder            recorder.Recorder
+	locationConfig      *location.LocationConfig
+	sunriseSunsetWindow bool
+	sunriseOffset       int
+	sunsetOffset        int
+	nextSunriseCheck    time.Time
 }
 
 type RecordingListener interface {
@@ -72,13 +84,11 @@ type RecordingListener interface {
 func (mp *MotionProcessor) Process(rawFrame *lepton3.RawFrame) {
 	frame := mp.frameLoop.Current()
 	rawFrame.ToFrame(frame)
-
 	mp.internalProcess(frame)
 }
 
 func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 	mp.totalFrames++
-
 	if mp.motionDetector.Detect(frame) {
 		if mp.listener != nil {
 			mp.listener.MotionDetected()
@@ -132,7 +142,28 @@ func (mp *MotionProcessor) GetRecentFrame(frame *lepton3.Frame) *lepton3.Frame {
 	return mp.frameLoop.CopyRecent(frame)
 }
 
+// setSunriseSunsetWindow sets the recording window based of todays sunset and sunrise location
+func (mp *MotionProcessor) setSunriseSunsetWindow() {
+	curTime := time.Now()
+	if !mp.sunriseSunsetWindow || curTime.Before(mp.nextSunriseCheck) {
+		return
+	}
+	sunriseOffset := time.Duration(mp.sunriseOffset) * time.Minute
+	sunsetOffset := time.Duration(mp.sunsetOffset) * time.Minute
+
+	location := curTime.Location()
+	year, month, day := curTime.Date()
+
+	rise, set := sunrise.SunriseSunset(float64(mp.locationConfig.Latitude), float64(mp.locationConfig.Longitude), year, month, day)
+	rise = rise.Add(sunriseOffset)
+	set = set.Add(sunsetOffset)
+
+	mp.window = *window.New(set.In(location), rise.In(location))
+	mp.nextSunriseCheck = time.Date(year, month, day, 0, 0, 0, 0, location).AddDate(0, 0, 1)
+}
+
 func (mp *MotionProcessor) canStartWriting() error {
+	mp.setSunriseSunsetWindow()
 	if !mp.window.Active() {
 		return errors.New("motion detected but outside of recording window")
 	} else {
