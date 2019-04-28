@@ -16,12 +16,19 @@
 
 package location
 
-import "errors"
+import (
+	"errors"
+
+	yaml "gopkg.in/yaml.v2"
+)
 
 const (
 	defaultConfig = "/etc/cacophony/location.yaml"
 	maxLatitude   = 90
 	maxLongitude  = 180
+	//Christchurch
+	defaultLatitude  = -43.5321
+	defaultLongitude = 172.6362
 )
 
 type LocationConfig struct {
@@ -35,10 +42,26 @@ func DefaultLocationFile() string {
 
 func DefaultLocationConfig() LocationConfig {
 	return LocationConfig{
-		Latitude:  -43.5321,
-		Longitude: 172.6362,
+		Latitude:  defaultLatitude,
+		Longitude: defaultLongitude,
 	}
 }
+
+func (conf *LocationConfig) IsLocationEmpty() bool {
+	return conf.Latitude == 0 && conf.Longitude == 0
+}
+
+//ParseConfig stored in yaml bytes and sets default location if location is (0,0)
+func (conf *LocationConfig) ParseConfig(buf []byte) error {
+	err := yaml.Unmarshal(buf, conf)
+	if err == nil && conf.IsLocationEmpty() {
+		conf.Latitude = defaultLatitude
+		conf.Longitude = defaultLongitude
+	}
+
+	return err
+}
+
 func (conf *LocationConfig) Validate() error {
 	if &conf.Latitude == nil {
 		return errors.New("Latitude cannot be nil")
