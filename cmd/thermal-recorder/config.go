@@ -139,7 +139,7 @@ func ParseConfig(buf, uploaderBuf, locationBuf []byte) (*Config, error) {
 
 	conf.DeviceName = uploaderConf.DeviceName
 
-	if err := yaml.Unmarshal(locationBuf, &conf.Location); err != nil {
+	if err := conf.Location.ParseConfig(locationBuf); err != nil {
 		return nil, err
 	}
 
