@@ -31,6 +31,9 @@ const (
 	PreviewSecs  byte = 'P'
 	Latitude     byte = 'L'
 	Longitude    byte = 'O'
+	LocTimestamp byte = 'S'
+	Altitude     byte = 'A'
+	Precision    byte = 'R'
 
 	// Frame field keys
 	TimeOn      byte = 't'

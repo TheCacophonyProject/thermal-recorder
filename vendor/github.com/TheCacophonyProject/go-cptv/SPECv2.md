@@ -70,6 +70,9 @@ After these a number of fields will exist.
 | Preview secs  | 1        | 'P'   | uint8   | Number of seconds of recording before motion event was detected
 | Latitude      | 4        | 'L'   | float32 | Latitude of device location
 | Longitude     | 4        | 'O'   | float32 | Longitude of device location
+| LocTimestamp  | 8        | 'S'   | uint64  | Time at which location of device was set.  Microseconds since 1970-01-01 UTC
+| Altitude      | 4        | 'A'   | float32 | Altitude of device location
+| Precision     | 4        | 'R'   | float32 | Estimated precision of location
 
 ## Frames
 
