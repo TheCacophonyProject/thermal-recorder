@@ -75,24 +75,46 @@ func (r *Reader) PreviewSecs() int {
 }
 
 // MotionConfig returns the YAML configuration for the motion detector
-// that was in use when this CPTV file was recorded.
+// that was in use when this CPTV file was recorded. Returns an empty string
+// if this field is not included.
 func (r *Reader) MotionConfig() string {
 	conf, _ := r.header.String(MotionConfig)
 	return conf
 }
 
 // Latitude returns the latitude part of the location of the device
-// when this CPTV file was recorded.
+// when this CPTV file was recorded. Returns 0 if the field is not included.
 func (r *Reader) Latitude() float32 {
 	lat, _ := r.header.Float32(Latitude)
 	return lat
 }
 
 // Longitude returns the longitude part of the location of the device
-// when this CPTV file was recorded.
+// when this CPTV file was recorded. Returns 0 if the field is not included.
 func (r *Reader) Longitude() float32 {
 	long, _ := r.header.Float32(Longitude)
 	return long
+}
+
+// LocTimestamp returns the timestamp at which the location of the device.
+// Returns the nil time.Time value if the field is not included.
+func (r *Reader) LocTimestamp() time.Time {
+	ts, _ := r.header.Timestamp(LocTimestamp)
+	return ts
+}
+
+// Altitude returns the altitude part of the location of the device
+// when this CPTV file was recorded. Returns 0 if the field is not included.
+func (r *Reader) Altitude() float32 {
+	alt, _ := r.header.Float32(Altitude)
+	return alt
+}
+
+// Precision returns the estimated precision of the location of the device
+// when this CPTV file was recorded. Returns 0 if the field is not included.
+func (r *Reader) Precision() float32 {
+	pre, _ := r.header.Float32(Precision)
+	return pre
 }
 
 // ReadFrame extracts and decompresses the next frame in a CPTV

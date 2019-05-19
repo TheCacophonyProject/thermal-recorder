@@ -44,6 +44,9 @@ type Header struct {
 	MotionConfig string
 	Latitude     float32
 	Longitude    float32
+	LocTimestamp time.Time
+	Altitude     float32
+	Precision    float32
 }
 
 // WriteHeader writes a CPTV file header
@@ -74,11 +77,21 @@ func (w *Writer) WriteHeader(header Header) error {
 		}
 	}
 
+	// The location fields are optional. They are only written out if they have non-zero values.
 	if header.Latitude != 0.0 {
 		fields.Float32(Latitude, header.Latitude)
 	}
 	if header.Longitude != 0.0 {
 		fields.Float32(Longitude, header.Longitude)
+	}
+	if !header.LocTimestamp.IsZero() {
+		fields.Timestamp(LocTimestamp, header.LocTimestamp)
+	}
+	if header.Altitude >= 0.0 {
+		fields.Float32(Altitude, header.Altitude)
+	}
+	if header.Precision != 0.0 {
+		fields.Float32(Precision, header.Precision)
 	}
 
 	return w.bldr.WriteHeader(fields)

@@ -52,6 +52,7 @@ func createCPTVFile(cptvFileName string) {
 	w := cptv.NewWriter(file)
 
 	ts := time.Date(2016, 5, 4, 3, 2, 1, 0, time.UTC)
+	lts := time.Date(2019, 5, 20, 9, 8, 7, 0, time.UTC)
 	header := cptv.Header{
 		Timestamp:    ts,
 		DeviceName:   "nz42",
@@ -59,6 +60,9 @@ func createCPTVFile(cptvFileName string) {
 		MotionConfig: "keep on movin",
 		Latitude:     -36.86667,
 		Longitude:    174.76667,
+		LocTimestamp: lts,
+		Altitude:     200,
+		Precision:    80.5,
 	}
 	w.WriteHeader(header)
 
@@ -95,6 +99,9 @@ func openAndDisplayCPTVFileContents(cptvFileName string) {
 	fmt.Println("\tMotionConfig =", r.MotionConfig())
 	fmt.Println("\tLatitude =", r.Latitude())
 	fmt.Println("\tLongitude =", r.Longitude())
+	fmt.Println("\tlocTimeStamp =", r.LocTimestamp().UTC())
+	fmt.Println("\tAltitude =", r.Altitude())
+	fmt.Println("\tPrecision =", r.Precision())
 	frameCount, err := r.FrameCount()
 	fmt.Println("\tNum Frames =", frameCount)
 

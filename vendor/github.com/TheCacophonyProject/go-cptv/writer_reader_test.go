@@ -41,11 +41,15 @@ func TestRoundTripHeaderDefaults(t *testing.T) {
 	assert.Equal(t, "", r.MotionConfig())
 	assert.Equal(t, float32(0.0), r.Latitude())
 	assert.Equal(t, float32(0.0), r.Longitude())
+	assert.True(t, r.LocTimestamp().IsZero()) // time.Time zero value was used
+	assert.Equal(t, float32(0.0), r.Altitude())
+	assert.Equal(t, float32(0.0), r.Precision())
 
 }
 
 func TestRoundTripHeader(t *testing.T) {
 	ts := time.Date(2016, 5, 4, 3, 2, 1, 0, time.UTC)
+	lts := time.Date(2019, 5, 20, 9, 8, 7, 0, time.UTC)
 	cptvBytes := new(bytes.Buffer)
 
 	w := NewWriter(cptvBytes)
@@ -56,6 +60,9 @@ func TestRoundTripHeader(t *testing.T) {
 		MotionConfig: "keep on movin",
 		Latitude:     -36.86667,
 		Longitude:    174.76667,
+		LocTimestamp: lts,
+		Altitude:     200,
+		Precision:    80.5,
 	}
 	require.NoError(t, w.WriteHeader(header))
 	require.NoError(t, w.Close())
@@ -68,6 +75,9 @@ func TestRoundTripHeader(t *testing.T) {
 	assert.Equal(t, "keep on movin", r.MotionConfig())
 	assert.Equal(t, float32(-36.86667), r.Latitude())
 	assert.Equal(t, float32(174.76667), r.Longitude())
+	assert.Equal(t, lts, r.LocTimestamp().UTC())
+	assert.Equal(t, float32(200), r.Altitude())
+	assert.Equal(t, float32(80.5), r.Precision())
 
 }
 
