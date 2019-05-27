@@ -123,6 +123,7 @@ func getExpectedAllSetConfig() Config {
 		Location: location.LocationConfig{
 			Latitude:  -36,
 			Longitude: 174,
+			Accuracy:  10,
 		},
 		FrameInput:   "/some/sock",
 		OutputDir:    "/some/where",
