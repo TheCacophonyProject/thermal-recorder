@@ -110,10 +110,10 @@ func (r *Reader) Altitude() float32 {
 	return alt
 }
 
-// Precision returns the estimated precision of the location of the device
+// Accuracy returns the estimated accuracy of the location setting of the device
 // when this CPTV file was recorded. Returns 0 if the field is not included.
-func (r *Reader) Precision() float32 {
-	pre, _ := r.header.Float32(Precision)
+func (r *Reader) Accuracy() float32 {
+	pre, _ := r.header.Float32(Accuracy)
 	return pre
 }
 

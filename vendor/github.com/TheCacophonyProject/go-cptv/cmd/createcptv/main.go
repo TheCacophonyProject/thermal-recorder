@@ -62,7 +62,7 @@ func createCPTVFile(cptvFileName string) {
 		Longitude:    174.76667,
 		LocTimestamp: lts,
 		Altitude:     200,
-		Precision:    80.5,
+		Accuracy:     10,
 	}
 	w.WriteHeader(header)
 
@@ -101,7 +101,7 @@ func openAndDisplayCPTVFileContents(cptvFileName string) {
 	fmt.Println("\tLongitude =", r.Longitude())
 	fmt.Println("\tlocTimeStamp =", r.LocTimestamp().UTC())
 	fmt.Println("\tAltitude =", r.Altitude())
-	fmt.Println("\tPrecision =", r.Precision())
+	fmt.Println("\tAccuracy =", r.Accuracy())
 	frameCount, err := r.FrameCount()
 	fmt.Println("\tNum Frames =", frameCount)
 

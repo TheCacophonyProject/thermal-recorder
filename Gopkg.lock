@@ -3,11 +3,11 @@
 
 [[projects]]
   branch = "master"
-  digest = "1:409fbbdb8d38399a13b7b2d2a8f57080c91ca13f1f6d4fae64741bbbb8e2c487"
+  digest = "1:b25e2936aa15bd13825b2704a18496ab80ef22b10a1cdcb693d8b1550027b426"
   name = "github.com/TheCacophonyProject/go-cptv"
   packages = ["."]
   pruneopts = ""
-  revision = "234405467a0efff0b9abb13f641cfce670a3fd1b"
+  revision = "cfce3277dd0d4c38b3ef1c1cae28cdd2c8dceaf8"
 
 [[projects]]
   branch = "master"

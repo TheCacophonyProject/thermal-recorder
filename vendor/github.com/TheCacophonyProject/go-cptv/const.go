@@ -33,7 +33,7 @@ const (
 	Longitude    byte = 'O'
 	LocTimestamp byte = 'S'
 	Altitude     byte = 'A'
-	Precision    byte = 'R'
+	Accuracy     byte = 'U'
 
 	// Frame field keys
 	TimeOn      byte = 't'

@@ -46,7 +46,7 @@ type Header struct {
 	Longitude    float32
 	LocTimestamp time.Time
 	Altitude     float32
-	Precision    float32
+	Accuracy     float32
 }
 
 // WriteHeader writes a CPTV file header
@@ -90,8 +90,8 @@ func (w *Writer) WriteHeader(header Header) error {
 	if header.Altitude >= 0.0 {
 		fields.Float32(Altitude, header.Altitude)
 	}
-	if header.Precision != 0.0 {
-		fields.Float32(Precision, header.Precision)
+	if header.Accuracy != 0.0 {
+		fields.Float32(Accuracy, header.Accuracy)
 	}
 
 	return w.bldr.WriteHeader(fields)
