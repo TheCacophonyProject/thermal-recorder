@@ -18,22 +18,25 @@ package motion
 
 import (
 	"errors"
-	"log"
 	"time"
 
+	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/window"
 	"github.com/nathan-osman/go-sunrise"
 
-	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/location"
+	"github.com/TheCacophonyProject/thermal-recorder/loglimiter"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
-	"github.com/TheCacophonyProject/window"
 )
+
+const minLogInterval = time.Minute
 
 func NewMotionProcessor(motionConf *MotionConfig,
 	recorderConf *recorder.RecorderConfig,
 	locationConf *location.LocationConfig,
 	listener RecordingListener,
-	recorder recorder.Recorder) *MotionProcessor {
+	recorder recorder.Recorder,
+) *MotionProcessor {
 	return &MotionProcessor{
 		minFrames:           recorderConf.MinSecs * lepton3.FramesHz,
 		maxFrames:           recorderConf.MaxSecs * lepton3.FramesHz,
@@ -49,6 +52,8 @@ func NewMotionProcessor(motionConf *MotionConfig,
 		sunriseSunsetWindow: recorderConf.UseSunriseSunsetWindow,
 		sunriseOffset:       recorderConf.SunriseOffset,
 		sunsetOffset:        recorderConf.SunsetOffset,
+
+		log: loglimiter.New(minLogInterval),
 	}
 }
 
@@ -59,9 +64,7 @@ type MotionProcessor struct {
 	motionDetector      *motionDetector
 	frameLoop           *FrameLoop
 	isRecording         bool
-	totalFrames         int
 	writeUntil          int
-	lastLogFrame        int
 	window              window.Window
 	conf                *recorder.RecorderConfig
 	listener            RecordingListener
@@ -73,6 +76,7 @@ type MotionProcessor struct {
 	sunriseOffset       int
 	sunsetOffset        int
 	nextSunriseCheck    time.Time
+	log                 *loglimiter.LogLimiter
 }
 
 type RecordingListener interface {
@@ -84,11 +88,10 @@ type RecordingListener interface {
 func (mp *MotionProcessor) Process(rawFrame *lepton3.RawFrame) {
 	frame := mp.frameLoop.Current()
 	rawFrame.ToFrame(frame)
-	mp.internalProcess(frame)
+	mp.process(frame)
 }
 
-func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
-	mp.totalFrames++
+func (mp *MotionProcessor) process(frame *lepton3.Frame) {
 	if mp.motionDetector.Detect(frame) {
 		if mp.listener != nil {
 			mp.listener.MotionDetected()
@@ -101,9 +104,9 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 		} else if mp.triggered < mp.triggerFrames {
 			// Only start recording after n (triggerFrames) consecutive frames with motion detected.
 		} else if err := mp.canStartWriting(); err != nil {
-			mp.occasionallyWriteError("Recording not started", err)
+			mp.log.Printf("Recording not started: %v", err)
 		} else if err := mp.startRecording(); err != nil {
-			mp.occasionallyWriteError("Can't start recording file", err)
+			mp.log.Printf("Can't start recording file: %v", err)
 		} else {
 			mp.writeUntil = mp.minFrames
 		}
@@ -115,7 +118,7 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 	if mp.isRecording {
 		err := mp.recorder.WriteFrame(frame)
 		if err != nil {
-			log.Printf("Failed to write to CPTV file %v", err)
+			mp.log.Printf("Failed to write to CPTV file %v", err)
 		}
 		mp.framesWritten++
 	}
@@ -125,17 +128,15 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 	if mp.isRecording && mp.framesWritten >= mp.writeUntil {
 		err := mp.stopRecording()
 		if err != nil {
-			log.Printf("Failed to stop recording CPTV file %v", err)
+			mp.log.Printf("Failed to stop recording CPTV file %v", err)
 		}
 	}
 }
 
 func (mp *MotionProcessor) ProcessFrame(srcFrame *lepton3.Frame) {
-
 	frame := mp.frameLoop.Current()
 	frame.Copy(srcFrame)
-
-	mp.internalProcess(frame)
+	mp.process(frame)
 }
 
 func (mp *MotionProcessor) GetRecentFrame(frame *lepton3.Frame) *lepton3.Frame {
@@ -166,24 +167,12 @@ func (mp *MotionProcessor) canStartWriting() error {
 	mp.setSunriseSunsetWindow()
 	if !mp.window.Active() {
 		return errors.New("motion detected but outside of recording window")
-	} else {
-		return mp.recorder.CheckCanRecord()
 	}
-}
-
-func (mp *MotionProcessor) occasionallyWriteError(task string, err error) {
-	shouldLogMotion := (mp.lastLogFrame == 0) //|| (mp.totalFrames >= mp.lastLogFrame+(10*framesHz))
-	if shouldLogMotion {
-		log.Printf("%s (%d): %v", task, mp.totalFrames, err)
-		mp.lastLogFrame = mp.totalFrames
-	}
+	return mp.recorder.CheckCanRecord()
 }
 
 func (mp *MotionProcessor) startRecording() error {
-
-	var err error
-
-	if err = mp.recorder.StartRecording(); err != nil {
+	if err := mp.recorder.StartRecording(); err != nil {
 		return err
 	}
 
@@ -192,8 +181,7 @@ func (mp *MotionProcessor) startRecording() error {
 		mp.listener.RecordingStarted()
 	}
 
-	err = mp.recordPreTriggerFrames()
-	return err
+	return mp.recordPreTriggerFrames()
 }
 
 func (mp *MotionProcessor) stopRecording() error {
@@ -213,13 +201,6 @@ func (mp *MotionProcessor) stopRecording() error {
 	return err
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func (mp *MotionProcessor) recordPreTriggerFrames() error {
 	frames := mp.frameLoop.GetHistory()
 	var frame *lepton3.Frame
@@ -235,4 +216,11 @@ func (mp *MotionProcessor) recordPreTriggerFrames() error {
 	}
 
 	return nil
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
