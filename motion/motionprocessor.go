@@ -84,10 +84,10 @@ type RecordingListener interface {
 func (mp *MotionProcessor) Process(rawFrame *lepton3.RawFrame) {
 	frame := mp.frameLoop.Current()
 	rawFrame.ToFrame(frame)
-	mp.internalProcess(frame)
+	mp.process(frame)
 }
 
-func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
+func (mp *MotionProcessor) process(frame *lepton3.Frame) {
 	mp.totalFrames++
 	if mp.motionDetector.Detect(frame) {
 		if mp.listener != nil {
@@ -131,11 +131,9 @@ func (mp *MotionProcessor) internalProcess(frame *lepton3.Frame) {
 }
 
 func (mp *MotionProcessor) ProcessFrame(srcFrame *lepton3.Frame) {
-
 	frame := mp.frameLoop.Current()
 	frame.Copy(srcFrame)
-
-	mp.internalProcess(frame)
+	mp.process(frame)
 }
 
 func (mp *MotionProcessor) GetRecentFrame(frame *lepton3.Frame) *lepton3.Frame {
@@ -166,9 +164,8 @@ func (mp *MotionProcessor) canStartWriting() error {
 	mp.setSunriseSunsetWindow()
 	if !mp.window.Active() {
 		return errors.New("motion detected but outside of recording window")
-	} else {
-		return mp.recorder.CheckCanRecord()
 	}
+	return mp.recorder.CheckCanRecord()
 }
 
 func (mp *MotionProcessor) occasionallyWriteError(task string, err error) {
@@ -180,10 +177,7 @@ func (mp *MotionProcessor) occasionallyWriteError(task string, err error) {
 }
 
 func (mp *MotionProcessor) startRecording() error {
-
-	var err error
-
-	if err = mp.recorder.StartRecording(); err != nil {
+	if err := mp.recorder.StartRecording(); err != nil {
 		return err
 	}
 
@@ -192,8 +186,7 @@ func (mp *MotionProcessor) startRecording() error {
 		mp.listener.RecordingStarted()
 	}
 
-	err = mp.recordPreTriggerFrames()
-	return err
+	return mp.recordPreTriggerFrames()
 }
 
 func (mp *MotionProcessor) stopRecording() error {
@@ -213,13 +206,6 @@ func (mp *MotionProcessor) stopRecording() error {
 	return err
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
-}
-
 func (mp *MotionProcessor) recordPreTriggerFrames() error {
 	frames := mp.frameLoop.GetHistory()
 	var frame *lepton3.Frame
@@ -235,4 +221,11 @@ func (mp *MotionProcessor) recordPreTriggerFrames() error {
 	}
 
 	return nil
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
