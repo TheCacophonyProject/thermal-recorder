@@ -34,12 +34,12 @@ func NewMotionDetector(args MotionConfig) *motionDetector {
 	d.flooredFrames = *NewFrameLoop(args.FrameCompareGap + 1)
 	d.diffFrames = *NewFrameLoop(2)
 	d.useOneDiff = args.UseOneDiffOnly
-	d.framesGap = uint64(args.FrameCompareGap)
 	d.deltaThresh = args.DeltaThresh
 	d.countThresh = args.CountThresh
 	d.tempThresh = args.TempThresh
 	d.verbose = args.Verbose
 	d.warmerOnly = args.WarmerOnly
+
 	d.start = args.EdgePixels
 	d.columnStop = lepton3.FrameCols - args.EdgePixels
 	d.rowStop = lepton3.FrameRows - args.EdgePixels
@@ -55,7 +55,6 @@ type motionDetector struct {
 	tempThresh    uint16
 	deltaThresh   uint16
 	countThresh   int
-	framesGap     uint64
 	verbose       bool
 	warmerOnly    bool
 	start         int
@@ -69,8 +68,8 @@ func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 }
 
 func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
-	processedFrame := d.flooredFrames.Current()
-	d.setFloor(frame, processedFrame)
+	flooredFrame := d.flooredFrames.Current()
+	d.setFloor(frame, flooredFrame)
 
 	// we will compare with the oldest saved frame.
 	compareFrame := d.flooredFrames.Oldest()
@@ -78,9 +77,9 @@ func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
 
 	diffFrame := d.diffFrames.Current()
 	if d.warmerOnly {
-		d.warmerDiffFrames(processedFrame, compareFrame, diffFrame)
+		d.warmerDiffFrames(flooredFrame, compareFrame, diffFrame)
 	} else {
-		d.absDiffFrames(processedFrame, compareFrame, diffFrame)
+		d.absDiffFrames(flooredFrame, compareFrame, diffFrame)
 	}
 	prevDiffFrame := d.diffFrames.Move()
 
