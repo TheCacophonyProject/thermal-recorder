@@ -34,7 +34,6 @@ import (
 
 type EventLoggingRecordingListener struct {
 	config               *Config
-	gaps                 int
 	frameCount           int
 	motionDetectedCount  int
 	lastDetection        int
@@ -46,12 +45,6 @@ type EventLoggingRecordingListener struct {
 func (p *EventLoggingRecordingListener) MotionDetected() {
 	if p.verbose {
 		log.Printf("%d: Motion Detected", p.frameCount)
-	}
-	if p.frameCount-p.lastDetection > 18 {
-		if p.verbose {
-			log.Printf("%.1f: Big gap %d", float32(p.lastDetection+1)/9, p.frameCount-p.lastDetection)
-		}
-		p.gaps++
 	}
 	p.motionDetectedCount++
 	p.lastDetection = p.frameCount
@@ -162,7 +155,10 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 	}
 	defer file.Close()
 
-	now := time.Minute
+	log.Printf("Device name: %v", reader.DeviceName())
+	log.Printf("Timestamp: %v", reader.Timestamp())
+
+	fakeTime := time.Minute
 	frame := new(lepton3.Frame)
 	for {
 		if err := reader.ReadFrame(frame); err != nil {
@@ -171,15 +167,17 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 					log.Printf("Error reading file occured %v", err)
 				}
 				log.Printf("Last Frame gap %d", listener.frameCount-listener.lastDetection)
-				log.Printf("Motion detected frames %d out of frames %d (%d)", listener.motionDetectedCount, listener.frameCount, listener.gaps)
+				log.Printf("Motion detected frames %d out of frames %d", listener.motionDetectedCount, listener.frameCount)
 			}
 			return listener
 		}
 
-		// These CPTV files don't include timestamps so fake them for
-		// now. Without doing this the FFC detection logic gets messed
-		// up.
-		frame.Status.TimeOn = now
+		// The CPTV files used by the tests are missing the TimeOn
+		// field so fake it avoid problems with incorrect FFC
+		// detection.
+		if frame.Status.TimeOn == time.Duration(0) {
+			frame.Status.TimeOn = fakeTime
+		}
 
 		processor.ProcessFrame(frame)
 		listener.frameCount++
