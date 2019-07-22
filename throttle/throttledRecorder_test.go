@@ -27,7 +27,6 @@ import (
 
 const THROTTLE_FRAMES int = 27
 const MIN_FRAMES_PER_RECORDING int = 9
-const SPARSE_LENGTH int = 18
 
 var countRecorder CountWritesRecorder
 var throttledRecorder ThrottledCounter
@@ -36,8 +35,6 @@ func DefaultTestThrottleConfig() *ThrottlerConfig {
 	return &ThrottlerConfig{
 		ApplyThrottling: true,
 		ThrottleAfter:   3,
-		SparseAfter:     11,
-		SparseLength:    2,
 		RefillRate:      1.0,
 	}
 }
@@ -124,63 +121,6 @@ func TestNotRecordingIncreasesRecordingLength(t *testing.T) {
 
 	PlayRecordingFrames(recorder, 50)
 	assert.Equal(t, 15, baseRecorder.writes)
-}
-
-func TestSparseRecordingWillStartAndStopAgain(t *testing.T) {
-	baseRecorder, recorder := NewTestThrottledRecorder()
-	// add enough frames to trigger sparse recording
-	PlayRecordingFrames(recorder, 50)
-	PlayRecordingFrames(recorder, 60)
-	assert.Equal(t, 0, baseRecorder.writes)
-
-	PlayRecordingFrames(recorder, 20)
-	assert.Equal(t, SPARSE_LENGTH, baseRecorder.writes)
-
-	PlayRecordingFrames(recorder, 20)
-	assert.Equal(t, 0, baseRecorder.writes)
-
-	PlayRecordingFrames(recorder, 100)
-
-	PlayRecordingFrames(recorder, 20)
-	assert.Equal(t, SPARSE_LENGTH, baseRecorder.writes)
-}
-
-func TestSparseRecordingCountRestartsWhenARealRecordingStarts(t *testing.T) {
-	baseRecorder, recorder := NewTestThrottledRecorder()
-	// fill bucket to trigger sparse recording
-	PlayRecordingFrames(recorder, THROTTLE_FRAMES)
-	PlayNonRecordingFrames(recorder, int(MIN_FRAMES_PER_RECORDING+1))
-
-	// Sparse count restarts with start of this recording
-	PlayRecordingFrames(recorder, 60)
-	assert.Equal(t, MIN_FRAMES_PER_RECORDING+1, baseRecorder.writes)
-
-	PlayRecordingFrames(recorder, 50)
-	assert.Equal(t, 0, baseRecorder.writes)
-
-	PlayRecordingFrames(recorder, 50)
-	assert.Equal(t, SPARSE_LENGTH, baseRecorder.writes)
-}
-
-func TestCanHaveNoSparseRecordings(t *testing.T) {
-	baseRecorder := new(CountWritesRecorder)
-
-	config := &ThrottlerConfig{
-		ApplyThrottling: true,
-		ThrottleAfter:   3,
-		SparseAfter:     11,
-		SparseLength:    0,
-	}
-	recorder := NewThrottledRecorder(baseRecorder, nil, config, 1)
-
-	PlayRecordingFrames(recorder, 50)
-	assert.Equal(t, THROTTLE_FRAMES, baseRecorder.writes)
-
-	PlayRecordingFrames(recorder, 60)
-	baseRecorder.Reset()
-
-	PlayRecordingFrames(recorder, 20)
-	assert.Equal(t, 0, baseRecorder.writes)
 }
 
 func TestUsingDifferentRefillRates(t *testing.T) {

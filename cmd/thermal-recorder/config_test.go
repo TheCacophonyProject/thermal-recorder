@@ -69,9 +69,7 @@ func getExpectedDefaultConfig() Config {
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: true,
 			ThrottleAfter:   600,
-			SparseAfter:     3600,
-			SparseLength:    30,
-			RefillRate:      1,
+			RefillRate:      0.02167,
 		},
 		Turret: TurretConfig{
 			Active: false,
@@ -149,8 +147,6 @@ func getExpectedAllSetConfig() Config {
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: false,
 			ThrottleAfter:   650,
-			SparseAfter:     6500,
-			SparseLength:    300,
 			RefillRate:      0.2,
 		},
 		Turret: TurretConfig{
