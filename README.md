@@ -7,14 +7,9 @@ project's own CPTV format.
 
 ## Releases
 
-Releases are built using TravisCI. To create a release:
+Releases are built using TravisCI. To create a release visit the
+[repository on Github](https://github.com/TheCacophonyProject/thermal-recorder/releases)
+and then follow our [general instructions](https://docs.cacophony.org.nz/home/creating-releases)
+for creating a release.
 
-* Tag the release with an annotated tag. For example:
-  `git tag -a "v1.4" -m "1.4 release"`
-* Push the tag to Github: `git push origin v1.4`
-* TravisCI will see the pushed tag, run the tests, create a release
-  package and create a
-  [Github Release](https://github.com/TheCacophonyProject/thermal-recorder/releases).
-
-For more about the mechanics of how releases work, see `travis.yml`
-and `.goreleaser.yml`.
+For more about the mechanics of how releases work, see `.travis.yml` and `.goreleaser.yml`.
