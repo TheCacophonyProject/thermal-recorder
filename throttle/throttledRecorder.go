@@ -18,6 +18,7 @@ package throttle
 
 import (
 	"log"
+	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
@@ -45,7 +46,8 @@ type ThrottledEventListener interface {
 	WhenThrottled()
 }
 
-func NewThrottledRecorder(baseRecorder recorder.Recorder,
+func NewThrottledRecorder(
+	baseRecorder recorder.Recorder,
 	eventListener ThrottledEventListener,
 	config *ThrottlerConfig,
 	minSeconds int,
@@ -118,4 +120,17 @@ func (throttler *ThrottledRecorder) WriteFrame(frame *lepton3.Frame) error {
 	}
 
 	return nil
+}
+
+// realClock implements Clock in terms of standard time functions.
+type realClock struct{}
+
+// Now implements Clock.Now by calling time.Now.
+func (realClock) Now() time.Time {
+	return time.Now()
+}
+
+// Now implements Clock.Sleep by calling time.Sleep.
+func (realClock) Sleep(d time.Duration) {
+	time.Sleep(d)
 }
