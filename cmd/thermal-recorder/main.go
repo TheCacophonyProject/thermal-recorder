@@ -150,7 +150,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 
 	if conf.Throttler.ApplyThrottling {
 		minRecordingLength := conf.Recorder.MinSecs + conf.Recorder.PreviewSecs
-		throttledRecorder = throttle.NewThrottledRecorder(cptvRecorder, new(throttle.ThrottledEventRecorder), &conf.Throttler, minRecordingLength)
+		throttledRecorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength, new(throttle.ThrottledEventRecorder))
 		recorder = throttledRecorder
 	}
 

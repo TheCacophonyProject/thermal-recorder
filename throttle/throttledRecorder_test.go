@@ -40,7 +40,7 @@ func newTestConfig() *ThrottlerConfig {
 func newTestThrottledRecorder() (*writeRecorder, *throttleListener, *ThrottledRecorder) {
 	recorder := new(writeRecorder)
 	listener := new(throttleListener)
-	return recorder, listener, NewThrottledRecorder(recorder, listener, newTestConfig(), 1)
+	return recorder, listener, NewThrottledRecorder(recorder, newTestConfig(), 1, listener)
 }
 
 type writeRecorder struct {
@@ -133,7 +133,7 @@ func TestUsingDifferentRefillRates(t *testing.T) {
 	config.RefillRate = 3
 
 	recorder := new(writeRecorder)
-	throtRecorder := NewThrottledRecorder(recorder, nil, config, 1)
+	throtRecorder := NewThrottledRecorder(recorder, config, 1, nil)
 	recordFrames(throtRecorder, throttleFrames)
 	advanceTime(throtRecorder, 5)
 	recorder.Reset()
@@ -142,7 +142,7 @@ func TestUsingDifferentRefillRates(t *testing.T) {
 
 	recorder.Reset()
 	config.RefillRate = .3
-	throtRecorder = NewThrottledRecorder(recorder, nil, config, 1)
+	throtRecorder = NewThrottledRecorder(recorder, config, 1, nil)
 	recordFrames(throtRecorder, throttleFrames)
 	advanceTime(throtRecorder, 31)
 	recorder.Reset()

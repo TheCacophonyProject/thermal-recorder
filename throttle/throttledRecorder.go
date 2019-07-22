@@ -48,9 +48,9 @@ type ThrottledEventListener interface {
 
 func NewThrottledRecorder(
 	baseRecorder recorder.Recorder,
-	eventListener ThrottledEventListener,
 	config *ThrottlerConfig,
 	minSeconds int,
+	eventListener ThrottledEventListener,
 ) *ThrottledRecorder {
 	bucketSize := float64(config.ThrottleAfter * framesHz)
 	return &ThrottledRecorder{
