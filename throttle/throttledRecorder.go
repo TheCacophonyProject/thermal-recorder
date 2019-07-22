@@ -60,9 +60,12 @@ func NewThrottledRecorderWithClock(
 	}
 }
 
-// ThrottledRecorder wraps a standard recorder so that it stops recording (ie gets throttled) if requested to
-// record too often.  This is desirable as the extra recordings are likely to be highly similar to the earlier recordings
-// and contain no new information.  It can happen when an animal is stuck in a trap or it is very windy.
+// ThrottledRecorder wraps a standard recorder so that it stops
+// recording (ie gets throttled) if requested to record too often.
+// This is desirable as the extra recordings are likely to be highly
+// similar to the earlier recordings and contain no new information.
+// It can happen when an animal is stuck in a trap or it is very
+// windy.
 type ThrottledRecorder struct {
 	recorder           recorder.Recorder
 	listener           ThrottledEventListener
