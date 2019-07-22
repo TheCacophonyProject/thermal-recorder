@@ -21,8 +21,9 @@ import (
 	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
-	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/juju/ratelimit"
+
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
 func NewThrottledRecorder(
