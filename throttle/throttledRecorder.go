@@ -22,9 +22,8 @@ import (
 
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
+	"github.com/juju/ratelimit"
 )
-
-const framesHz = uint16(lepton3.FramesHz)
 
 // ThrottledRecorder wraps a standard recorder so that it stops recording (ie gets throttled) if requested to
 // record too often.  This is desirable as the extra recordings are likely to be highly similar to the earlier recordings
@@ -33,13 +32,11 @@ const framesHz = uint16(lepton3.FramesHz)
 type ThrottledRecorder struct {
 	recorder           recorder.Recorder
 	listener           ThrottledEventListener
-	bucket             TokenBucket
+	bucket             *ratelimit.Bucket
 	recording          bool
-	minRecordingLength float64
-	askedToWriteFrame  bool
+	minRecordingLength int64
 	throttledFrames    uint32
 	frameCount         uint32
-	refillRate         float64
 }
 
 type ThrottledEventListener interface {
@@ -52,23 +49,29 @@ func NewThrottledRecorder(
 	minSeconds int,
 	eventListener ThrottledEventListener,
 ) *ThrottledRecorder {
-	bucketSize := float64(config.ThrottleAfter * framesHz)
+	return NewThrottledRecorderWithClock(
+		baseRecorder,
+		config,
+		minSeconds,
+		eventListener,
+		new(realClock),
+	)
+}
+
+func NewThrottledRecorderWithClock(
+	baseRecorder recorder.Recorder,
+	config *ThrottlerConfig,
+	minSeconds int,
+	eventListener ThrottledEventListener,
+	clock ratelimit.Clock,
+) *ThrottledRecorder {
+	bucket := ratelimit.NewBucketWithRateAndClock(config.RefillRate, int64(config.ThrottleAfter)*lepton3.FramesHz, clock)
 	return &ThrottledRecorder{
 		recorder:           baseRecorder,
 		listener:           eventListener,
-		bucket:             TokenBucket{tokens: bucketSize, size: bucketSize},
-		minRecordingLength: float64(uint16(minSeconds) * framesHz),
-		refillRate:         config.RefillRate,
+		bucket:             bucket,
+		minRecordingLength: int64(minSeconds) * lepton3.FramesHz,
 	}
-}
-
-func (throttler *ThrottledRecorder) NextFrame() {
-	if throttler.askedToWriteFrame {
-		throttler.bucket.RemoveTokens(1)
-	} else {
-		throttler.bucket.AddTokens(throttler.refillRate)
-	}
-	throttler.askedToWriteFrame = false
 }
 
 func (throttler *ThrottledRecorder) CheckCanRecord() error {
@@ -76,7 +79,7 @@ func (throttler *ThrottledRecorder) CheckCanRecord() error {
 }
 
 func (throttler *ThrottledRecorder) StartRecording() error {
-	if throttler.bucket.HasTokens(throttler.minRecordingLength) {
+	if throttler.bucket.Available() >= throttler.minRecordingLength {
 		throttler.recording = true
 		return throttler.recorder.StartRecording()
 	} else {
@@ -104,25 +107,24 @@ func (throttler *ThrottledRecorder) StopRecording() error {
 }
 
 func (throttler *ThrottledRecorder) WriteFrame(frame *lepton3.Frame) error {
-	throttler.askedToWriteFrame = true
-
-	if throttler.recording {
-		throttler.frameCount++
-		if throttler.bucket.HasTokens(1) {
-			return throttler.recorder.WriteFrame(frame)
-		} else {
-			if throttler.throttledFrames == 0 && throttler.listener != nil {
-				log.Printf("Recording throttled.")
-				throttler.listener.WhenThrottled()
-			}
-			throttler.throttledFrames++
-		}
+	if !throttler.recording {
+		return nil
 	}
 
+	throttler.frameCount++
+	if throttler.bucket.TakeAvailable(1) > 0 {
+		return throttler.recorder.WriteFrame(frame)
+	}
+
+	if throttler.throttledFrames == 0 && throttler.listener != nil {
+		log.Printf("Recording throttled.")
+		throttler.listener.WhenThrottled()
+	}
+	throttler.throttledFrames++
 	return nil
 }
 
-// realClock implements Clock in terms of standard time functions.
+// realClock implements ratelimit.Clock in terms of standard time functions.
 type realClock struct{}
 
 // Now implements Clock.Now by calling time.Now.

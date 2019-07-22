@@ -18,6 +18,7 @@ package throttle
 
 import (
 	"testing"
+	"time"
 
 	"github.com/juju/ratelimit"
 	"github.com/stretchr/testify/assert"
@@ -37,10 +38,11 @@ func newTestConfig() *ThrottlerConfig {
 	}
 }
 
-func newTestThrottledRecorder() (*writeRecorder, *throttleListener, *ThrottledRecorder) {
+func newTestThrottledRecorder() (*writeRecorder, *throttleListener, *ThrottledRecorder, *testClock) {
+	clock := new(testClock)
 	recorder := new(writeRecorder)
 	listener := new(throttleListener)
-	return recorder, listener, NewThrottledRecorder(recorder, newTestConfig(), 1, listener)
+	return recorder, listener, NewThrottledRecorderWithClock(recorder, newTestConfig(), 1, listener, clock), clock
 }
 
 type writeRecorder struct {
@@ -65,27 +67,18 @@ func (tc *throttleListener) WhenThrottled() {
 	tc.events++
 }
 
-func advanceTime(recorder *ThrottledRecorder, frames int) {
-	for count := 0; count < frames; count++ {
-		recorder.NextFrame()
-	}
-}
-
 func recordFrames(recorder *ThrottledRecorder, frames int) {
-	testframe := new(lepton3.Frame)
+	recorder.StartRecording()
 
-	for count := 0; count < frames; count++ {
-		recorder.NextFrame()
-		if count == 0 {
-			recorder.StartRecording()
-		}
+	testframe := new(lepton3.Frame)
+	for i := 0; i < frames; i++ {
 		recorder.WriteFrame(testframe)
 	}
 	recorder.StopRecording()
 }
 
 func TestOnlyWritesUntilBucketIsFull(t *testing.T) {
-	recorder, listener, throtRecorder := newTestThrottledRecorder()
+	recorder, listener, throtRecorder, _ := newTestThrottledRecorder()
 
 	recordFrames(throtRecorder, 50)
 	assert.Equal(t, throttleFrames, recorder.writes)
@@ -93,7 +86,7 @@ func TestOnlyWritesUntilBucketIsFull(t *testing.T) {
 }
 
 func TestCanRecordTwiceWithoutThrottling(t *testing.T) {
-	recorder, _, throtRecorder := newTestThrottledRecorder()
+	recorder, _, throtRecorder, _ := newTestThrottledRecorder()
 
 	recordFrames(throtRecorder, 10)
 	assert.Equal(t, 10, recorder.writes)
@@ -103,7 +96,7 @@ func TestCanRecordTwiceWithoutThrottling(t *testing.T) {
 }
 
 func TestWillNotStartRecordingIfLessThanMinFramesToFillBucket(t *testing.T) {
-	recorder, _, throtRecorder := newTestThrottledRecorder()
+	recorder, _, throtRecorder, _ := newTestThrottledRecorder()
 
 	recordFrames(throtRecorder, 20)
 
@@ -114,13 +107,13 @@ func TestWillNotStartRecordingIfLessThanMinFramesToFillBucket(t *testing.T) {
 }
 
 func TestNotRecordingFillsBucket(t *testing.T) {
-	recorder, _, throtRecorder := newTestThrottledRecorder()
+	recorder, _, throtRecorder, clock := newTestThrottledRecorder()
 
 	// empty bucket
 	recordFrames(throtRecorder, 50)
 
 	// allow it fill a bit
-	advanceTime(throtRecorder, 15)
+	clock.Sleep(15 * time.Second)
 
 	// Observe that it only filled a bit
 	recorder.Reset()
@@ -129,29 +122,31 @@ func TestNotRecordingFillsBucket(t *testing.T) {
 }
 
 func TestUsingDifferentRefillRates(t *testing.T) {
+	clock := new(testClock)
+
 	config := newTestConfig()
 	config.RefillRate = 3
 
 	recorder := new(writeRecorder)
-	throtRecorder := NewThrottledRecorder(recorder, config, 1, nil)
+	throtRecorder := NewThrottledRecorderWithClock(recorder, config, 1, nil, clock)
 	recordFrames(throtRecorder, throttleFrames)
-	advanceTime(throtRecorder, 5)
+	clock.Sleep(5 * time.Second)
 	recorder.Reset()
 	recordFrames(throtRecorder, 60)
 	assert.Equal(t, 15, recorder.writes)
 
 	recorder.Reset()
 	config.RefillRate = .3
-	throtRecorder = NewThrottledRecorder(recorder, config, 1, nil)
+	throtRecorder = NewThrottledRecorderWithClock(recorder, config, 1, nil, clock)
 	recordFrames(throtRecorder, throttleFrames)
-	advanceTime(throtRecorder, 31)
+	clock.Sleep(31 * time.Second)
 	recorder.Reset()
 	recordFrames(throtRecorder, 60)
 	assert.Equal(t, 9, recorder.writes)
 }
 
 func TestNotifiesWhenThrottling(t *testing.T) {
-	_, listener, throtRecorder := newTestThrottledRecorder()
+	_, listener, throtRecorder, _ := newTestThrottledRecorder()
 
 	recordFrames(throtRecorder, 10)
 	assert.Equal(t, 0, listener.events)
@@ -161,15 +156,31 @@ func TestNotifiesWhenThrottling(t *testing.T) {
 }
 
 func TestNotifiesEvenWhenRecordingDoesntStart(t *testing.T) {
-	_, listener, throtRecorder := newTestThrottledRecorder()
+	_, listener, throtRecorder, clock := newTestThrottledRecorder()
 
 	recordFrames(throtRecorder, 50)
 	assert.Equal(t, 1, listener.events)
 
-	advanceTime(throtRecorder, minFramesPerRecording-2)
+	clock.Sleep(time.Duration((minFramesPerRecording-2)*lepton3.FramesHz) * time.Second)
 
 	recordFrames(throtRecorder, 50)
 	assert.Equal(t, 2, listener.events)
 }
 
 var _ ratelimit.Clock = new(realClock)
+var _ ratelimit.Clock = new(testClock)
+
+// testClock implements a fake ratelimit.Clock for testing.
+type testClock struct {
+	now time.Time
+}
+
+// Now implements Clock.Now by calling time.Now.
+func (c *testClock) Now() time.Time {
+	return c.now
+}
+
+// Now implements Clock.Sleep by calling time.Sleep.
+func (c *testClock) Sleep(d time.Duration) {
+	c.now = c.now.Add(d)
+}
