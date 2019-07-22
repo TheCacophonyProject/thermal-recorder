@@ -8,7 +8,8 @@ release:
   name_template: '{{.Tag}}'
 
 builds:
-- binary: thermal-recorder
+- id: thermal-recorder
+  binary: thermal-recorder
   main: ./cmd/thermal-recorder
   goos:
     - linux
@@ -17,7 +18,8 @@ builds:
   goarm:
     - "7"
   ldflags: -s -w -X main.version={{.Version}}
-- binary: leptond
+- id: leptond
+  binary: leptond
   main: ./cmd/leptond
   goos:
     - linux
@@ -27,7 +29,8 @@ builds:
     - "7"
   ldflags: -s -w -X main.version={{.Version}}
 
-nfpm:
+nfpms:
+-
   vendor: The Cacophony Project
   homepage: http://cacophony.org.nz/
   maintainer: Menno Finlay-Smits <menno@cacophony.org.nz>
