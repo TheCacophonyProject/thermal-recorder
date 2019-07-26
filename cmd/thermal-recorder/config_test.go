@@ -23,6 +23,7 @@ import (
 	"runtime"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -69,7 +70,7 @@ func getExpectedDefaultConfig() Config {
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: true,
 			ThrottleAfter:   600,
-			RefillRate:      0.02167,
+			MinRefill:       10 * time.Minute,
 		},
 		Turret: TurretConfig{
 			Active: false,
@@ -101,7 +102,7 @@ func TestAllDefaults(t *testing.T) {
 	assert.Equal(t, expected, *conf)
 }
 
-func TestAllProgramDefaultsMatchDefaultYamlFile(t *testing.T) {
+func TestDefaultsMatchDefaultYamlFile(t *testing.T) {
 	configDefaults, err := ParseConfig([]byte(""), []byte(""), []byte(""))
 	require.NoError(t, err)
 
@@ -147,7 +148,7 @@ func getExpectedAllSetConfig() Config {
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: false,
 			ThrottleAfter:   650,
-			RefillRate:      0.2,
+			MinRefill:       15 * time.Minute,
 		},
 		Turret: TurretConfig{
 			Active: true,

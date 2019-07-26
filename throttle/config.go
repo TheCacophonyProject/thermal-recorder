@@ -16,16 +16,18 @@
 
 package throttle
 
+import "time"
+
 type ThrottlerConfig struct {
-	ApplyThrottling bool    `yaml:"apply-throttling"`
-	ThrottleAfter   uint16  `yaml:"throttle-after-secs"`
-	RefillRate      float64 `yaml:"refill-rate"`
+	ApplyThrottling bool          `yaml:"apply-throttling"`
+	ThrottleAfter   uint16        `yaml:"throttle-after-secs"`
+	MinRefill       time.Duration `yaml:"min-refill"`
 }
 
 func DefaultThrottlerConfig() ThrottlerConfig {
 	return ThrottlerConfig{
 		ApplyThrottling: true,
 		ThrottleAfter:   600,
-		RefillRate:      0.02167,
+		MinRefill:       10 * time.Minute,
 	}
 }

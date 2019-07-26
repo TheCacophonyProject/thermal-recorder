@@ -20,9 +20,7 @@ motion:
 throttler:
     apply-throttling: false
     throttle-after-secs: 650
-    sparse-after-secs: 6500
-    sparse-length-secs: 300
-    refill-rate: 0.2
+    min-refill: "15m"
 leds:
     recording: "RecordingPIN"
     running: "RunningPIN"

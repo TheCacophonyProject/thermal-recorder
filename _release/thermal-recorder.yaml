@@ -87,10 +87,6 @@ throttler:
     # start throttling after this many seconds of recording
     throttle-after-secs: 600
 
-    # refill-rate controls how quickly the throttling token bucket
-    # takes to refill and allow recordings to be triggered again.
-    #
-    # A value of 2.0 means that recording resumes in half the time,
-    # while a value '0.5' will means throttling remains active for
-    # double the time.
-    refill-rate: 0.02167
+    # The minimum time before a recording is allowed again once
+    # throttling has engaged.
+    min-refill: "10m"
