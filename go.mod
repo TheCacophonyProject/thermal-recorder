@@ -10,6 +10,7 @@ require (
 	github.com/coreos/go-systemd v0.0.0-20180511133405-39ca1b05acc7
 	github.com/felixge/pidctrl v0.0.0-20160307080219-7b13bcae7243
 	github.com/godbus/dbus v4.1.0+incompatible
+	github.com/juju/ratelimit v1.0.1
 	github.com/nathan-osman/go-sunrise v0.0.0-20171121204956-7c449e7c690b
 	github.com/stretchr/testify v1.2.2
 	gopkg.in/yaml.v2 v2.2.1

@@ -84,19 +84,11 @@ throttler:
     # set to false if you do not want to apply throttling
     apply-throttling: true
 
-    # start throttling after this many seconds of recording
-    throttle-after-secs: 600
+    # Maximum continuous recording time represented by the recording
+    # bucket. Due to the bucket refilling over time, the maximum
+    # recording allowed by throttling is actually longer than this.
+    bucket-size: "10m"
 
-    # record an occasional sparse recording after this many seconds of throttling during which
-    # time no recordings have been made
-    sparse-after-secs: 3600
-
-    # max length of sparse recording should be.
-    # if =0 then no occasional recordings will be made
-    # if value is less than the min recording length then it will set to min recording length
-    sparse-length-secs: 30
-
-    # refill rate controls how soon normal recording resumes once throttling is active. Compared with
-    #'1.0', a value of '2.0' means that normal recording resumes in half the time,
-    # while a value '0.5' will means throttling remains active for double the time.
-    refill-rate: 1.0
+    # The minimum time before a recording is allowed again once
+    # throttling has engaged.
+    min-refill: "10m"

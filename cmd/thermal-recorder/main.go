@@ -146,12 +146,9 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 	defer cptvRecorder.Stop()
 	var recorder recorder.Recorder = cptvRecorder
 
-	var throttledRecorder *throttle.ThrottledRecorder
-
 	if conf.Throttler.ApplyThrottling {
 		minRecordingLength := conf.Recorder.MinSecs + conf.Recorder.PreviewSecs
-		throttledRecorder = throttle.NewThrottledRecorder(cptvRecorder, new(throttle.ThrottledEventRecorder), &conf.Throttler, minRecordingLength)
-		recorder = throttledRecorder
+		recorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength, new(throttle.ThrottledEventRecorder))
 	}
 
 	processor = motion.NewMotionProcessor(&conf.Motion, &conf.Recorder, &conf.Location, nil, recorder)
@@ -172,9 +169,6 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 			log.Printf("%d frames for this connection", totalFrames)
 		}
 
-		if throttledRecorder != nil {
-			throttledRecorder.NextFrame()
-		}
 		processor.Process(rawFrame)
 	}
 }
