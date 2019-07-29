@@ -53,6 +53,10 @@ func NewThrottledRecorderWithClock(
 	minFrames := int64(minSeconds) * lepton3.FramesHz
 	refillRate := float64(minFrames) / config.MinRefill.Seconds()
 
+	if minFrames > bucketFrames {
+		log.Println("minimum recording length is greater than throttle bucket - recording will not be possible!")
+	}
+
 	bucket := ratelimit.NewBucketWithRateAndClock(refillRate, bucketFrames, clock)
 
 	if listener == nil {
