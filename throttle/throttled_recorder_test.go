@@ -28,8 +28,7 @@ import (
 )
 
 const (
-	throttleAfterSecs = 30
-	throttleFrames    = throttleAfterSecs * lepton3.FramesHz
+	throttleAfter = 30 * time.Second
 
 	minRecordingSecs   = 10
 	minRecordingFrames = minRecordingSecs * lepton3.FramesHz
@@ -37,10 +36,12 @@ const (
 	minRefill = 20 * time.Second
 )
 
+var throttleFrames = int(throttleAfter.Seconds() * lepton3.FramesHz)
+
 func newTestConfig() *ThrottlerConfig {
 	return &ThrottlerConfig{
 		ApplyThrottling: true,
-		ThrottleAfter:   throttleAfterSecs,
+		BucketSize:      throttleAfter,
 		MinRefill:       minRefill,
 	}
 }

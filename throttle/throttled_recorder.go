@@ -49,7 +49,7 @@ func NewThrottledRecorderWithClock(
 	clock ratelimit.Clock,
 ) *ThrottledRecorder {
 	// The token bucket tracks the number of *frames* available for recording.
-	bucketFrames := int64(config.ThrottleAfter) * lepton3.FramesHz
+	bucketFrames := int64(config.BucketSize.Seconds() * lepton3.FramesHz)
 	minFrames := int64(minSeconds) * lepton3.FramesHz
 	refillRate := float64(minFrames) / config.MinRefill.Seconds()
 

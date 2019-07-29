@@ -69,7 +69,7 @@ func getExpectedDefaultConfig() Config {
 		},
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: true,
-			ThrottleAfter:   600,
+			BucketSize:      10 * time.Minute,
 			MinRefill:       10 * time.Minute,
 		},
 		Turret: TurretConfig{
@@ -147,7 +147,7 @@ func getExpectedAllSetConfig() Config {
 		},
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: false,
-			ThrottleAfter:   650,
+			BucketSize:      5 * time.Minute,
 			MinRefill:       15 * time.Minute,
 		},
 		Turret: TurretConfig{

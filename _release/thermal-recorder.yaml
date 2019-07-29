@@ -84,8 +84,10 @@ throttler:
     # set to false if you do not want to apply throttling
     apply-throttling: true
 
-    # start throttling after this many seconds of recording
-    throttle-after-secs: 600
+    # Maximum continuous recording time represented by the recording
+    # bucket. Due to the bucket refilling over time, the maximum
+    # recording allowed by throttling is actually longer than this.
+    bucket-size: "10m"
 
     # The minimum time before a recording is allowed again once
     # throttling has engaged.

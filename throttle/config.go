@@ -20,14 +20,14 @@ import "time"
 
 type ThrottlerConfig struct {
 	ApplyThrottling bool          `yaml:"apply-throttling"`
-	ThrottleAfter   uint16        `yaml:"throttle-after-secs"`
+	BucketSize      time.Duration `yaml:"bucket-size"`
 	MinRefill       time.Duration `yaml:"min-refill"`
 }
 
 func DefaultThrottlerConfig() ThrottlerConfig {
 	return ThrottlerConfig{
 		ApplyThrottling: true,
-		ThrottleAfter:   600,
+		BucketSize:      10 * time.Minute,
 		MinRefill:       10 * time.Minute,
 	}
 }

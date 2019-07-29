@@ -19,7 +19,7 @@ motion:
     warmer-only: false
 throttler:
     apply-throttling: false
-    throttle-after-secs: 650
+    bucket-size: "5m"
     min-refill: "15m"
 leds:
     recording: "RecordingPIN"
