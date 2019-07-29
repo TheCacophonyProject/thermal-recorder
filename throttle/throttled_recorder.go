@@ -48,20 +48,22 @@ func NewThrottledRecorderWithClock(
 	listener ThrottledEventListener,
 	clock ratelimit.Clock,
 ) *ThrottledRecorder {
-
 	// The token bucket tracks the number of *frames* available for recording.
 	bucketFrames := int64(config.ThrottleAfter) * lepton3.FramesHz
-	minFrames := minSeconds * lepton3.FramesHz
+	minFrames := int64(minSeconds) * lepton3.FramesHz
 	refillRate := float64(minFrames) / config.MinRefill.Seconds()
+
 	bucket := ratelimit.NewBucketWithRateAndClock(refillRate, bucketFrames, clock)
+
 	if listener == nil {
 		listener = new(nullListener)
 	}
+
 	return &ThrottledRecorder{
 		recorder:           baseRecorder,
 		listener:           listener,
 		bucket:             bucket,
-		minRecordingLength: int64(minSeconds) * lepton3.FramesHz,
+		minRecordingLength: minFrames,
 	}
 }
 
@@ -77,8 +79,6 @@ type ThrottledRecorder struct {
 	bucket             *ratelimit.Bucket
 	recording          bool
 	minRecordingLength int64
-	throttledFrames    uint32
-	totalFrames        uint32
 }
 
 type ThrottledEventListener interface {
@@ -94,24 +94,17 @@ func (throttler *ThrottledRecorder) CheckCanRecord() error {
 }
 
 func (throttler *ThrottledRecorder) StartRecording() error {
-	if throttler.bucket.Available() >= throttler.minRecordingLength {
-		throttler.recording = true
-		return throttler.recorder.StartRecording()
-	} else {
-		throttler.recording = false
-		log.Print("Recording not started due to throttling")
-		throttler.listener.WhenThrottled()
-		return nil
+	if err := throttler.maybeStartRecording(); err != nil {
+		return err
 	}
+	if !throttler.recording {
+		log.Print("recording not started due to throttling")
+		throttler.listener.WhenThrottled()
+	}
+	return nil
 }
 
 func (throttler *ThrottledRecorder) StopRecording() error {
-	if throttler.recording && throttler.throttledFrames > 0 {
-		log.Printf("Stop recording; %d/%d frames throttled", throttler.throttledFrames, throttler.totalFrames)
-	}
-	throttler.throttledFrames = 0
-	throttler.totalFrames = 0
-
 	if throttler.recording {
 		throttler.recording = false
 		return throttler.recorder.StopRecording()
@@ -121,19 +114,30 @@ func (throttler *ThrottledRecorder) StopRecording() error {
 
 func (throttler *ThrottledRecorder) WriteFrame(frame *lepton3.Frame) error {
 	if !throttler.recording {
-		return nil
+		if err := throttler.maybeStartRecording(); err != nil {
+			return err
+		}
+		if !throttler.recording {
+			return nil
+		}
 	}
 
-	throttler.totalFrames++
 	if throttler.bucket.TakeAvailable(1) > 0 {
 		return throttler.recorder.WriteFrame(frame)
 	}
 
-	if throttler.throttledFrames == 0 {
-		log.Printf("recording throttled")
-		throttler.listener.WhenThrottled()
+	log.Print("recording throttled")
+	throttler.listener.WhenThrottled()
+	return throttler.StopRecording()
+}
+
+func (throttler *ThrottledRecorder) maybeStartRecording() error {
+	if throttler.bucket.Available() >= throttler.minRecordingLength {
+		if err := throttler.recorder.StartRecording(); err != nil {
+			return err
+		}
+		throttler.recording = true
 	}
-	throttler.throttledFrames++
 	return nil
 }
 
