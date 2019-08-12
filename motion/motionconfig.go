@@ -17,28 +17,30 @@
 package motion
 
 type MotionConfig struct {
-	TempThresh      uint16 `yaml:"temp-thresh"`
-	DeltaThresh     uint16 `yaml:"delta-thresh"`
-	CountThresh     int    `yaml:"count-thresh"`
-	FrameCompareGap int    `yaml:"frame-compare-gap"`
-	UseOneDiffOnly  bool   `yaml:"one-diff-only"`
-	TriggerFrames   int    `yaml:"trigger-frames"`
-	WarmerOnly      bool   `yaml:"warmer-only"`
-	EdgePixels      int    `yaml:"edge-pixels"`
-	Verbose         bool   `yaml:"verbose"`
+	DynamicThreshold bool   `yaml:"dynamic-thresh"`
+	TempThresh       uint16 `yaml:"temp-thresh"`
+	DeltaThresh      uint16 `yaml:"delta-thresh"`
+	CountThresh      int    `yaml:"count-thresh"`
+	FrameCompareGap  int    `yaml:"frame-compare-gap"`
+	UseOneDiffOnly   bool   `yaml:"one-diff-only"`
+	TriggerFrames    int    `yaml:"trigger-frames"`
+	WarmerOnly       bool   `yaml:"warmer-only"`
+	EdgePixels       int    `yaml:"edge-pixels"`
+	Verbose          bool   `yaml:"verbose"`
 }
 
 func DefaultMotionConfig() MotionConfig {
 	return MotionConfig{
-		TempThresh:      2900,
-		DeltaThresh:     50,
-		CountThresh:     3,
-		FrameCompareGap: 45,
-		Verbose:         false,
-		TriggerFrames:   2,
-		UseOneDiffOnly:  true,
-		WarmerOnly:      true,
-		EdgePixels:      1,
+		TempThresh:       2900,
+		DeltaThresh:      50,
+		CountThresh:      3,
+		FrameCompareGap:  45,
+		Verbose:          false,
+		TriggerFrames:    2,
+		UseOneDiffOnly:   true,
+		WarmerOnly:       true,
+		EdgePixels:       1,
+		DynamicThreshold: true,
 	}
 }
 

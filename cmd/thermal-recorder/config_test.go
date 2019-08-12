@@ -27,7 +27,6 @@ import (
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/yaml.v2"
 
 	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
@@ -57,15 +56,16 @@ func getExpectedDefaultConfig() Config {
 			PreviewSecs: 3,
 		},
 		Motion: motion.MotionConfig{
-			TempThresh:      2900,
-			DeltaThresh:     50,
-			CountThresh:     3,
-			FrameCompareGap: 45,
-			UseOneDiffOnly:  true,
-			Verbose:         false,
-			TriggerFrames:   2,
-			WarmerOnly:      true,
-			EdgePixels:      1,
+			TempThresh:       2900,
+			DeltaThresh:      50,
+			CountThresh:      3,
+			FrameCompareGap:  45,
+			UseOneDiffOnly:   true,
+			Verbose:          false,
+			TriggerFrames:    2,
+			WarmerOnly:       true,
+			EdgePixels:       1,
+			DynamicThreshold: true,
 		},
 		Throttler: throttle.ThrottlerConfig{
 			ApplyThrottling: true,
