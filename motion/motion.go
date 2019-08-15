@@ -71,7 +71,7 @@ type motionDetector struct {
 	rowStop           int
 	columnStop        int
 	count             int
-	background        [120][160]uint16
+	background        [lepton3.FrameRows][lepton3.FrameCols]uint16
 	backgroundWeight  float32
 	debug             *debugTracker
 	previewFrames     int
