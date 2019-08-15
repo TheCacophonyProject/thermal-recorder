@@ -30,9 +30,10 @@ import (
 const ffcPeriod = 10 * time.Second
 
 const debugLogSecs = 5
-const frameBackgroundWeighting = 0.9
+const frameBackgroundWeighting = 0.99
+const weightEveryNFrames = 3
 
-func NewMotionDetector(args MotionConfig) *motionDetector {
+func NewMotionDetector(args MotionConfig, previewFrames int) *motionDetector {
 	d := new(motionDetector)
 	d.flooredFrames = *NewFrameLoop(args.FrameCompareGap + 1)
 	d.diffFrames = *NewFrameLoop(2)
@@ -47,6 +48,7 @@ func NewMotionDetector(args MotionConfig) *motionDetector {
 	d.columnStop = lepton3.FrameCols - args.EdgePixels
 	d.rowStop = lepton3.FrameRows - args.EdgePixels
 	d.backgroundWeight = frameBackgroundWeighting
+	d.previewFrames = previewFrames
 	if args.Verbose {
 		d.debug = newDebugTracker()
 	}
@@ -72,24 +74,30 @@ type motionDetector struct {
 	background        [120][160]uint16
 	backgroundWeight  float32
 	debug             *debugTracker
+	previewFrames     int
 }
 
 func (d *motionDetector) calculateThreshold(backAverage float64) {
+	oldTemp := d.tempThresh
 	d.tempThresh = uint16(math.Min(backAverage, float64(d.defaultTempThresh)))
+	if oldTemp != d.tempThresh {
+		d.debug.update("thresh", int(d.tempThresh))
+	}
 }
 
 func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 	if d.dynamicThresh {
 		backAverage, changed := d.updateBackground(frame)
-		if changed {
+		if changed && d.count > d.previewFrames {
 			d.calculateThreshold(backAverage)
 			d.backgroundWeight = frameBackgroundWeighting
 		} else {
-			d.backgroundWeight = d.backgroundWeight * frameBackgroundWeighting
+			if d.count%weightEveryNFrames == 0 {
+				d.backgroundWeight = d.backgroundWeight * frameBackgroundWeighting
+			}
 		}
 	}
 	d.count++
-
 	movement, deltaCount := d.pixelsChanged(frame)
 	if movement {
 		d.debug.update("detect", 1)
@@ -217,7 +225,7 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *lepton3.Frame) *lepton3.Fra
 func (d *motionDetector) updateBackground(new_frame *lepton3.Frame) (float64, bool) {
 	if d.count == 0 {
 		d.background = new_frame.Pix
-		return 0, false
+		return 0, true
 	}
 	var changed bool = false
 	var sum float64 = 0
@@ -231,7 +239,6 @@ func (d *motionDetector) updateBackground(new_frame *lepton3.Frame) (float64, bo
 		}
 	}
 	return sum / float64((d.rowStop-d.start)*(d.columnStop-d.start)), changed
-
 }
 
 func absDiff(a, b uint16) uint16 {

@@ -132,6 +132,7 @@ func ParseConfig(buf, uploaderBuf, locationBuf []byte) (*Config, error) {
 	if err := yaml.Unmarshal(buf, &conf); err != nil {
 		return nil, err
 	}
+
 	uploaderConf := defaultUploaderConfig
 	if err := yaml.Unmarshal(uploaderBuf, &uploaderConf); err != nil {
 		return nil, err

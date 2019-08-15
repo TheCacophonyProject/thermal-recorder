@@ -31,6 +31,7 @@ type MotionConfig struct {
 
 func DefaultMotionConfig() MotionConfig {
 	return MotionConfig{
+		DynamicThreshold: true,
 		TempThresh:       2900,
 		DeltaThresh:      50,
 		CountThresh:      3,
@@ -40,7 +41,6 @@ func DefaultMotionConfig() MotionConfig {
 		UseOneDiffOnly:   true,
 		WarmerOnly:       true,
 		EdgePixels:       1,
-		DynamicThreshold: true,
 	}
 }
 
