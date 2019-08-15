@@ -30,7 +30,7 @@ import (
 const ffcPeriod = 10 * time.Second
 
 const debugLogSecs = 5
-const backgroundRefresh = 100
+const frameBackgroundWeighting = 0.9
 
 func NewMotionDetector(args MotionConfig) *motionDetector {
 	d := new(motionDetector)
@@ -46,7 +46,7 @@ func NewMotionDetector(args MotionConfig) *motionDetector {
 	d.start = args.EdgePixels
 	d.columnStop = lepton3.FrameCols - args.EdgePixels
 	d.rowStop = lepton3.FrameRows - args.EdgePixels
-
+	d.backgroundWeight = frameBackgroundWeighting
 	if args.Verbose {
 		d.debug = newDebugTracker()
 	}
@@ -70,6 +70,7 @@ type motionDetector struct {
 	columnStop        int
 	count             int
 	background        [120][160]uint16
+	backgroundWeight  float32
 	debug             *debugTracker
 }
 
@@ -79,8 +80,13 @@ func (d *motionDetector) calculateThreshold(backAverage float64) {
 
 func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 	if d.dynamicThresh {
-		backAverage := d.updateBackground(frame)
-		d.calculateThreshold(backAverage)
+		backAverage, changed := d.updateBackground(frame)
+		if changed {
+			d.calculateThreshold(backAverage)
+			d.backgroundWeight = frameBackgroundWeighting
+		} else {
+			d.backgroundWeight = d.backgroundWeight * frameBackgroundWeighting
+		}
 	}
 	d.count++
 
@@ -208,19 +214,23 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *lepton3.Frame) *lepton3.Fra
 	return out
 }
 
-func (d *motionDetector) updateBackground(new_frame *lepton3.Frame) float64 {
-	if d.count%backgroundRefresh == 0 {
+func (d *motionDetector) updateBackground(new_frame *lepton3.Frame) (float64, bool) {
+	if d.count == 0 {
 		d.background = new_frame.Pix
-		return 0
+		return 0, false
 	}
+	var changed bool = false
 	var sum float64 = 0
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
-			d.background[y][x] = uint16(math.Min(float64(d.background[y][x]), float64(new_frame.Pix[y][x])))
+			if uint16(float32(new_frame.Pix[y][x])*d.backgroundWeight) < d.background[y][x] {
+				d.background[y][x] = new_frame.Pix[y][x]
+				changed = true
+			}
 			sum = sum + float64(d.background[y][x])
 		}
 	}
-	return sum / float64((d.rowStop-d.start)*(d.columnStop-d.start))
+	return sum / float64((d.rowStop-d.start)*(d.columnStop-d.start)), changed
 
 }
 
