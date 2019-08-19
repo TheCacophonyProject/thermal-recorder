@@ -73,22 +73,19 @@ type motionDetector struct {
 	count             int
 	background        [lepton3.FrameRows][lepton3.FrameCols]uint16
 	backgroundWeight  float32
+	backgroundFrames  int
 	debug             *debugTracker
 	previewFrames     int
 }
 
 func (d *motionDetector) calculateThreshold(backAverage float64) {
-	oldTemp := d.tempThresh
 	d.tempThresh = uint16(math.Min(backAverage, float64(d.defaultTempThresh)))
-	if oldTemp != d.tempThresh {
-		d.debug.update("thresh", int(d.tempThresh))
-	}
 }
 
 func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
-	if d.dynamicThresh {
+	if d.dynamicThresh && !isAffectedByFFC(frame) {
 		backAverage, changed := d.updateBackground(frame)
-		if changed && d.count > d.previewFrames {
+		if changed && d.backgroundFrames > d.previewFrames {
 			d.calculateThreshold(backAverage)
 			d.backgroundWeight = frameBackgroundWeighting
 		} else {
@@ -96,6 +93,7 @@ func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 				d.backgroundWeight = d.backgroundWeight * frameBackgroundWeighting
 			}
 		}
+		d.debug.update("thresh", int(d.tempThresh))
 	}
 	d.count++
 	movement, deltaCount := d.pixelsChanged(frame)
@@ -105,7 +103,7 @@ func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 	d.debug.update("delta", deltaCount)
 
 	if d.debug != nil && d.count%(debugLogSecs*lepton3.FramesHz) == 0 {
-		log.Print("motion:: " + d.debug.string("detect:n temp:all ftemp:all diff:max delta:max ffc:n"))
+		log.Print("motion:: " + d.debug.string("thresh:all detect:n temp:all ftemp:all diff:max delta:max ffc:n"))
 		d.debug.reset()
 	}
 	return movement
@@ -223,22 +221,24 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *lepton3.Frame) *lepton3.Fra
 }
 
 func (d *motionDetector) updateBackground(new_frame *lepton3.Frame) (float64, bool) {
-	if d.count == 0 {
+	d.backgroundFrames++
+	if d.backgroundFrames == 1 {
 		d.background = new_frame.Pix
 		return 0, true
 	}
+	count := float64((d.rowStop - d.start) * (d.columnStop - d.start))
 	var changed bool = false
-	var sum float64 = 0
+	var average float64 = 0
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
 			if uint16(float32(new_frame.Pix[y][x])*d.backgroundWeight) < d.background[y][x] {
 				d.background[y][x] = new_frame.Pix[y][x]
 				changed = true
 			}
-			sum = sum + float64(d.background[y][x])
+			average = average + float64(d.background[y][x])/count
 		}
 	}
-	return sum / float64((d.rowStop-d.start)*(d.columnStop-d.start)), changed
+	return average, changed
 }
 
 func absDiff(a, b uint16) uint16 {
