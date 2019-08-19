@@ -49,6 +49,8 @@ func NewMotionDetector(args MotionConfig, previewFrames int) *motionDetector {
 	d.rowStop = lepton3.FrameRows - args.EdgePixels
 	d.backgroundWeight = frameBackgroundWeighting
 	d.previewFrames = previewFrames
+	d.numPixels = float64((d.rowStop - d.start) * (d.columnStop - d.start))
+
 	if args.Verbose {
 		d.debug = newDebugTracker()
 	}
@@ -76,6 +78,7 @@ type motionDetector struct {
 	backgroundFrames  int
 	debug             *debugTracker
 	previewFrames     int
+	numPixels         float64
 }
 
 func (d *motionDetector) calculateThreshold(backAverage float64) {
@@ -226,7 +229,7 @@ func (d *motionDetector) updateBackground(new_frame *lepton3.Frame) (float64, bo
 		d.background = new_frame.Pix
 		return 0, true
 	}
-	count := float64((d.rowStop - d.start) * (d.columnStop - d.start))
+
 	var changed bool = false
 	var average float64 = 0
 	for y := d.start; y < d.rowStop; y++ {
@@ -235,7 +238,7 @@ func (d *motionDetector) updateBackground(new_frame *lepton3.Frame) (float64, bo
 				d.background[y][x] = new_frame.Pix[y][x]
 				changed = true
 			}
-			average = average + float64(d.background[y][x])/count
+			average = average + float64(d.background[y][x])/d.numPixels
 		}
 	}
 	return average, changed
