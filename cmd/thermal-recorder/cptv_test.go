@@ -60,7 +60,7 @@ func TestCptvAnimalRecordings(t *testing.T) {
 		"cat.cptv":      "(25:41)",
 		"hedgehog.cptv": "(3:32)(45:end)",
 		"possum02.cptv": "(1:end)",
-		"rat.cptv":      "(1:6)",
+		"rat.cptv":      "(1:6)(73:84)",
 		"rat02.cptv":    "(1:23)(57:90)",
 	}
 

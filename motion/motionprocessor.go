@@ -40,7 +40,7 @@ func NewMotionProcessor(motionConf *MotionConfig,
 	return &MotionProcessor{
 		minFrames:           recorderConf.MinSecs * lepton3.FramesHz,
 		maxFrames:           recorderConf.MaxSecs * lepton3.FramesHz,
-		motionDetector:      NewMotionDetector(*motionConf),
+		motionDetector:      NewMotionDetector(*motionConf, recorderConf.PreviewSecs*lepton3.FramesHz),
 		frameLoop:           NewFrameLoop(recorderConf.PreviewSecs*lepton3.FramesHz + motionConf.TriggerFrames),
 		isRecording:         false,
 		window:              *window.New(recorderConf.WindowStart.Time, recorderConf.WindowEnd.Time),

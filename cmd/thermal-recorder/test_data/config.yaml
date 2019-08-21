@@ -8,6 +8,7 @@ recorder:
     window-start: 17:10
     window-end: 07:20
 motion:
+    dynamic-thresh: true
     temp-thresh: 2000
     delta-thresh: 20
     count-thresh: 1

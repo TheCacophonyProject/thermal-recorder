@@ -29,7 +29,7 @@ import (
 func TestRevertsToUsingSmallerFrameIntervalWhenNotEnoughFrames_OneFrame(t *testing.T) {
 	config := defaultMotionParams()
 	config.UseOneDiffOnly = true
-	detector := NewMotionDetector(config)
+	detector := NewMotionDetector(config, defaultPreviewFrames())
 
 	detects, pixels := newFrameGen(detector).Movement(5)
 	assert.Equal(t, []bool{false, true, true, true, true}, detects)
@@ -39,7 +39,7 @@ func TestRevertsToUsingSmallerFrameIntervalWhenNotEnoughFrames_OneFrame(t *testi
 func TestNoMotionDetectedIfNothingHasChanged(t *testing.T) {
 	config := defaultMotionParams()
 	config.UseOneDiffOnly = true
-	detector := NewMotionDetector(config)
+	detector := NewMotionDetector(config, defaultPreviewFrames())
 
 	detects, pixels := newFrameGen(detector).NoMovement(5)
 	assertAllFalse(t, detects)
@@ -48,7 +48,7 @@ func TestNoMotionDetectedIfNothingHasChanged(t *testing.T) {
 
 func TestIfUsingTwoFramesItOnlyCountsWhereBothFramesHaveChanged(t *testing.T) {
 	config := defaultMotionParams()
-	detector := NewMotionDetector(config)
+	detector := NewMotionDetector(config, defaultPreviewFrames())
 
 	detects, pixels := newFrameGen(detector).Movement(6)
 	assert.Equal(t, []bool{false, false, false, false, false, true}, detects)
@@ -58,7 +58,7 @@ func TestIfUsingTwoFramesItOnlyCountsWhereBothFramesHaveChanged(t *testing.T) {
 func TestChangeCountThresh(t *testing.T) {
 	config := defaultMotionParams()
 	config.CountThresh = 4
-	detector := NewMotionDetector(config)
+	detector := NewMotionDetector(config, defaultPreviewFrames())
 
 	detects, pixels := newFrameGen(detector).Movement(6)
 	assert.Equal(t, []bool{false, false, true, true, true, true}, detects)
@@ -68,7 +68,7 @@ func TestChangeCountThresh(t *testing.T) {
 func TestIgnoresEdgePixel(t *testing.T) {
 	config := defaultMotionParams()
 	config.EdgePixels = 1
-	detector := NewMotionDetector(config)
+	detector := NewMotionDetector(config, defaultPreviewFrames())
 
 	detects, pixels := newFrameGen(detector).MovementInColumn(0, 4)
 	assert.Equal(t, []bool{false, false, false, false}, detects)
@@ -92,7 +92,7 @@ func TestDetectsAfterEdgePixel(t *testing.T) {
 	config.EdgePixels = 1
 	config.WarmerOnly = true
 	config.CountThresh = 4
-	detector := NewMotionDetector(config)
+	detector := NewMotionDetector(config, defaultPreviewFrames())
 
 	detects, pixels := newFrameGen(detector).MovementInColumn(1, 4)
 	assert.Equal(t, []bool{false, false, true, true}, detects)
@@ -116,7 +116,7 @@ func TestCanChangeEdgePixelsValue(t *testing.T) {
 	config.EdgePixels = 0
 	config.WarmerOnly = true
 	config.CountThresh = 4
-	detector := NewMotionDetector(config)
+	detector := NewMotionDetector(config, defaultPreviewFrames())
 
 	detects, pixels := newFrameGen(detector).MovementInColumn(0, 4)
 	assert.Equal(t, []bool{false, false, true, true}, detects)
@@ -127,7 +127,7 @@ func TestSomethingMovingDuringFFC(t *testing.T) {
 	config := defaultMotionParams()
 	config.UseOneDiffOnly = true
 	config.CountThresh = 4
-	detector := NewMotionDetector(config)
+	detector := NewMotionDetector(config, defaultPreviewFrames())
 
 	gen := newFrameGen(detector)
 
@@ -161,6 +161,10 @@ func defaultMotionParams() MotionConfig {
 		WarmerOnly:      false,
 		EdgePixels:      1,
 	}
+}
+
+func defaultPreviewFrames() int {
+	return 3 * 9
 }
 
 const frameInterval = time.Second / 9
