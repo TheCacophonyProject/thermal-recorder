@@ -114,7 +114,7 @@ func ParseConfigFiles(recorderFilename, uploaderFilename, locationFileName strin
 	}
 
 	uploaderBuf, err := ioutil.ReadFile(uploaderFilename)
-	if err != nil {
+	if err != nil && !os.IsNotExist(err) {
 		return nil, err
 	}
 
