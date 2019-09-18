@@ -7,6 +7,8 @@ github.com/Masterminds/vcs v1.13.0/go.mod h1:N09YCmOQr6RLxC6UNHzuVwAdodYbbnycGHS
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/TheCacophonyProject/go-config v0.0.0-20190912230121-3ae512e4ea95 h1:+ovLYC5Re+Q9NTChbgJ36PzeSQlOXbSWZQVC+yD47Ak=
 github.com/TheCacophonyProject/go-config v0.0.0-20190912230121-3ae512e4ea95/go.mod h1:gPUJLVu408NRz9/P3BrsxzOzLc+KJLrv+jVdDw3RI0Y=
+github.com/TheCacophonyProject/go-config v0.0.0-20190918041555-29df9aabd14b h1:aie2dvwgvtHj8hgCvPqnuwrf090S6kxXDPOBRdGknVY=
+github.com/TheCacophonyProject/go-config v0.0.0-20190918041555-29df9aabd14b/go.mod h1:gPUJLVu408NRz9/P3BrsxzOzLc+KJLrv+jVdDw3RI0Y=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20190522012101-cfce3277dd0d h1:PlyFODiyyxPn/9INRoouq9xVoHjQNckaU1/Za6ztLIg=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20190522012101-cfce3277dd0d/go.mod h1:0G8yHs+MtBkSFuZ9Hc8ju120G00x4SaUmnwaOhBBosQ=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20190715012645-46e70a4e1b3f h1:2sTJ2R1hs6dzJv2PZKIAoYamBFQQAsXjnmDvo1GXKfg=
