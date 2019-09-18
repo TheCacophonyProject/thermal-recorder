@@ -17,12 +17,7 @@
 package main
 
 import (
-	"io/ioutil"
-	"os"
-
-	yaml "gopkg.in/yaml.v2"
-
-	"github.com/TheCacophonyProject/thermal-recorder/location"
+	goconfig "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
@@ -34,118 +29,60 @@ type Config struct {
 	OutputDir    string `yaml:"output-dir"`
 	MinDiskSpace uint64 `yaml:"min-disk-space"`
 	Recorder     recorder.RecorderConfig
-	Motion       motion.MotionConfig
-	Turret       TurretConfig
-	Throttler    throttle.ThrottlerConfig
-	Location     location.LocationConfig
+	Motion       goconfig.ThermalMotion
+	Throttler    goconfig.ThermalThrottler
+	Location     goconfig.Location
 }
 
-type ServoConfig struct {
-	Active   bool    `yaml:"active"`
-	MinAng   float64 `yaml:"min-ang"`
-	MaxAng   float64 `yaml:"max-ang"`
-	StartAng float64 `yaml:"start-ang"`
-	Pin      string  `yaml:"pin"`
-}
-
-type TurretConfig struct {
-	Active bool        `yaml:"active"`
-	PID    []float64   `yaml:"pid"`
-	ServoX ServoConfig `yaml:"servo-x"`
-	ServoY ServoConfig `yaml:"servo-y"`
-}
-
-type uploaderConfig struct {
-	DeviceName string `yaml:"device-name"`
-}
-
-func (conf *Config) Validate() error {
-	if err := conf.Recorder.Validate(); err != nil {
-		return err
-	}
-
-	if err := conf.Motion.Validate(); err != nil {
-		return err
-	}
-
-	if err := conf.Location.Validate(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-var defaultUploaderConfig = uploaderConfig{
-	DeviceName: "",
-}
-
-var defaultConfig = Config{
-	FrameInput:   "/var/run/lepton-frames",
-	OutputDir:    "/var/spool/cptv",
-	MinDiskSpace: 200,
-	Recorder:     recorder.DefaultRecorderConfig(),
-	Motion:       motion.DefaultMotionConfig(),
-	Throttler:    throttle.DefaultThrottlerConfig(),
-	Location:     location.DefaultLocationConfig(),
-	Turret: TurretConfig{
-		Active: false,
-		PID:    []float64{0.05, 0, 0},
-		ServoX: ServoConfig{
-			Active:   false,
-			Pin:      "17",
-			MaxAng:   160,
-			MinAng:   20,
-			StartAng: 90,
-		},
-		ServoY: ServoConfig{
-			Active:   false,
-			Pin:      "18",
-			MaxAng:   160,
-			MinAng:   20,
-			StartAng: 90,
-		},
-	},
-}
-
-func ParseConfigFiles(recorderFilename, uploaderFilename, locationFileName string) (*Config, error) {
-	buf, err := ioutil.ReadFile(recorderFilename)
+func ParseConfig(configFolder string) (*Config, error) {
+	configRW, err := goconfig.New(configFolder)
 	if err != nil {
 		return nil, err
 	}
 
-	uploaderBuf, err := ioutil.ReadFile(uploaderFilename)
-	if err != nil && !os.IsNotExist(err) {
+	recorderConfig, err := recorder.NewConfig(configRW)
+	if err != nil {
 		return nil, err
 	}
 
-	locationBuf, err := ioutil.ReadFile(locationFileName)
-	if err != nil && !os.IsNotExist(err) {
+	motionConfig, err := motion.NewConfig(configRW)
+	if err != nil {
 		return nil, err
 	}
 
-	return ParseConfig(buf, uploaderBuf, locationBuf)
-}
-
-func ParseConfig(buf, uploaderBuf, locationBuf []byte) (*Config, error) {
-
-	conf := defaultConfig
-	if err := yaml.Unmarshal(buf, &conf); err != nil {
-		return nil, err
-	}
-	uploaderConf := defaultUploaderConfig
-	if err := yaml.Unmarshal(uploaderBuf, &uploaderConf); err != nil {
+	throttlerConfig, err := throttle.NewConfig(configRW)
+	if err != nil {
 		return nil, err
 	}
 
-	conf.DeviceName = uploaderConf.DeviceName
-
-	if err := conf.Location.ParseConfig(locationBuf); err != nil {
+	var locationConfig goconfig.Location
+	if err := configRW.Unmarshal(goconfig.LocationKey, &locationConfig); err != nil {
 		return nil, err
 	}
 
-	if err := conf.Validate(); err != nil {
+	thermalRecorderConfig := goconfig.DefaultThermalRecorder()
+	if err := configRW.Unmarshal(goconfig.ThermalRecorderKey, &thermalRecorderConfig); err != nil {
 		return nil, err
 	}
 
-	return &conf, nil
+	leptonConfig := goconfig.DefaultLepton()
+	if err := configRW.Unmarshal(goconfig.LeptonKey, &leptonConfig); err != nil {
+		return nil, err
+	}
+
+	var deviceConfig goconfig.Device
+	if err := configRW.Unmarshal(goconfig.DeviceKey, &deviceConfig); err != nil {
+		return nil, err
+	}
+
+	return &Config{
+		DeviceName:   deviceConfig.Name,
+		FrameInput:   leptonConfig.FrameOutput,
+		OutputDir:    thermalRecorderConfig.OutputDir,
+		MinDiskSpace: thermalRecorderConfig.MinDiskSpaceMB,
+		Recorder:     *recorderConfig,
+		Motion:       *motionConfig,
+		Throttler:    *throttlerConfig,
+		Location:     locationConfig,
+	}, nil
 }

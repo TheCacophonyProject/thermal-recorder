@@ -22,6 +22,7 @@ import (
 	"testing"
 	"time"
 
+	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/stretchr/testify/assert"
 )
@@ -152,8 +153,8 @@ func TestSomethingMovingDuringFFC(t *testing.T) {
 	assert.Equal(t, []int{0, 9, 9, 9, 18}, pixels)
 }
 
-func defaultMotionParams() MotionConfig {
-	return MotionConfig{
+func defaultMotionParams() config.ThermalMotion {
+	return config.ThermalMotion{
 		TempThresh:      3000,
 		DeltaThresh:     30,
 		CountThresh:     8,

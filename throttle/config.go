@@ -16,18 +16,14 @@
 
 package throttle
 
-import "time"
+import (
+	config "github.com/TheCacophonyProject/go-config"
+)
 
-type ThrottlerConfig struct {
-	ApplyThrottling bool          `yaml:"apply-throttling"`
-	BucketSize      time.Duration `yaml:"bucket-size"`
-	MinRefill       time.Duration `yaml:"min-refill"`
-}
-
-func DefaultThrottlerConfig() ThrottlerConfig {
-	return ThrottlerConfig{
-		ApplyThrottling: true,
-		BucketSize:      10 * time.Minute,
-		MinRefill:       10 * time.Minute,
+func NewConfig(conf *config.Config) (*config.ThermalThrottler, error) {
+	thermalThrottler := config.DefaultThermalThrottler()
+	if err := conf.Unmarshal(config.ThermalThrottlerKey, &thermalThrottler); err != nil {
+		return nil, err
 	}
+	return &thermalThrottler, nil
 }

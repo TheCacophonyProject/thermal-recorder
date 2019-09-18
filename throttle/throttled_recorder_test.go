@@ -23,6 +23,7 @@ import (
 	"github.com/juju/ratelimit"
 	"github.com/stretchr/testify/assert"
 
+	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
@@ -38,11 +39,11 @@ const (
 
 var throttleFrames = int(throttleAfter.Seconds() * lepton3.FramesHz)
 
-func newTestConfig() *ThrottlerConfig {
-	return &ThrottlerConfig{
-		ApplyThrottling: true,
-		BucketSize:      throttleAfter,
-		MinRefill:       minRefill,
+func newTestConfig() *config.ThermalThrottler {
+	return &config.ThermalThrottler{
+		Activate:   true,
+		BucketSize: throttleAfter,
+		MinRefill:  minRefill,
 	}
 }
 

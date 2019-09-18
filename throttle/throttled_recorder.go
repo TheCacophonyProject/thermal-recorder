@@ -23,12 +23,13 @@ import (
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/juju/ratelimit"
 
+	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
 func NewThrottledRecorder(
 	baseRecorder recorder.Recorder,
-	config *ThrottlerConfig,
+	config *config.ThermalThrottler,
 	minSeconds int,
 	eventListener ThrottledEventListener,
 ) *ThrottledRecorder {
@@ -43,7 +44,7 @@ func NewThrottledRecorder(
 
 func NewThrottledRecorderWithClock(
 	baseRecorder recorder.Recorder,
-	config *ThrottlerConfig,
+	config *config.ThermalThrottler,
 	minSeconds int,
 	listener ThrottledEventListener,
 	clock ratelimit.Clock,

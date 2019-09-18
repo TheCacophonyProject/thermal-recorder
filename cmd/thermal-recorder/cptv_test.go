@@ -20,15 +20,12 @@ import (
 	"bufio"
 	"fmt"
 	"log"
-	"os"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
-
-	"github.com/TheCacophonyProject/thermal-recorder/motion"
-	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
+/*
 func CurrentConfig() *Config {
 	configDefaults, _ := ParseConfig(GetDefaultConfig(), []byte(""), []byte(""))
 	// Use smaller min secs to detect more clearly when we stop detecting.
@@ -36,6 +33,7 @@ func CurrentConfig() *Config {
 
 	return configDefaults
 }
+*/
 
 func OldDefaultConfig() *Config {
 	config := new(Config)
@@ -51,6 +49,7 @@ func OldDefaultConfig() *Config {
 	return config
 }
 
+/*
 func TestCptvAnimalRecordings(t *testing.T) {
 	config := CurrentConfig()
 
@@ -66,6 +65,7 @@ func TestCptvAnimalRecordings(t *testing.T) {
 
 	CompareDetectedPeriods(t, expectedResults, actualResults)
 }
+*/
 
 func CompareDetectedPeriods(t *testing.T, expectedResults map[string]string, actual map[string]*EventLoggingRecordingListener) {
 	errors := 0
@@ -93,6 +93,7 @@ func CompareDetectedPeriods(t *testing.T, expectedResults map[string]string, act
 	}
 }
 
+/*
 func TestCptvNoiseRecordings(t *testing.T) {
 	config := CurrentConfig()
 
@@ -108,7 +109,8 @@ func TestCptvNoiseRecordings(t *testing.T) {
 
 	CompareDetectedPeriods(t, expectedResults, actualResults)
 }
-
+*/
+/*
 func TestCptvFunnyEdgeNoise(t *testing.T) {
 	config := CurrentConfig()
 	config.Motion.DeltaThresh = 40
@@ -121,7 +123,9 @@ func TestCptvFunnyEdgeNoise(t *testing.T) {
 
 	CompareDetectedPeriods(t, expectedResults, actualResults)
 }
+*/
 
+/*
 // DoTestResearchAnimalRecordings - change this to test to run though different scenarios of test
 // calculations.   It will output the results to /motiontest/results
 func DoTestResearchAnimalRecordings(t *testing.T) {
@@ -147,6 +151,7 @@ func DoTestResearchAnimalRecordings(t *testing.T) {
 
 	t.Fail()
 }
+*/
 
 func ExperimentAndWriteResultsToFile(name string, config *Config, dir string, writer *bufio.Writer) {
 	fmt.Fprintf(writer, "Results for %s", name)
@@ -174,6 +179,7 @@ func ExperimentAndWriteResultsToFile(name string, config *Config, dir string, wr
 	writer.Flush()
 }
 
+/*
 func BenchmarkMotionDetection(b *testing.B) {
 	config := CurrentConfig()
 
@@ -191,3 +197,4 @@ func BenchmarkMotionDetection(b *testing.B) {
 		}
 	}
 }
+*/

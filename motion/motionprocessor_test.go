@@ -22,9 +22,10 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
+	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/lepton3"
-	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
+	"github.com/TheCacophonyProject/window"
 )
 
 type TestRecorder struct {
@@ -65,8 +66,8 @@ func (tr *TestRecorder) SetCheckError(err error) {
 func (tr *TestRecorder) IsRecording() bool {
 	return tr.frameIds != nil
 }
-func LocationTestConfig() *location.LocationConfig {
-	config := location.DefaultLocationConfig()
+func LocationTestConfig() *config.Location {
+	config := config.Location{}
 	return &config
 }
 
@@ -75,11 +76,16 @@ func RecorderTestConfig() *recorder.RecorderConfig {
 	config.MinSecs = 3
 	config.MaxSecs = 20
 	config.PreviewSecs = 1
+	w, err := window.New("20:00", "20:00", 0, 0)
+	if err != nil {
+		panic(err)
+	}
+	config.Window = *w
 	return config
 }
 
-func MotionTestConfig() *MotionConfig {
-	config := new(MotionConfig)
+func MotionTestConfig() *config.ThermalMotion {
+	config := new(config.ThermalMotion)
 
 	config.TempThresh = 3000
 	config.DeltaThresh = 50
@@ -100,7 +106,7 @@ func FramesFrom(start, end int) []int {
 	return slice
 }
 
-func SetupTest(mConf *MotionConfig, rConf *recorder.RecorderConfig, lConf *location.LocationConfig) (*TestRecorder, *TestFrameMaker) {
+func SetupTest(mConf *config.ThermalMotion, rConf *recorder.RecorderConfig, lConf *config.Location) (*TestRecorder, *TestFrameMaker) {
 	recorder := new(TestRecorder)
 	processor := NewMotionProcessor(mConf, rConf, lConf, nil, recorder)
 

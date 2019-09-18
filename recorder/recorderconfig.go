@@ -19,37 +19,56 @@ package recorder
 import (
 	"errors"
 
+	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/window"
 )
 
 type RecorderConfig struct {
-	MinSecs                int              `yaml:"min-secs"`
-	MaxSecs                int              `yaml:"max-secs"`
-	PreviewSecs            int              `yaml:"preview-secs"`
-	UseSunriseSunsetWindow bool             `yaml:"sunrise-sunset"`
-	SunriseOffset          int              `yaml:"sunrise-offset"`
-	SunsetOffset           int              `yaml:"sunset-offset"`
-	WindowStart            window.TimeOfDay `yaml:"window-start"`
-	WindowEnd              window.TimeOfDay `yaml:"window-end"`
+	MinSecs     int
+	MaxSecs     int
+	PreviewSecs int
+	Window      window.Window
 }
 
-func DefaultRecorderConfig() RecorderConfig {
-	return RecorderConfig{
-		MinSecs:     10,
-		MaxSecs:     600,
-		PreviewSecs: 3,
+func NewConfig(conf *config.Config) (*RecorderConfig, error) {
+	thermalRecorderConfig := config.DefaultThermalRecorder()
+	if err := conf.Unmarshal(config.ThermalRecorderKey, &thermalRecorderConfig); err != nil {
+		return nil, err
 	}
+	windowLocationConfig := config.DefaultWindowLocation()
+	if err := conf.Unmarshal(config.LocationKey, &windowLocationConfig); err != nil {
+		return nil, err
+	}
+	windowsConfig := config.DefaultWindows()
+	if err := conf.Unmarshal(config.WindowsKey, &windowsConfig); err != nil {
+		return nil, err
+	}
+
+	w, err := window.New(
+		windowsConfig.StartRecording,
+		windowsConfig.StopRecording,
+		float64(windowLocationConfig.Latitude),
+		float64(windowLocationConfig.Longitude))
+	if err != nil {
+		return nil, err
+	}
+
+	recorderConfig := RecorderConfig{
+		MinSecs:     thermalRecorderConfig.MinSecs,
+		MaxSecs:     thermalRecorderConfig.MaxSecs,
+		PreviewSecs: thermalRecorderConfig.PreviewSecs,
+		Window:      *w,
+	}
+
+	if err := recorderConfig.validate(); err != nil {
+		return nil, err
+	}
+	return &recorderConfig, nil
 }
 
-func (conf *RecorderConfig) Validate() error {
+func (conf *RecorderConfig) validate() error {
 	if conf.MaxSecs < conf.MinSecs {
 		return errors.New("max-secs should be larger than min-secs")
-	}
-	if conf.WindowStart.IsZero() && !conf.WindowEnd.IsZero() {
-		return errors.New("window-end is set but window-start isn't")
-	}
-	if !conf.WindowStart.IsZero() && conf.WindowEnd.IsZero() {
-		return errors.New("window-start is set but window-end isn't")
 	}
 	return nil
 }

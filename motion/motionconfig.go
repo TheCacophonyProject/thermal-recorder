@@ -16,35 +16,22 @@
 
 package motion
 
-type MotionConfig struct {
-	DynamicThreshold bool   `yaml:"dynamic-thresh"`
-	TempThresh       uint16 `yaml:"temp-thresh"`
-	DeltaThresh      uint16 `yaml:"delta-thresh"`
-	CountThresh      int    `yaml:"count-thresh"`
-	FrameCompareGap  int    `yaml:"frame-compare-gap"`
-	UseOneDiffOnly   bool   `yaml:"one-diff-only"`
-	TriggerFrames    int    `yaml:"trigger-frames"`
-	WarmerOnly       bool   `yaml:"warmer-only"`
-	EdgePixels       int    `yaml:"edge-pixels"`
-	Verbose          bool   `yaml:"verbose"`
-}
+import (
+	config "github.com/TheCacophonyProject/go-config"
+)
 
-func DefaultMotionConfig() MotionConfig {
-	return MotionConfig{
-		DynamicThreshold: true,
-		TempThresh:       2900,
-		DeltaThresh:      50,
-		CountThresh:      3,
-		FrameCompareGap:  45,
-		Verbose:          false,
-		TriggerFrames:    2,
-		UseOneDiffOnly:   true,
-		WarmerOnly:       true,
-		EdgePixels:       1,
+func NewConfig(configRW *config.Config) (*config.ThermalMotion, error) {
+	thermalMotionConfig := config.DefaultThermalMotion()
+	if err := configRW.Unmarshal(config.ThermalMotionKey, &thermalMotionConfig); err != nil {
+		return nil, err
 	}
+	if err := validateConfig(&thermalMotionConfig); err != nil {
+		return nil, err
+	}
+	return &thermalMotionConfig, nil
 }
 
-func (conf *MotionConfig) Validate() error {
+func validateConfig(*config.ThermalMotion) error {
 	// TODO
 	return nil
 }

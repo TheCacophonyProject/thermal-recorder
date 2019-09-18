@@ -24,6 +24,7 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
 	"github.com/coreos/go-systemd/daemon"
@@ -44,7 +45,7 @@ const (
 var version = "<not set>"
 
 type Args struct {
-	ConfigFile string `arg:"-c,--config" help:"path to configuration file"`
+	ConfigDir  string `arg:"-c,--config" help:"path to configuration dir"`
 	Quick      bool   `arg:"-q,--quick" help:"don't cycle camera power on startup"`
 	Timestamps bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
 }
@@ -55,7 +56,7 @@ func (Args) Version() string {
 
 func procArgs() Args {
 	var args Args
-	args.ConfigFile = "/etc/leptond.yaml"
+	args.ConfigDir = config.DefaultConfigDir
 	arg.MustParse(&args)
 	return args
 }
@@ -82,7 +83,7 @@ func runMain() error {
 	}
 
 	log.Printf("version: %s", version)
-	conf, err := ParseConfigFile(args.ConfigFile)
+	conf, err := ParseConfigFile(args.ConfigDir)
 	if err != nil {
 		return err
 	}
