@@ -45,7 +45,7 @@ const (
 var version = "<not set>"
 
 type Args struct {
-	ConfigDir  string `arg:"-c,--config" help:"path to configuration dir"`
+	ConfigDir  string `arg:"-c,--config" help:"path to configuration directory"`
 	Quick      bool   `arg:"-q,--quick" help:"don't cycle camera power on startup"`
 	Timestamps bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
 }
