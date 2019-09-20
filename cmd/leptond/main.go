@@ -83,7 +83,7 @@ func runMain() error {
 	}
 
 	log.Printf("version: %s", version)
-	conf, err := ParseConfigFile(args.ConfigDir)
+	conf, err := ParseConfig(args.ConfigDir)
 	if err != nil {
 		return err
 	}

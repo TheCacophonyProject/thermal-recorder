@@ -26,7 +26,7 @@ type Config struct {
 	FrameOutput string
 }
 
-func ParseConfigFile(configFolder string) (*Config, error) {
+func ParseConfig(configFolder string) (*Config, error) {
 	configRW, err := goconfig.New(configFolder)
 	if err != nil {
 		return nil, err

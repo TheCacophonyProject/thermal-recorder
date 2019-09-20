@@ -26,10 +26,11 @@ import (
 	"testing"
 
 	config "github.com/TheCacophonyProject/go-config"
-	"github.com/TheCacophonyProject/thermal-recorder/motion"
-	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/window"
 	"github.com/stretchr/testify/assert"
+
+	"github.com/TheCacophonyProject/thermal-recorder/motion"
+	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
 func CurrentConfig() *Config {
