@@ -25,9 +25,9 @@ import (
 
 type Config struct {
 	DeviceName   string
-	FrameInput   string `yaml:"frame-input"`
-	OutputDir    string `yaml:"output-dir"`
-	MinDiskSpace uint64 `yaml:"min-disk-space"`
+	FrameInput   string
+	OutputDir    string
+	MinDiskSpace uint64
 	Recorder     recorder.RecorderConfig
 	Motion       goconfig.ThermalMotion
 	Throttler    goconfig.ThermalThrottler

@@ -9,7 +9,6 @@ require (
 	github.com/TheCacophonyProject/window v0.0.0-20190821235241-ab92c2ee24b6
 	github.com/alexflint/go-arg v1.1.0
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
-	github.com/felixge/pidctrl v0.0.0-20160307080219-7b13bcae7243
 	github.com/godbus/dbus v4.1.0+incompatible
 	github.com/juju/ratelimit v1.0.1
 	github.com/stretchr/testify v1.3.0
