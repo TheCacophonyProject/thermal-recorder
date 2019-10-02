@@ -21,6 +21,7 @@ import (
 	"image"
 	"image/color"
 	"image/png"
+	"log"
 	"math"
 	"os"
 	"path"
@@ -28,6 +29,8 @@ import (
 
 	"github.com/TheCacophonyProject/lepton3"
 )
+
+const snapshotName = "still.png"
 
 var (
 	previousSnapshotID = 0
@@ -71,12 +74,18 @@ func newSnapshot(dir string) error {
 		}
 	}
 
-	out, err := os.Create(path.Join(dir, "still.png"))
+	out, err := os.Create(path.Join(dir, snapshotName))
 	if err != nil {
 		return err
 	}
 	defer out.Close()
 	return png.Encode(out, g16)
+}
+
+func deleteSnapshot(dir string) {
+	if err := os.Remove(path.Join(dir, snapshotName)); err != nil && !os.IsNotExist(err) {
+		log.Printf("error with deleting snapshot image %s", err)
+	}
 }
 
 func maxUint16(a, b uint16) uint16 {

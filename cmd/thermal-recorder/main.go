@@ -102,6 +102,8 @@ func runMain() error {
 		return err
 	}
 
+	deleteSnapshot(conf.OutputDir)
+
 	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {
 		return err
