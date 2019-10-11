@@ -137,7 +137,7 @@ func (d *motionDetector) pixelsChanged(frame *lepton3.Frame, prevFFC bool) (bool
 		return false, 0
 	}
 
-	if d.affectedByFCC || prevFFC {
+	if isAffectedByFFC(frame) || prevFFC {
 		d.debug.update("ffc", 1)
 		d.flooredFrames.SetAsOldest()
 		d.firstDiff = false
