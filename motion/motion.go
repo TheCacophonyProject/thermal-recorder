@@ -21,6 +21,7 @@ import (
 	"math"
 	"time"
 
+	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/lepton3"
 )
 
@@ -33,7 +34,7 @@ const debugLogSecs = 5
 const frameBackgroundWeighting = 0.99
 const weightEveryNFrames = 3
 
-func NewMotionDetector(args MotionConfig, previewFrames int) *motionDetector {
+func NewMotionDetector(args config.ThermalMotion, previewFrames int) *motionDetector {
 	d := new(motionDetector)
 	d.flooredFrames = *NewFrameLoop(args.FrameCompareGap + 1)
 	d.diffFrames = *NewFrameLoop(2)

@@ -21,8 +21,12 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
+	config "github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/window"
 	"github.com/stretchr/testify/assert"
 
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
@@ -30,11 +34,24 @@ import (
 )
 
 func CurrentConfig() *Config {
-	configDefaults, _ := ParseConfig(GetDefaultConfig(), []byte(""), []byte(""))
-	// Use smaller min secs to detect more clearly when we stop detecting.
-	configDefaults.Recorder.MinSecs = 1
-
-	return configDefaults
+	//GetDefaultConfig()
+	w, _ := window.New("12:00", "12:00", 0, 0)
+	recorder := recorder.RecorderConfig{
+		MaxSecs:     config.DefaultThermalRecorder().MaxSecs,
+		MinSecs:     1, // Use smaller min secs to detect more clearly when we stop detecting.
+		PreviewSecs: config.DefaultThermalRecorder().PreviewSecs,
+		Window:      *w,
+	}
+	return &Config{
+		DeviceName:   "test name",
+		FrameInput:   config.DefaultLepton().FrameOutput,
+		Location:     config.Location{},
+		MinDiskSpace: config.DefaultThermalRecorder().MinDiskSpaceMB,
+		Motion:       config.DefaultThermalMotion(),
+		OutputDir:    config.DefaultThermalRecorder().OutputDir,
+		Recorder:     recorder,
+		Throttler:    config.DefaultThermalThrottler(),
+	}
 }
 
 func OldDefaultConfig() *Config {
@@ -91,6 +108,22 @@ func CompareDetectedPeriods(t *testing.T, expectedResults map[string]string, act
 	if errors > 0 {
 		assert.Fail(t, fmt.Sprintf("There were %d errors.", errors))
 	}
+}
+
+func GetBaseDir() string {
+	_, file, _, ok := runtime.Caller(0)
+
+	if !ok {
+		panic(fmt.Errorf("Could not find the base dir where sample files are"))
+	}
+
+	dir, err := filepath.Abs(filepath.Dir(file))
+
+	if err != nil {
+		panic(err)
+	}
+
+	return dir
 }
 
 func TestCptvNoiseRecordings(t *testing.T) {

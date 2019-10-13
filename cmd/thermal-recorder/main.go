@@ -24,8 +24,8 @@ import (
 	arg "github.com/alexflint/go-arg"
 	"periph.io/x/periph/host"
 
+	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/lepton3"
-	"github.com/TheCacophonyProject/thermal-recorder/location"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
@@ -45,12 +45,10 @@ var (
 )
 
 type Args struct {
-	ConfigFile         string `arg:"-c,--config" help:"path to configuration file"`
-	UploaderConfigFile string `arg:"-u,--uploader-config" help:"path to uploader config file"`
-	Timestamps         bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
-	TestCptvFile       string `arg:"-f, --testfile" help:"Run a CPTV file through to see what the results are"`
-	Verbose            bool   `arg:"-v, --verbose" help:"Make logging more verbose"`
-	LocationConfigFile string `arg:"-l, --location" help:"path to location config file"`
+	ConfigDir    string `arg:"-c,--config" help:"path to configuration directory"`
+	Timestamps   bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
+	TestCptvFile string `arg:"-f, --testfile" help:"Run a CPTV file through to see what the results are"`
+	Verbose      bool   `arg:"-v, --verbose" help:"Make logging more verbose"`
 }
 
 func (Args) Version() string {
@@ -59,9 +57,7 @@ func (Args) Version() string {
 
 func procArgs() Args {
 	var args Args
-	args.ConfigFile = "/etc/thermal-recorder.yaml"
-	args.UploaderConfigFile = "/etc/thermal-uploader.yaml"
-	args.LocationConfigFile = location.DefaultLocationFile()
+	args.ConfigDir = config.DefaultConfigDir
 	arg.MustParse(&args)
 	return args
 }
@@ -81,8 +77,7 @@ func runMain() error {
 	}
 
 	log.Printf("running version: %s", version)
-	conf, err := ParseConfigFiles(args.ConfigFile, args.UploaderConfigFile, args.LocationConfigFile)
-
+	conf, err := ParseConfig(args.ConfigDir)
 	if err != nil {
 		return err
 	}
@@ -109,9 +104,6 @@ func runMain() error {
 		return err
 	}
 
-	turret := NewTurretController(conf.Turret)
-	go turret.Start()
-
 	log.Println("deleting temp files")
 	if err := deleteTempFiles(conf.OutputDir); err != nil {
 		return err
@@ -135,12 +127,12 @@ func runMain() error {
 		// Prevent concurrent connections.
 		listener.Close()
 
-		err = handleConn(conn, conf, turret)
+		err = handleConn(conn, conf)
 		log.Printf("camera connection ended with: %v", err)
 	}
 }
 
-func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
+func handleConn(conn net.Conn, conf *Config) error {
 
 	totalFrames := 0
 
@@ -148,7 +140,7 @@ func handleConn(conn net.Conn, conf *Config, turret *TurretController) error {
 	defer cptvRecorder.Stop()
 	var recorder recorder.Recorder = cptvRecorder
 
-	if conf.Throttler.ApplyThrottling {
+	if conf.Throttler.Activate {
 		minRecordingLength := conf.Recorder.MinSecs + conf.Recorder.PreviewSecs
 		recorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength, new(throttle.ThrottledEventRecorder))
 	}
@@ -186,17 +178,5 @@ func logConfig(conf *Config) {
 	log.Printf("throttler: %+v", conf.Throttler)
 	log.Printf("location latitude: %v", conf.Location.Latitude)
 	log.Printf("location longitude: %v", conf.Location.Longitude)
-	if conf.Recorder.UseSunriseSunsetWindow {
-		log.Printf("recording window is based on sunrise and sunset (sunrise offset is %v minutes, sunset offset is %v minutes", conf.Recorder.SunriseOffset, conf.Recorder.SunsetOffset)
-	} else if !conf.Recorder.WindowStart.IsZero() {
-		log.Printf("recording window: %02d:%02d to %02d:%02d",
-			conf.Recorder.WindowStart.Hour(), conf.Recorder.WindowStart.Minute(),
-			conf.Recorder.WindowEnd.Hour(), conf.Recorder.WindowEnd.Minute())
-	}
-	if conf.Turret.Active {
-		log.Printf("Turret active")
-		log.Printf("\tPID: %v", conf.Turret.PID)
-		log.Printf("\tServoX: %+v", conf.Turret.ServoX)
-		log.Printf("\tServoY: %+v", conf.Turret.ServoY)
-	}
+	log.Printf("recording window: %s", conf.Recorder.Window)
 }

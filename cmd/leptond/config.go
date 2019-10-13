@@ -17,35 +17,34 @@
 package main
 
 import (
-	"io/ioutil"
-
-	yaml "gopkg.in/yaml.v2"
+	goconfig "github.com/TheCacophonyProject/go-config"
 )
 
 type Config struct {
-	SPISpeed    int64  `yaml:"spi-speed"`
-	PowerPin    string `yaml:"power-pin"`
-	FrameOutput string `yaml:"frame-output"`
+	SPISpeed    int64
+	PowerPin    string
+	FrameOutput string
 }
 
-var defaultConfig = Config{
-	SPISpeed:    2000000,
-	PowerPin:    "GPIO23",
-	FrameOutput: "/var/run/lepton-frames",
-}
-
-func ParseConfigFile(filename string) (*Config, error) {
-	buf, err := ioutil.ReadFile(filename)
+func ParseConfig(configFolder string) (*Config, error) {
+	configRW, err := goconfig.New(configFolder)
 	if err != nil {
 		return nil, err
 	}
-	return ParseConfig(buf)
-}
 
-func ParseConfig(buf []byte) (*Config, error) {
-	conf := defaultConfig
-	if err := yaml.Unmarshal(buf, &conf); err != nil {
+	gpio := goconfig.DefaultGPIO()
+	if err := configRW.Unmarshal(goconfig.GPIOKey, &gpio); err != nil {
 		return nil, err
 	}
-	return &conf, nil
+
+	lepton := goconfig.DefaultLepton()
+	if err := configRW.Unmarshal(goconfig.LeptonKey, &lepton); err != nil {
+		return nil, err
+	}
+
+	return &Config{
+		SPISpeed:    lepton.SPISpeed,
+		PowerPin:    gpio.ThermalCameraPower,
+		FrameOutput: lepton.FrameOutput,
+	}, nil
 }
