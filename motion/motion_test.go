@@ -194,7 +194,7 @@ func (g *frameGen) NoMovement(frames int) ([]bool, []int) {
 
 	for i := range results {
 		frame := g.makeSpot(3300, 0, 0)
-		results[i], pixels[i] = g.detector.pixelsChanged(frame)
+		results[i], pixels[i] = g.detector.pixelsChanged(frame, false)
 	}
 	return results, pixels
 }
@@ -205,7 +205,7 @@ func (g *frameGen) Movement(frames int) ([]bool, []int) {
 
 	for i := range results {
 		frame := g.makeSpot(3300, 10+i, i*100)
-		results[i], pixels[i] = g.detector.pixelsChanged(frame)
+		results[i], pixels[i] = g.detector.pixelsChanged(frame, false)
 	}
 	return results, pixels
 }
@@ -217,7 +217,7 @@ func (g *frameGen) MovementInColumn(col, frames int) ([]bool, []int) {
 	for i := range results {
 		log.Println(i)
 		frame := g.makeColSpot(3300, 10+5*(i+1), col, (i+1)*100)
-		results[i], pixels[i] = g.detector.pixelsChanged(frame)
+		results[i], pixels[i] = g.detector.pixelsChanged(frame, false)
 	}
 	return results, pixels
 }
@@ -228,7 +228,7 @@ func (g *frameGen) MovementInRow(row, frames int) ([]bool, []int) {
 
 	for i := range results {
 		frame := g.makeRowSpot(3300, row, 10+5*(i+1), (i+1)*100)
-		results[i], pixels[i] = g.detector.pixelsChanged(frame)
+		results[i], pixels[i] = g.detector.pixelsChanged(frame, false)
 	}
 	return results, pixels
 }

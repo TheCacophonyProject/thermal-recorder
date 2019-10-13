@@ -80,6 +80,7 @@ type motionDetector struct {
 	debug             *debugTracker
 	previewFrames     int
 	numPixels         float64
+	affectedByFCC     bool
 }
 
 func (d *motionDetector) calculateThreshold(backAverage float64) {
@@ -87,8 +88,11 @@ func (d *motionDetector) calculateThreshold(backAverage float64) {
 }
 
 func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
-	if d.dynamicThresh && !isAffectedByFFC(frame) {
-		backAverage, changed := d.updateBackground(frame)
+	prevFFC := d.affectedByFCC
+	d.affectedByFCC = isAffectedByFFC(frame)
+
+	if d.dynamicThresh && !d.affectedByFCC {
+		backAverage, changed := d.updateBackground(frame, prevFFC)
 		if changed && d.backgroundFrames > d.previewFrames {
 			d.calculateThreshold(backAverage)
 			d.backgroundWeight = frameBackgroundWeighting
@@ -100,7 +104,7 @@ func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 		d.debug.update("thresh", int(d.tempThresh))
 	}
 	d.count++
-	movement, deltaCount := d.pixelsChanged(frame)
+	movement, deltaCount := d.pixelsChanged(frame, prevFFC)
 	if movement {
 		d.debug.update("detect", 1)
 	}
@@ -113,7 +117,7 @@ func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 	return movement
 }
 
-func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
+func (d *motionDetector) pixelsChanged(frame *lepton3.Frame, prevFFC bool) (bool, int) {
 	flooredFrame := d.flooredFrames.Current()
 	d.setFloor(frame, flooredFrame)
 
@@ -134,7 +138,7 @@ func (d *motionDetector) pixelsChanged(frame *lepton3.Frame) (bool, int) {
 		return false, 0
 	}
 
-	if isAffectedByFFC(frame) {
+	if isAffectedByFFC(frame) || prevFFC {
 		d.debug.update("ffc", 1)
 		d.flooredFrames.SetAsOldest()
 		d.firstDiff = false
@@ -224,7 +228,7 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *lepton3.Frame) *lepton3.Fra
 	return out
 }
 
-func (d *motionDetector) updateBackground(new_frame *lepton3.Frame) (float64, bool) {
+func (d *motionDetector) updateBackground(new_frame *lepton3.Frame, prevFFC bool) (float64, bool) {
 	d.backgroundFrames++
 	if d.backgroundFrames == 1 {
 		d.background = new_frame.Pix
@@ -235,7 +239,7 @@ func (d *motionDetector) updateBackground(new_frame *lepton3.Frame) (float64, bo
 	var average float64 = 0
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
-			if uint16(float32(new_frame.Pix[y][x])*d.backgroundWeight) < d.background[y][x] {
+			if prevFFC || uint16(float32(new_frame.Pix[y][x])*d.backgroundWeight) < d.background[y][x] {
 				d.background[y][x] = new_frame.Pix[y][x]
 				changed = true
 			}
