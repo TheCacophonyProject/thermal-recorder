@@ -24,6 +24,7 @@ import (
 )
 
 type Config struct {
+	DeviceID     int
 	DeviceName   string
 	FrameInput   string
 	OutputDir    string
@@ -76,6 +77,7 @@ func ParseConfig(configFolder string) (*Config, error) {
 	}
 
 	return &Config{
+		DeviceID:     deviceConfig.ID,
 		DeviceName:   deviceConfig.Name,
 		FrameInput:   leptonConfig.FrameOutput,
 		OutputDir:    thermalRecorderConfig.OutputDir,

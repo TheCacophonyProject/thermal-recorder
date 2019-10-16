@@ -36,18 +36,22 @@ func NewCPTVFileRecorder(config *Config) *CPTVFileRecorder {
 	if err != nil {
 		panic(fmt.Sprintf("failed to convert motion config to YAML: %v", err))
 	}
+	cptvHeader := cptv.Header{
+		DeviceName:   config.DeviceName,
+		PreviewSecs:  config.Recorder.PreviewSecs,
+		MotionConfig: string(motionYAML),
+		Latitude:     config.Location.Latitude,
+		Longitude:    config.Location.Longitude,
+		LocTimestamp: config.Location.Timestamp,
+		Altitude:     config.Location.Altitude,
+		Accuracy:     config.Location.Accuracy,
+	}
+	if config.DeviceID > 0 {
+		cptvHeader.DeviceID = config.DeviceID
+	}
 	return &CPTVFileRecorder{
-		outputDir: config.OutputDir,
-		header: cptv.Header{
-			DeviceName:   config.DeviceName,
-			PreviewSecs:  config.Recorder.PreviewSecs,
-			MotionConfig: string(motionYAML),
-			Latitude:     config.Location.Latitude,
-			Longitude:    config.Location.Longitude,
-			LocTimestamp: config.Location.Timestamp,
-			Altitude:     config.Location.Altitude,
-			Accuracy:     config.Location.Accuracy,
-		},
+		outputDir:    config.OutputDir,
+		header:       cptvHeader,
 		minDiskSpace: config.MinDiskSpace,
 	}
 }
