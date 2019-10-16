@@ -7,8 +7,9 @@ github.com/Masterminds/vcs v1.13.0/go.mod h1:N09YCmOQr6RLxC6UNHzuVwAdodYbbnycGHS
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
 github.com/TheCacophonyProject/go-config v0.0.0-20190918041555-29df9aabd14b h1:aie2dvwgvtHj8hgCvPqnuwrf090S6kxXDPOBRdGknVY=
 github.com/TheCacophonyProject/go-config v0.0.0-20190918041555-29df9aabd14b/go.mod h1:gPUJLVu408NRz9/P3BrsxzOzLc+KJLrv+jVdDw3RI0Y=
-github.com/TheCacophonyProject/go-cptv v0.0.0-20190522012101-cfce3277dd0d h1:PlyFODiyyxPn/9INRoouq9xVoHjQNckaU1/Za6ztLIg=
-github.com/TheCacophonyProject/go-cptv v0.0.0-20190522012101-cfce3277dd0d/go.mod h1:0G8yHs+MtBkSFuZ9Hc8ju120G00x4SaUmnwaOhBBosQ=
+github.com/TheCacophonyProject/go-cptv v0.0.0-20190829021603-992765fceb9b h1:nWwxOyT9EvqPp/ih3/+DNyu2irMYd/0VlnjXK4gZXYM=
+github.com/TheCacophonyProject/go-cptv v0.0.0-20190829021603-992765fceb9b/go.mod h1:cDdt+cs882otscgxOWynghBP2DUL2psRill5KYuDcMw=
+github.com/TheCacophonyProject/lepton3 v0.0.0-20181105002713-24af961474c7/go.mod h1:yVwn6AMmsdzeu+tYunw9CYwD8+L8VWCxEACpKxyximU=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20190715012645-46e70a4e1b3f h1:2sTJ2R1hs6dzJv2PZKIAoYamBFQQAsXjnmDvo1GXKfg=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20190715012645-46e70a4e1b3f/go.mod h1:yShL/C1UD2IGzlXF1qmH7EfIPdRkzaK4kShR65/l0As=
 github.com/TheCacophonyProject/periph v2.0.1-0.20171123021141-d06ef89e37e8+incompatible h1:HNEla6Hv+j5M3rdH4D+1MTZeVhsyi17zqpvl998/ssI=
@@ -151,6 +152,7 @@ golang.org/x/crypto v0.0.0-20180904163835-0709b304e793/go.mod h1:6SG95UA2DQfeDnf
 golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2/go.mod h1:djNgcEr1/C05ACkg1iLfiJU5Ep61QUkGW8qpdssI0+w=
 golang.org/x/lint v0.0.0-20181026193005-c67002cb31c3/go.mod h1:UVdnD1Gm6xHRNCYTkRU2/jEulfH38KcIWyp/GAMgvoE=
 golang.org/x/lint v0.0.0-20190313153728-d0100b6bd8b3/go.mod h1:6SW0HCj/g11FgYtHlgUYUwCkIfeOF89ocIRzGO/8vkc=
+golang.org/x/net v0.0.0-20171004034648-a04bdaca5b32/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20180811021610-c39426892332 h1:efGso+ep0DjyCBJPjvoz0HI6UldX4Md2F1rZFe1ir0E=
 golang.org/x/net v0.0.0-20180811021610-c39426892332/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
 golang.org/x/net v0.0.0-20180826012351-8a410e7b638d/go.mod h1:mL1N/T3taQHkDXs73rZJwtUhF3w3ftmwwsq0BUmARs4=
