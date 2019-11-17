@@ -3,7 +3,7 @@ module github.com/TheCacophonyProject/thermal-recorder
 go 1.12
 
 require (
-	github.com/TheCacophonyProject/go-config v1.1.0
+	github.com/TheCacophonyProject/go-config v1.1.1
 	github.com/TheCacophonyProject/go-cptv v0.0.0-20190829021603-992765fceb9b
 	github.com/TheCacophonyProject/lepton3 v0.0.0-20190715012645-46e70a4e1b3f
 	github.com/TheCacophonyProject/window v0.0.0-20190821235241-ab92c2ee24b6
@@ -18,7 +18,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.5.0 // indirect
 	github.com/stretchr/testify v1.3.0
-	golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4 // indirect
+	golang.org/x/sys v0.0.0-20191117211529-81af7394a238 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/yaml.v2 v2.2.5
 	periph.io/x/periph v3.6.2+incompatible
