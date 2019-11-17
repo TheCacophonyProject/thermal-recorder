@@ -9,6 +9,8 @@ github.com/TheCacophonyProject/go-config v0.0.0-20190918041555-29df9aabd14b h1:a
 github.com/TheCacophonyProject/go-config v0.0.0-20190918041555-29df9aabd14b/go.mod h1:gPUJLVu408NRz9/P3BrsxzOzLc+KJLrv+jVdDw3RI0Y=
 github.com/TheCacophonyProject/go-config v1.1.0 h1:nFRxN0NyH+VvyrbSBjyqyFuScFSzT+8tJabfrszbOHI=
 github.com/TheCacophonyProject/go-config v1.1.0/go.mod h1:WuesghaKfkLjOSR07Aaw3el/KPOSB8rRsL3pg5RMr8o=
+github.com/TheCacophonyProject/go-config v1.1.1 h1:46UuL+FpR+hJTAIaOVkx76idzVptMcID8DjQ4by3syU=
+github.com/TheCacophonyProject/go-config v1.1.1/go.mod h1:WuesghaKfkLjOSR07Aaw3el/KPOSB8rRsL3pg5RMr8o=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20190829021603-992765fceb9b h1:nWwxOyT9EvqPp/ih3/+DNyu2irMYd/0VlnjXK4gZXYM=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20190829021603-992765fceb9b/go.mod h1:cDdt+cs882otscgxOWynghBP2DUL2psRill5KYuDcMw=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20181105002713-24af961474c7/go.mod h1:yVwn6AMmsdzeu+tYunw9CYwD8+L8VWCxEACpKxyximU=
@@ -189,6 +191,8 @@ golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a h1:1BGLXjeY4akVXGgbC9HugT3Jv
 golang.org/x/sys v0.0.0-20190215142949-d0b11bdaac8a/go.mod h1:STP8DvDyc/dI5b8T5hshtkjS+E42TnysNCUPdjciGhY=
 golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4 h1:Hynbrlo6LbYI3H1IqXpkVDOcX/3HiPdhVEuyj5a59RM=
 golang.org/x/sys v0.0.0-20191110163157-d32e6e3b99c4/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
+golang.org/x/sys v0.0.0-20191117211529-81af7394a238 h1:Bm3cDUUSrXTkUZ5SygdSTSdbkL29gk0MB0IOqdvfPuA=
+golang.org/x/sys v0.0.0-20191117211529-81af7394a238/go.mod h1:h1NjWce9XRLGQEsW7wpKNCjG9DtNlClVuFLEZdDNbEs=
 golang.org/x/text v0.3.0 h1:g61tztE5qeGQ89tm6NTjjM9VPIm088od1l6aSorWRWg=
 golang.org/x/text v0.3.0/go.mod h1:NqM8EUOU14njkJ3fqMW+pc6Ldnwhi/IjpwHt7yyuwOQ=
 golang.org/x/text v0.3.2 h1:tW2bmiBqwgJj/UpqtC8EpXEZVYOwU0yG4iWbprSVAcs=
