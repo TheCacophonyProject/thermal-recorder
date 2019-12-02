@@ -93,7 +93,7 @@ func newSnapshot(dir string) error {
 		return err
 	}
 
-	// the time will be changed only if the attempt is successfull
+	// the time will be changed only if the attempt is successful
 	previousSnapshotTime = time.Now()
 	return nil
 }
