@@ -26,20 +26,29 @@ import (
 	"os"
 	"path"
 	"sync"
+	"time"
 
 	"github.com/TheCacophonyProject/lepton3"
 )
 
-const snapshotName = "still.png"
+const (
+	snapshotName          = "still.png"
+	allowedSnapshotPeriod = 500 * time.Millisecond
+)
 
 var (
-	previousSnapshotID = 0
-	mu                 sync.Mutex
+	previousSnapshotID   = 0
+	previousSnapshotTime time.Time
+	mu                   sync.Mutex
 )
 
 func newSnapshot(dir string) error {
 	mu.Lock()
 	defer mu.Unlock()
+
+	if time.Since(previousSnapshotTime) < allowedSnapshotPeriod {
+		return nil
+	}
 
 	if processor == nil {
 		return errors.New("Reading from camera has not started yet.")
@@ -79,7 +88,14 @@ func newSnapshot(dir string) error {
 		return err
 	}
 	defer out.Close()
-	return png.Encode(out, g16)
+
+	if err := png.Encode(out, g16); err != nil {
+		return err
+	}
+
+	// the time will be changed only if the attempt is successful
+	previousSnapshotTime = time.Now()
+	return nil
 }
 
 func deleteSnapshot(dir string) {
