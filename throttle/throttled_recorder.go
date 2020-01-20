@@ -20,10 +20,10 @@ import (
 	"log"
 	"time"
 
-	"github.com/TheCacophonyProject/lepton3"
 	"github.com/juju/ratelimit"
 
 	config "github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
 
@@ -31,14 +31,14 @@ func NewThrottledRecorder(
 	baseRecorder recorder.Recorder,
 	config *config.ThermalThrottler,
 	minSeconds int,
-	eventListener ThrottledEventListener,
+	eventListener ThrottledEventListener, camera cptvframe.CameraSpec,
 ) *ThrottledRecorder {
 	return NewThrottledRecorderWithClock(
 		baseRecorder,
 		config,
 		minSeconds,
 		eventListener,
-		new(realClock),
+		new(realClock), camera,
 	)
 }
 
@@ -47,11 +47,11 @@ func NewThrottledRecorderWithClock(
 	config *config.ThermalThrottler,
 	minSeconds int,
 	listener ThrottledEventListener,
-	clock ratelimit.Clock,
+	clock ratelimit.Clock, camera cptvframe.CameraSpec,
 ) *ThrottledRecorder {
 	// The token bucket tracks the number of *frames* available for recording.
-	bucketFrames := int64(config.BucketSize.Seconds() * lepton3.FramesHz)
-	minFrames := int64(minSeconds) * lepton3.FramesHz
+	bucketFrames := int64(config.BucketSize.Seconds()) * int64(camera.FPS())
+	minFrames := int64(minSeconds * camera.FPS())
 	refillRate := float64(minFrames) / config.MinRefill.Seconds()
 
 	if minFrames > bucketFrames {
@@ -117,7 +117,7 @@ func (throttler *ThrottledRecorder) StopRecording() error {
 	return nil
 }
 
-func (throttler *ThrottledRecorder) WriteFrame(frame *lepton3.Frame) error {
+func (throttler *ThrottledRecorder) WriteFrame(frame *cptvframe.Frame) error {
 	if !throttler.recording {
 		if err := throttler.maybeStartRecording(); err != nil {
 			return err

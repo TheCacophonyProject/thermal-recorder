@@ -19,7 +19,7 @@ package motion
 import (
 	"testing"
 
-	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -31,8 +31,10 @@ type FrameLoopTestClass struct {
 }
 
 func NewFrameLoopTestClass(frames int) *FrameLoopTestClass {
+	camera := new(TestCamera)
+
 	frameLoop := &FrameLoopTestClass{
-		FrameLoop: NewFrameLoop(FIVE_FRAME_LOOP),
+		FrameLoop: NewFrameLoop(FIVE_FRAME_LOOP, camera),
 		count:     1,
 	}
 	if frames > 0 {
@@ -42,7 +44,7 @@ func NewFrameLoopTestClass(frames int) *FrameLoopTestClass {
 	return frameLoop
 }
 
-func (fl *FrameLoopTestClass) Move() *lepton3.Frame {
+func (fl *FrameLoopTestClass) Move() *cptvframe.Frame {
 	frame := fl.FrameLoop.Move()
 	fl.count++
 	frame.Pix[0][0] = fl.count
@@ -55,7 +57,7 @@ func (fl *FrameLoopTestClass) AddFrames(numberFrames int) {
 	}
 }
 
-func getId(frame *lepton3.Frame) int {
+func getId(frame *cptvframe.Frame) int {
 	return int(frame.Pix[0][0])
 }
 
@@ -69,7 +71,9 @@ func getHistoryIds(frameLoop *FrameLoopTestClass) []int {
 }
 
 func TestFrameLoopLoopsRoundFrames(t *testing.T) {
-	frameLoop := NewFrameLoop(FIVE_FRAME_LOOP)
+	camera := new(TestCamera)
+
+	frameLoop := NewFrameLoop(FIVE_FRAME_LOOP, camera)
 	frameLoop.Current().Pix[0][0] = uint16(1)
 	frameLoop.Move().Pix[0][0] = uint16(2)
 	frameLoop.Move().Pix[0][0] = uint16(3)

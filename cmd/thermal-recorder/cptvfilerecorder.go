@@ -27,11 +27,11 @@ import (
 	"time"
 
 	cptv "github.com/TheCacophonyProject/go-cptv"
-	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	yaml "gopkg.in/yaml.v2"
 )
 
-func NewCPTVFileRecorder(config *Config) *CPTVFileRecorder {
+func NewCPTVFileRecorder(config *Config, camera cptvframe.CameraSpec) *CPTVFileRecorder {
 	motionYAML, err := yaml.Marshal(config.Motion)
 	if err != nil {
 		panic(fmt.Sprintf("failed to convert motion config to YAML: %v", err))
@@ -53,6 +53,7 @@ func NewCPTVFileRecorder(config *Config) *CPTVFileRecorder {
 		outputDir:    config.OutputDir,
 		header:       cptvHeader,
 		minDiskSpace: config.MinDiskSpace,
+		camera:       camera,
 	}
 }
 
@@ -60,8 +61,8 @@ type CPTVFileRecorder struct {
 	outputDir    string
 	header       cptv.Header
 	minDiskSpace uint64
-
-	writer *cptv.FileWriter
+	camera       cptvframe.CameraSpec
+	writer       *cptv.FileWriter
 }
 
 func (cfr *CPTVFileRecorder) CheckCanRecord() error {
@@ -78,7 +79,7 @@ func (fw *CPTVFileRecorder) StartRecording() error {
 	filename := filepath.Join(fw.outputDir, newRecordingTempName())
 	log.Printf("recording started: %s", filename)
 
-	writer, err := cptv.NewFileWriter(filename)
+	writer, err := cptv.NewFileWriter(filename, fw.camera)
 	if err != nil {
 		return err
 	}
@@ -113,7 +114,7 @@ func (fw *CPTVFileRecorder) Stop() {
 	}
 }
 
-func (fw *CPTVFileRecorder) WriteFrame(frame *lepton3.Frame) error {
+func (fw *CPTVFileRecorder) WriteFrame(frame *cptvframe.Frame) error {
 	return fw.writer.WriteFrame(frame)
 }
 

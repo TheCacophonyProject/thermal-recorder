@@ -24,10 +24,13 @@ import (
 	"os/exec"
 	"time"
 
+	"github.com/TheCacophonyProject/go-cptv"
+
 	"github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
 	"github.com/coreos/go-systemd/daemon"
+	"gopkg.in/yaml.v1"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
@@ -90,8 +93,8 @@ func runMain() error {
 	logConfig(conf)
 
 	log.Print("dialing frame output socket")
-	conn, err := net.DialUnix("unixpacket", nil, &net.UnixAddr{
-		Net:  "unixgram",
+	conn, err := net.DialUnix("unix", nil, &net.UnixAddr{
+		Net:  "unix",
 		Name: conf.FrameOutput,
 	})
 	if err != nil {
@@ -153,6 +156,24 @@ func runMain() error {
 
 func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error {
 	conn.SetWriteBuffer(lepton3.FrameCols * lepton3.FrameRows * 2 * 20)
+
+	camera_specs := map[string]interface{}{
+		string(cptv.XResolution): lepton3.FrameCols,
+		string(cptv.YResolution): lepton3.FrameRows,
+		string(cptv.FrameSize):   lepton3.FrameCols * lepton3.FrameRows * 2,
+		"Model":                  "Boson",
+		"Brand":                  "Flir",
+		"FrameRate":              lepton3.FramesHz,
+		// cptv.BitWidth: lepton3.BitWidth
+	}
+
+	cameraYAML, err := yaml.Marshal(camera_specs)
+	if err != nil {
+		return err
+	}
+	if _, err := conn.Write(cameraYAML); err != nil {
+		return err
+	}
 
 	log.Print("reading frames")
 	frame := new(lepton3.RawFrame)

@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	config "github.com/TheCacophonyProject/go-config"
-	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/window"
 )
@@ -49,7 +49,7 @@ func (tr *TestRecorder) StartRecording() error {
 	return nil
 }
 
-func (tr *TestRecorder) WriteFrame(frame *lepton3.Frame) error {
+func (tr *TestRecorder) WriteFrame(frame *cptvframe.Frame) error {
 	tr.frameIds[tr.index] = int(frame.Pix[0][0])
 	tr.index++
 	return nil
@@ -108,9 +108,10 @@ func FramesFrom(start, end int) []int {
 
 func SetupTest(mConf *config.ThermalMotion, rConf *recorder.RecorderConfig, lConf *config.Location) (*TestRecorder, *TestFrameMaker) {
 	recorder := new(TestRecorder)
-	processor := NewMotionProcessor(mConf, rConf, lConf, nil, recorder)
+	camera := new(TestCamera)
+	processor := NewMotionProcessor(mConf, rConf, lConf, nil, recorder, camera)
 
-	scenarioMaker := MakeTestFrameMaker(processor)
+	scenarioMaker := MakeTestFrameMaker(processor, camera)
 	return recorder, scenarioMaker
 }
 

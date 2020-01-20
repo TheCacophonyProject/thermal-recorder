@@ -19,34 +19,34 @@ package motion
 import (
 	"sync"
 
-	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 )
 
-func NewFrameLoop(size int) *FrameLoop {
-	frames := make([]*lepton3.Frame, size)
+func NewFrameLoop(size int, camera cptvframe.CameraSpec) *FrameLoop {
+	frames := make([]*cptvframe.Frame, size)
 	for i := range frames {
-		frames[i] = new(lepton3.Frame)
+		frames[i] = cptvframe.NewFrame(camera)
 	}
 
 	return &FrameLoop{
 		size:          size,
 		currentIndex:  0,
 		frames:        frames,
-		orderedFrames: make([]*lepton3.Frame, size),
+		orderedFrames: make([]*cptvframe.Frame, size),
 		bufferFull:    false,
 	}
 }
 
 const NO_OLDEST_SET = -1
 
-// FrameLoop stores the last n frames in a loop that will be overwritten when full.
+// FrameLoop stores the last n frames in a lgooop that will be overwritten when full.
 // The latest written frame can be anywhere in the list of frames.  Beware: all frames
 // returned by FrameLoop will at some point be over-written.
 type FrameLoop struct {
 	size          int
 	currentIndex  int
-	frames        []*lepton3.Frame
-	orderedFrames []*lepton3.Frame
+	frames        []*cptvframe.Frame
+	orderedFrames []*cptvframe.Frame
 	bufferFull    bool
 	oldest        int
 	mu            sync.Mutex
@@ -58,7 +58,7 @@ func (fl *FrameLoop) nextIndexAfter(index int) int {
 
 // Move, moves the current frame one forwards and return the new frame.
 // Note: data on all returned frame objects will eventually get overwritten
-func (fl *FrameLoop) Move() *lepton3.Frame {
+func (fl *FrameLoop) Move() *cptvframe.Frame {
 	fl.mu.Lock()
 	defer fl.mu.Unlock()
 
@@ -77,24 +77,23 @@ func (fl *FrameLoop) Move() *lepton3.Frame {
 
 // Current returns the current frame.
 // Note: data on all returned frame objects will eventually get overwritten
-func (fl *FrameLoop) Current() *lepton3.Frame {
+func (fl *FrameLoop) Current() *cptvframe.Frame {
 	return fl.frames[fl.currentIndex]
 }
 
 // CopyRecent returns a copy of the previous frame.
-func (fl *FrameLoop) CopyRecent(f *lepton3.Frame) *lepton3.Frame {
+func (fl *FrameLoop) CopyRecent() *cptvframe.Frame {
 	fl.mu.Lock()
 	defer fl.mu.Unlock()
 
 	previousIndex := (fl.currentIndex - 1 + fl.size) % fl.size
-	f.Copy(fl.frames[previousIndex])
-	return f
+	return fl.frames[previousIndex].CreateCopy()
 }
 
 // GetHistory returns all the frames recorded in an slice from oldest to newest.
 // Note: The returned slice will be rewritten next time GetHistory is called.
 // Note: GetHistory always returns one frame even if none have been stored in the loop
-func (fl *FrameLoop) GetHistory() []*lepton3.Frame {
+func (fl *FrameLoop) GetHistory() []*cptvframe.Frame {
 	fullHistory := fl.getFullHistory()
 
 	if fl.oldest == NO_OLDEST_SET {
@@ -106,7 +105,7 @@ func (fl *FrameLoop) GetHistory() []*lepton3.Frame {
 	return fullHistory[len(fullHistory)-historyLength:]
 }
 
-func (fl *FrameLoop) getFullHistory() []*lepton3.Frame {
+func (fl *FrameLoop) getFullHistory() []*cptvframe.Frame {
 	if fl.currentIndex == fl.size-1 {
 		copy(fl.orderedFrames[:], fl.frames[:])
 		return fl.orderedFrames
@@ -126,7 +125,7 @@ func (fl *FrameLoop) getFullHistory() []*lepton3.Frame {
 
 // Oldest returns the oldest frame remembered.   This is either the next
 // frame in the buffer (next to be overwritten), or the frame marked oldest
-func (fl *FrameLoop) Oldest() *lepton3.Frame {
+func (fl *FrameLoop) Oldest() *cptvframe.Frame {
 	if fl.oldest != NO_OLDEST_SET {
 		return fl.frames[fl.oldest]
 	}
@@ -135,7 +134,7 @@ func (fl *FrameLoop) Oldest() *lepton3.Frame {
 
 // SetAsOldest - Marks current frame as oldest.  This mean Oldest() will never return
 // a frame that was written before this one.
-func (fl *FrameLoop) SetAsOldest() *lepton3.Frame {
+func (fl *FrameLoop) SetAsOldest() *cptvframe.Frame {
 	fl.oldest = fl.currentIndex
 	return fl.Current()
 }

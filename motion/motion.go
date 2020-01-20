@@ -22,7 +22,7 @@ import (
 	"time"
 
 	config "github.com/TheCacophonyProject/go-config"
-	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 )
 
 // This is the period for which measurements go funny after a Flat
@@ -34,10 +34,10 @@ const debugLogSecs = 5
 const frameBackgroundWeighting = 0.99
 const weightEveryNFrames = 3
 
-func NewMotionDetector(args config.ThermalMotion, previewFrames int) *motionDetector {
+func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptvframe.CameraSpec) *motionDetector {
 	d := new(motionDetector)
-	d.flooredFrames = *NewFrameLoop(args.FrameCompareGap + 1)
-	d.diffFrames = *NewFrameLoop(2)
+	d.flooredFrames = *NewFrameLoop(args.FrameCompareGap+1, camera)
+	d.diffFrames = *NewFrameLoop(2, camera)
 	d.useOneDiff = args.UseOneDiffOnly
 	d.deltaThresh = args.DeltaThresh
 	d.countThresh = args.CountThresh
@@ -46,16 +46,19 @@ func NewMotionDetector(args config.ThermalMotion, previewFrames int) *motionDete
 	d.warmerOnly = args.WarmerOnly
 	d.dynamicThresh = args.DynamicThreshold
 	d.start = args.EdgePixels
-	d.columnStop = lepton3.FrameCols - args.EdgePixels
-	d.rowStop = lepton3.FrameRows - args.EdgePixels
+	d.columnStop = camera.ResX() - args.EdgePixels
+	d.rowStop = camera.ResY() - args.EdgePixels
 	d.backgroundWeight = frameBackgroundWeighting
 	d.previewFrames = previewFrames
 	d.numPixels = float64((d.rowStop - d.start) * (d.columnStop - d.start))
-
+	d.framesHz = camera.FPS()
 	if args.Verbose {
 		d.debug = newDebugTracker()
 	}
-
+	d.background = make([][]uint16, camera.ResY())
+	for i := range d.background {
+		d.background[i] = make([]uint16, camera.ResX())
+	}
 	return d
 }
 
@@ -74,20 +77,21 @@ type motionDetector struct {
 	rowStop           int
 	columnStop        int
 	count             int
-	background        [lepton3.FrameRows][lepton3.FrameCols]uint16
+	background        [][]uint16
 	backgroundWeight  float32
 	backgroundFrames  int
 	debug             *debugTracker
 	previewFrames     int
 	numPixels         float64
 	affectedByFCC     bool
+	framesHz          int
 }
 
 func (d *motionDetector) calculateThreshold(backAverage float64) {
 	d.tempThresh = uint16(math.Min(backAverage, float64(d.defaultTempThresh)))
 }
 
-func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
+func (d *motionDetector) Detect(frame *cptvframe.Frame) bool {
 	prevFFC := d.affectedByFCC
 	d.affectedByFCC = isAffectedByFFC(frame)
 
@@ -110,14 +114,14 @@ func (d *motionDetector) Detect(frame *lepton3.Frame) bool {
 	}
 	d.debug.update("delta", deltaCount)
 
-	if d.debug != nil && d.count%(debugLogSecs*lepton3.FramesHz) == 0 {
+	if d.debug != nil && d.count%(debugLogSecs*d.framesHz) == 0 {
 		log.Print("motion:: " + d.debug.string("thresh:all detect:n temp:all ftemp:all diff:max delta:max ffc:n"))
 		d.debug.reset()
 	}
 	return movement
 }
 
-func (d *motionDetector) pixelsChanged(frame *lepton3.Frame, prevFFC bool) (bool, int) {
+func (d *motionDetector) pixelsChanged(frame *cptvframe.Frame, prevFFC bool) (bool, int) {
 	flooredFrame := d.flooredFrames.Current()
 	d.setFloor(frame, flooredFrame)
 
@@ -151,11 +155,11 @@ func (d *motionDetector) pixelsChanged(frame *lepton3.Frame, prevFFC bool) (bool
 	return d.hasMotion(diffFrame, prevDiffFrame)
 }
 
-func isAffectedByFFC(f *lepton3.Frame) bool {
+func isAffectedByFFC(f *cptvframe.Frame) bool {
 	return f.Status.TimeOn-f.Status.LastFFCTime < ffcPeriod
 }
 
-func (d *motionDetector) setFloor(f, out *lepton3.Frame) *lepton3.Frame {
+func (d *motionDetector) setFloor(f, out *cptvframe.Frame) *cptvframe.Frame {
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
 			v := f.Pix[y][x]
@@ -170,7 +174,7 @@ func (d *motionDetector) setFloor(f, out *lepton3.Frame) *lepton3.Frame {
 	return out
 }
 
-func (d *motionDetector) CountPixelsTwoCompare(f1 *lepton3.Frame, f2 *lepton3.Frame) (deltas int) {
+func (d *motionDetector) CountPixelsTwoCompare(f1 *cptvframe.Frame, f2 *cptvframe.Frame) (deltas int) {
 	var deltaCount int
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
@@ -184,7 +188,7 @@ func (d *motionDetector) CountPixelsTwoCompare(f1 *lepton3.Frame, f2 *lepton3.Fr
 	return deltaCount
 }
 
-func (d *motionDetector) CountPixels(f1 *lepton3.Frame) (deltas int) {
+func (d *motionDetector) CountPixels(f1 *cptvframe.Frame) (deltas int) {
 	var deltaCount int
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
@@ -198,7 +202,7 @@ func (d *motionDetector) CountPixels(f1 *lepton3.Frame) (deltas int) {
 	return deltaCount
 }
 
-func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, int) {
+func (d *motionDetector) hasMotion(f1 *cptvframe.Frame, f2 *cptvframe.Frame) (bool, int) {
 	var deltaCount int
 	if d.useOneDiff {
 		deltaCount = d.CountPixels(f1)
@@ -208,7 +212,7 @@ func (d *motionDetector) hasMotion(f1 *lepton3.Frame, f2 *lepton3.Frame) (bool, 
 	return deltaCount >= d.countThresh, deltaCount
 }
 
-func (d *motionDetector) absDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame {
+func (d *motionDetector) absDiffFrames(a, b, out *cptvframe.Frame) *cptvframe.Frame {
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
 			out.Pix[y][x] = absDiff(a.Pix[y][x], b.Pix[y][x])
@@ -217,7 +221,7 @@ func (d *motionDetector) absDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame 
 	return out
 }
 
-func (d *motionDetector) warmerDiffFrames(a, b, out *lepton3.Frame) *lepton3.Frame {
+func (d *motionDetector) warmerDiffFrames(a, b, out *cptvframe.Frame) *cptvframe.Frame {
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
 			va := a.Pix[y][x]
@@ -228,7 +232,7 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *lepton3.Frame) *lepton3.Fra
 	return out
 }
 
-func (d *motionDetector) updateBackground(new_frame *lepton3.Frame, prevFFC bool) (float64, bool) {
+func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bool) (float64, bool) {
 	d.backgroundFrames++
 	if d.backgroundFrames == 1 {
 		d.background = new_frame.Pix

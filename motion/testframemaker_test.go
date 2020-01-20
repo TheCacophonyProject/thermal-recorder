@@ -19,7 +19,7 @@ package motion
 import (
 	"time"
 
-	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 )
 
 // TODO - this is very similar to frameGen in motion_test.go. Merge them.
@@ -30,14 +30,16 @@ type TestFrameMaker struct {
 	BrightSpotVal      int
 	brightSpotPosition int
 	now                time.Duration
+	camera             cptvframe.CameraSpec
 }
 
-func MakeTestFrameMaker(motionProcessor *MotionProcessor) *TestFrameMaker {
+func MakeTestFrameMaker(motionProcessor *MotionProcessor, camera cptvframe.CameraSpec) *TestFrameMaker {
 	return &TestFrameMaker{
 		processor:     motionProcessor,
 		BackgroundVal: 3300,
 		BrightSpotVal: 100,
 		now:           time.Minute,
+		camera:        camera,
 	}
 }
 
@@ -58,21 +60,26 @@ func (tfm *TestFrameMaker) AddMovingDotFrames(frames int) *TestFrameMaker {
 	return tfm
 }
 
-func (tfm *TestFrameMaker) PlayFrame(frame *lepton3.Frame) {
+func (tfm *TestFrameMaker) PlayFrame(frame *cptvframe.Frame) {
 	tfm.processor.ProcessFrame(frame)
 }
 
-func (tfm *TestFrameMaker) makeFrame() *lepton3.Frame {
-	frame := new(lepton3.Frame)
+func (tfm *TestFrameMaker) makeFrame() *cptvframe.Frame {
+	frame := cptvframe.NewFrame(tfm.camera)
 	frame.Status.TimeOn = tfm.now
 	tfm.now += frameInterval
 
 	if tfm.BackgroundVal != 0 {
-		for y := 0; y < lepton3.FrameRows; y++ {
-			for x := 0; x < lepton3.FrameCols; x++ {
+		for y, row := range frame.Pix {
+			for x, _ := range row {
 				frame.Pix[y][x] = uint16(tfm.BackgroundVal)
 			}
 		}
+		// for y := 0; y < cptvframe.FrameRows; y++ {
+		// 	for x := 0; x < cptvframe.FrameCols; x++ {
+		// 		frame.Pix[y][x] = uint16(tfm.BackgroundVal)
+		// 	}
+		// }
 	}
 
 	frame.Pix[0][0] = tfm.frameCounter
@@ -80,7 +87,7 @@ func (tfm *TestFrameMaker) makeFrame() *lepton3.Frame {
 	return frame
 }
 
-func (tfm *TestFrameMaker) makeFrameWithBrightSport(position int) *lepton3.Frame {
+func (tfm *TestFrameMaker) makeFrameWithBrightSport(position int) *cptvframe.Frame {
 	frame := tfm.makeFrame()
 
 	brightness16 := uint16(tfm.BackgroundVal + tfm.BrightSpotVal)
