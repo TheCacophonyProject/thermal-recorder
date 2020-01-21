@@ -50,7 +50,6 @@ func NewMotionProcessor(motionConf *config.ThermalMotion,
 		recorder:       recorder,
 		locationConfig: locationConf,
 		log:            loglimiter.New(minLogInterval),
-		camera:         c,
 	}
 }
 
@@ -74,7 +73,6 @@ type MotionProcessor struct {
 	sunsetOffset        int
 	nextSunriseCheck    time.Time
 	log                 *loglimiter.LogLimiter
-	camera              cptvframe.CameraSpec
 }
 
 type RecordingListener interface {
