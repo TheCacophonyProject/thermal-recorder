@@ -167,15 +167,15 @@ func runMain() error {
 }
 
 func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error {
-	conn.SetWriteBuffer(lepton3.FrameCols * lepton3.FrameRows * 2 * 20)
+	conn.SetWriteBuffer(camera.ResX() * camera.ResY() * 2 * 20)
 
 	camera_specs := map[string]interface{}{
 		headers.XResolution: camera.ResX(),
 		headers.YResolution: camera.ResY(),
 		headers.FrameSize:   camera.ResX() * camera.ResY() * 2,
-		headers.Model:       "Lepton3",
-		headers.Brand:       "Flir",
-		headers.FPS:         lepton3.FramesHz,
+		headers.Model:       lepton3.Model,
+		headers.Brand:       lepton3.Brand,
+		headers.FPS:         camera.FPS(),
 	}
 
 	cameraYAML, err := yaml.Marshal(camera_specs)

@@ -31,7 +31,7 @@ import (
 	yaml "gopkg.in/yaml.v2"
 )
 
-func NewCPTVFileRecorder(config *Config, camera cptvframe.CameraSpec) *CPTVFileRecorder {
+func NewCPTVFileRecorder(config *Config, camera cptvframe.CameraSpec, brand, model string) *CPTVFileRecorder {
 	motionYAML, err := yaml.Marshal(config.Motion)
 	if err != nil {
 		panic(fmt.Sprintf("failed to convert motion config to YAML: %v", err))
@@ -45,6 +45,9 @@ func NewCPTVFileRecorder(config *Config, camera cptvframe.CameraSpec) *CPTVFileR
 		LocTimestamp: config.Location.Timestamp,
 		Altitude:     config.Location.Altitude,
 		Accuracy:     config.Location.Accuracy,
+		FPS:          camera.FPS(),
+		Brand:        brand,
+		Model:        model,
 	}
 	if config.DeviceID > 0 {
 		cptvHeader.DeviceID = config.DeviceID

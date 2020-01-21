@@ -4,8 +4,8 @@ go 1.12
 
 require (
 	github.com/TheCacophonyProject/go-config v1.1.1
-	github.com/TheCacophonyProject/go-cptv v0.0.0-20200116020937-858bd8b71512
-	github.com/TheCacophonyProject/lepton3 v0.0.0-20200116023332-d1bc821d8ce6
+	github.com/TheCacophonyProject/go-cptv v0.0.0-20200121021233-067055d0edf0
+	github.com/TheCacophonyProject/lepton3 v0.0.0-20200121020734-2ae28662e1bc
 	github.com/TheCacophonyProject/window v0.0.0-20190821235241-ab92c2ee24b6
 	github.com/alexflint/go-arg v1.1.0
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
@@ -27,5 +27,3 @@ require (
 
 // We maintain a custom fork of periph.io at the moment.
 replace periph.io/x/periph => github.com/TheCacophonyProject/periph v2.0.1-0.20171123021141-d06ef89e37e8+incompatible
-
-replace github.com/TheCacophonyProject/go-cptv => github.com/gferraro/go-cptv v0.0.0-20200120200422-2c441f5cee3a

@@ -192,7 +192,7 @@ func handleConn(conn net.Conn, conf *Config) error {
 	if err != nil {
 		return err
 	}
-	cptvRecorder := NewCPTVFileRecorder(conf, header)
+	cptvRecorder := NewCPTVFileRecorder(conf, header, header.brand, header.model)
 	defer cptvRecorder.Stop()
 	var recorder recorder.Recorder = cptvRecorder
 
