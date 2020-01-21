@@ -17,17 +17,20 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
 	"log"
 	"net"
 	"os"
+	"strings"
 
 	arg "github.com/alexflint/go-arg"
 	"gopkg.in/yaml.v1"
 	"periph.io/x/periph/host"
 
 	config "github.com/TheCacophonyProject/go-config"
-	"github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/thermal-recorder/headers"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
@@ -135,11 +138,12 @@ func runMain() error {
 }
 
 type HeaderInfo struct {
-	resX  int
-	resY  int
-	fps   int
-	model string
-	brand string
+	resX      int
+	resY      int
+	fps       int
+	framesize int
+	model     string
+	brand     string
 }
 
 func (h *HeaderInfo) ResX() int {
@@ -154,23 +158,33 @@ func (h *HeaderInfo) FPS() int {
 
 func NewHeader(headerInfo map[string]interface{}) *HeaderInfo {
 	return &HeaderInfo{
-		resX:  headerInfo[string(cptv.XResolution)].(int),
-		resY:  headerInfo[string(cptv.YResolution)].(int),
-		fps:   headerInfo[string(cptv.FPS)].(int),
-		model: headerInfo[string(cptv.Model)].(string),
-		brand: headerInfo[string(cptv.Brand)].(string),
+		resX:      headerInfo[headers.XResolution].(int),
+		resY:      headerInfo[headers.YResolution].(int),
+		fps:       headerInfo[headers.FPS].(int),
+		framesize: headerInfo[headers.FrameSize].(int),
+		model:     headerInfo[headers.Model].(string),
+		brand:     headerInfo[headers.Model].(string),
 	}
 }
 
 func readHeader(conn net.Conn) (*HeaderInfo, error) {
-	buf := make([]byte, 1000)
-
-	n, err := conn.Read(buf)
+	var buf bytes.Buffer
+	scanner := bufio.NewScanner(conn)
+	for {
+		if ok := scanner.Scan(); !ok {
+			break
+		}
+		line := scanner.Text()
+		if strings.Trim(line, " ") == "" {
+			break
+		}
+		buf.WriteString(line + "\n")
+	}
 	header := make(map[string]interface{})
-	err = yaml.Unmarshal(buf[:n], &header)
-
+	err := yaml.Unmarshal(buf.Bytes(), &header)
 	return NewHeader(header), err
 }
+
 func handleConn(conn net.Conn, conf *Config) error {
 
 	totalFrames := 0
