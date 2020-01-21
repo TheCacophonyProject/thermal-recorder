@@ -75,11 +75,6 @@ func (tfm *TestFrameMaker) makeFrame() *cptvframe.Frame {
 				frame.Pix[y][x] = uint16(tfm.BackgroundVal)
 			}
 		}
-		// for y := 0; y < cptvframe.FrameRows; y++ {
-		// 	for x := 0; x < cptvframe.FrameCols; x++ {
-		// 		frame.Pix[y][x] = uint16(tfm.BackgroundVal)
-		// 	}
-		// }
 	}
 
 	frame.Pix[0][0] = tfm.frameCounter

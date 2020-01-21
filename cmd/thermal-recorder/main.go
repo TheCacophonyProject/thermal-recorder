@@ -19,6 +19,7 @@ package main
 import (
 	"bufio"
 	"bytes"
+	"io"
 	"log"
 	"net"
 	"os"
@@ -167,20 +168,20 @@ func NewHeader(headerInfo map[string]interface{}) *HeaderInfo {
 
 func readHeader(conn net.Conn) (*HeaderInfo, error) {
 	var buf bytes.Buffer
-	scanner := bufio.NewScanner(conn)
+	reader := bufio.NewReader(conn)
 	for {
-		if ok := scanner.Scan(); !ok {
+		line, err := reader.ReadString(byte('\n'))
+		if err != nil {
+			return nil, err
+		}
+		if strings.Trim(line, " ") == "\n" {
 			break
 		}
-		line := scanner.Text()
-		if strings.Trim(line, " ") == "" {
-			break
-		}
-		buf.WriteString(line + "\n")
+		buf.WriteString(line)
 	}
 	header := make(map[string]interface{})
 	err := yaml.Unmarshal(buf.Bytes(), &header)
-	return NewHeader(header), err
+	return nil, err
 }
 
 func handleConn(conn net.Conn, conf *Config) error {
@@ -208,7 +209,7 @@ func handleConn(conn net.Conn, conf *Config) error {
 
 	rawFrame := new(lepton3.RawFrame)
 	for {
-		_, err := conn.Read(rawFrame[:])
+		_, err := io.ReadFull(conn, rawFrame[:])
 		if err != nil {
 			return err
 		}
