@@ -150,7 +150,6 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 	listener.config = cpt.config
 	listener.verbose = verbose
 	listener.framesHz = camera.FPS()
-	// should pass in reader as camera specs, but old cptv files dont have frameHZ
 	processor := motion.NewMotionProcessor(&cpt.config.Motion, &cpt.config.Recorder, &cpt.config.Location, listener, recorder, camera)
 
 	if err != nil {

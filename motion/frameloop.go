@@ -39,7 +39,7 @@ func NewFrameLoop(size int, camera cptvframe.CameraSpec) *FrameLoop {
 
 const NO_OLDEST_SET = -1
 
-// FrameLoop stores the last n frames in a lgooop that will be overwritten when full.
+// FrameLoop stores the last n frames in a loop that will be overwritten when full.
 // The latest written frame can be anywhere in the list of frames.  Beware: all frames
 // returned by FrameLoop will at some point be over-written.
 type FrameLoop struct {

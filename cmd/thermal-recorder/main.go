@@ -37,8 +37,6 @@ import (
 )
 
 const (
-	boson       = "boson"
-	lepton      = "lepton3"
 	cptvTempExt = "cptv.temp"
 )
 
