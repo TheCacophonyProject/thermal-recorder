@@ -26,7 +26,7 @@ import (
 	"time"
 
 	cptv "github.com/TheCacophonyProject/go-cptv"
-	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
@@ -40,6 +40,7 @@ type EventLoggingRecordingListener struct {
 	verbose              bool
 	recordedFrames       string
 	motionDetectedFrames string
+	framesHz             int
 }
 
 func (p *EventLoggingRecordingListener) MotionDetected() {
@@ -63,7 +64,7 @@ func (p *EventLoggingRecordingListener) RecordingEnded() {
 		log.Printf("%d: Recording Ended", p.frameCount)
 	}
 	p.recordedFrames += fmt.Sprintf("%d)", p.frameCount)
-	p.motionDetectedFrames += fmt.Sprintf("%d)", p.frameCount-p.config.Recorder.MinSecs*lepton3.FramesHz)
+	p.motionDetectedFrames += fmt.Sprintf("%d)", p.frameCount-p.config.Recorder.MinSecs*p.framesHz)
 }
 
 func (p *EventLoggingRecordingListener) completed() {
@@ -115,9 +116,9 @@ func (cpt *CPTVPlaybackTester) TestAllCPTVFiles(dir string) map[string]*EventLog
 	return cpt.results
 }
 
-func (cpt *CPTVPlaybackTester) LoadAllCptvFrames(filename string) []*lepton3.Frame {
+func (cpt *CPTVPlaybackTester) LoadAllCptvFrames(filename string) []*cptvframe.Frame {
 	cpt.config.Motion.Verbose = false
-	frames := make([]*lepton3.Frame, 0, 100)
+	frames := make([]*cptvframe.Frame, 0, 100)
 
 	file, reader, err := motionTesterLoadFile(filename)
 	if err != nil {
@@ -125,13 +126,13 @@ func (cpt *CPTVPlaybackTester) LoadAllCptvFrames(filename string) []*lepton3.Fra
 	}
 	defer file.Close()
 
-	frame := new(lepton3.Frame)
+	frame := reader.EmptyFrame()
 	for {
 		if err := reader.ReadFrame(frame); err != nil {
 			return frames
 		}
 		frames = append(frames, frame)
-		frame = new(lepton3.Frame)
+		frame = reader.EmptyFrame()
 	}
 }
 
@@ -141,15 +142,16 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 		log.Printf("TestFile is %s", filename)
 	}
 
+	recorder := new(recorder.NoWriteRecorder)
+
+	file, reader, err := motionTesterLoadFile(filename)
+	camera := new(TestCamera)
 	listener := new(EventLoggingRecordingListener)
 	listener.config = cpt.config
 	listener.verbose = verbose
+	listener.framesHz = camera.FPS()
+	processor := motion.NewMotionProcessor(&cpt.config.Motion, &cpt.config.Recorder, &cpt.config.Location, listener, recorder, camera)
 
-	recorder := new(recorder.NoWriteRecorder)
-
-	processor := motion.NewMotionProcessor(&cpt.config.Motion, &cpt.config.Recorder, &cpt.config.Location, listener, recorder)
-
-	file, reader, err := motionTesterLoadFile(filename)
 	if err != nil {
 		log.Printf("Could not open file %v", err)
 	}
@@ -159,7 +161,7 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 	log.Printf("Timestamp: %v", reader.Timestamp())
 
 	fakeTime := time.Minute
-	frame := new(lepton3.Frame)
+	frame := reader.EmptyFrame()
 	for {
 		if err := reader.ReadFrame(frame); err != nil {
 			if verbose {

@@ -17,31 +17,35 @@
 package main
 
 import (
+	"bufio"
+	"bytes"
+	"io"
 	"log"
 	"net"
 	"os"
+	"strings"
 
 	arg "github.com/alexflint/go-arg"
+	"gopkg.in/yaml.v1"
 	"periph.io/x/periph/host"
 
 	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/thermal-recorder/headers"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
 )
 
 const (
-	framesHz    = lepton3.FramesHz // approx
 	cptvTempExt = "cptv.temp"
-
-	frameLogIntervalFirstMin = 15 * framesHz
-	frameLogInterval         = 60 * 5 * framesHz
 )
 
 var (
-	version   = "<not set>"
-	processor *motion.MotionProcessor
+	version                  = "<not set>"
+	processor                *motion.MotionProcessor
+	frameLogIntervalFirstMin = 15
+	frameLogInterval         = 60 * 5
 )
 
 type Args struct {
@@ -112,7 +116,7 @@ func runMain() error {
 	for {
 		// Set up listener for frames sent by leptond.
 		os.Remove(conf.FrameInput)
-		listener, err := net.Listen("unixpacket", conf.FrameInput)
+		listener, err := net.Listen("unix", conf.FrameInput)
 		if err != nil {
 			return err
 		}
@@ -132,34 +136,87 @@ func runMain() error {
 	}
 }
 
+type HeaderInfo struct {
+	resX      int
+	resY      int
+	fps       int
+	framesize int
+	model     string
+	brand     string
+}
+
+func (h *HeaderInfo) ResX() int {
+	return h.resX
+}
+func (h *HeaderInfo) ResY() int {
+	return h.resY
+}
+func (h *HeaderInfo) FPS() int {
+	return h.fps
+}
+
+func NewHeader(headerInfo map[string]interface{}) *HeaderInfo {
+	return &HeaderInfo{
+		resX:      headerInfo[headers.XResolution].(int),
+		resY:      headerInfo[headers.YResolution].(int),
+		fps:       headerInfo[headers.FPS].(int),
+		framesize: headerInfo[headers.FrameSize].(int),
+		model:     headerInfo[headers.Model].(string),
+		brand:     headerInfo[headers.Model].(string),
+	}
+}
+
+func readHeader(reader *bufio.Reader) (*HeaderInfo, error) {
+	var buf bytes.Buffer
+	for {
+		line, err := reader.ReadString(byte('\n'))
+		if err != nil {
+			return nil, err
+		}
+		if strings.Trim(line, " ") == "\n" {
+			break
+		}
+		buf.WriteString(line)
+	}
+	header := make(map[string]interface{})
+	err := yaml.Unmarshal(buf.Bytes(), &header)
+	return NewHeader(header), err
+}
+
 func handleConn(conn net.Conn, conf *Config) error {
 
 	totalFrames := 0
-
-	cptvRecorder := NewCPTVFileRecorder(conf)
+	reader := bufio.NewReader(conn)
+	header, err := readHeader(reader)
+	if err != nil {
+		return err
+	}
+	cptvRecorder := NewCPTVFileRecorder(conf, header, header.brand, header.model)
 	defer cptvRecorder.Stop()
 	var recorder recorder.Recorder = cptvRecorder
 
 	if conf.Throttler.Activate {
 		minRecordingLength := conf.Recorder.MinSecs + conf.Recorder.PreviewSecs
-		recorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength, new(throttle.ThrottledEventRecorder))
+		recorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength, new(throttle.ThrottledEventRecorder), header)
 	}
 
-	processor = motion.NewMotionProcessor(&conf.Motion, &conf.Recorder, &conf.Location, nil, recorder)
-
-	rawFrame := new(lepton3.RawFrame)
+	processor = motion.NewMotionProcessor(&conf.Motion, &conf.Recorder, &conf.Location, nil, recorder, header)
 
 	log.Print("new camera connection, reading frames")
 
+	frameLogIntervalFirstMin *= header.FPS()
+	frameLogInterval *= header.FPS()
+
+	rawFrame := new(lepton3.RawFrame)
 	for {
-		_, err := conn.Read(rawFrame[:])
+		_, err := io.ReadFull(reader, rawFrame[:])
 		if err != nil {
 			return err
 		}
 		totalFrames++
 
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
-			totalFrames <= 60*framesHz || totalFrames%frameLogInterval == 0 {
+			totalFrames <= 60*header.FPS() || totalFrames%frameLogInterval == 0 {
 			log.Printf("%d frames for this connection", totalFrames)
 		}
 

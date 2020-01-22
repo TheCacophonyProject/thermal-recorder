@@ -23,114 +23,140 @@ import (
 	"time"
 
 	config "github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/stretchr/testify/assert"
 )
 
+type TestCamera struct {
+}
+
+func (cam *TestCamera) ResX() int {
+	return 160
+}
+func (cam *TestCamera) ResY() int {
+	return 120
+}
+func (cam *TestCamera) FPS() int {
+	return 9
+}
+
 func TestRevertsToUsingSmallerFrameIntervalWhenNotEnoughFrames_OneFrame(t *testing.T) {
+	camera := new(TestCamera)
 	config := defaultMotionParams()
 	config.UseOneDiffOnly = true
-	detector := NewMotionDetector(config, defaultPreviewFrames())
+	detector := NewMotionDetector(config, defaultPreviewFrames(), camera)
 
-	detects, pixels := newFrameGen(detector).Movement(5)
+	detects, pixels := newFrameGen(detector, camera).Movement(5)
 	assert.Equal(t, []bool{false, true, true, true, true}, detects)
 	assert.Equal(t, []int{0, 9, 9, 9, 18}, pixels)
 }
 
 func TestNoMotionDetectedIfNothingHasChanged(t *testing.T) {
+	camera := new(TestCamera)
 	config := defaultMotionParams()
 	config.UseOneDiffOnly = true
-	detector := NewMotionDetector(config, defaultPreviewFrames())
+	detector := NewMotionDetector(config, defaultPreviewFrames(), camera)
 
-	detects, pixels := newFrameGen(detector).NoMovement(5)
+	detects, pixels := newFrameGen(detector, camera).NoMovement(5)
 	assertAllFalse(t, detects)
 	assertAllZero(t, pixels)
 }
 
 func TestIfUsingTwoFramesItOnlyCountsWhereBothFramesHaveChanged(t *testing.T) {
+	camera := new(TestCamera)
 	config := defaultMotionParams()
-	detector := NewMotionDetector(config, defaultPreviewFrames())
+	detector := NewMotionDetector(config, defaultPreviewFrames(), camera)
 
-	detects, pixels := newFrameGen(detector).Movement(6)
+	detects, pixels := newFrameGen(detector, camera).Movement(6)
 	assert.Equal(t, []bool{false, false, false, false, false, true}, detects)
 	assert.Equal(t, []int{0, 0, 4, 4, 5, 9}, pixels)
 }
 
 func TestChangeCountThresh(t *testing.T) {
+	camera := new(TestCamera)
 	config := defaultMotionParams()
 	config.CountThresh = 4
-	detector := NewMotionDetector(config, defaultPreviewFrames())
+	detector := NewMotionDetector(config, defaultPreviewFrames(), camera)
 
-	detects, pixels := newFrameGen(detector).Movement(6)
+	detects, pixels := newFrameGen(detector, camera).Movement(6)
 	assert.Equal(t, []bool{false, false, true, true, true, true}, detects)
 	assert.Equal(t, []int{0, 0, 4, 4, 5, 9}, pixels)
 }
 
 func TestIgnoresEdgePixel(t *testing.T) {
+	camera := new(TestCamera)
+
 	config := defaultMotionParams()
 	config.EdgePixels = 1
-	detector := NewMotionDetector(config, defaultPreviewFrames())
+	detector := NewMotionDetector(config, defaultPreviewFrames(), camera)
 
-	detects, pixels := newFrameGen(detector).MovementInColumn(0, 4)
+	detects, pixels := newFrameGen(detector, camera).MovementInColumn(0, 4)
 	assert.Equal(t, []bool{false, false, false, false}, detects)
 	assert.Equal(t, []int{0, 0, 0, 0}, pixels)
 
-	detects, pixels = newFrameGen(detector).MovementInColumn(lepton3.FrameCols-1, 4)
+	detects, pixels = newFrameGen(detector, camera).MovementInColumn(lepton3.FrameCols-1, 4)
 	assert.Equal(t, []bool{false, false, false, false}, detects)
 	assert.Equal(t, []int{0, 0, 0, 0}, pixels)
 
-	detects, pixels = newFrameGen(detector).MovementInRow(0, 4)
+	detects, pixels = newFrameGen(detector, camera).MovementInRow(0, 4)
 	assert.Equal(t, []bool{false, false, false, false}, detects)
 	assert.Equal(t, []int{0, 0, 0, 0}, pixels)
 
-	detects, pixels = newFrameGen(detector).MovementInRow(lepton3.FrameRows-1, 4)
+	detects, pixels = newFrameGen(detector, camera).MovementInRow(lepton3.FrameRows-1, 4)
 	assert.Equal(t, []bool{false, false, false, false}, detects)
 	assert.Equal(t, []int{0, 0, 0, 0}, pixels)
 }
 
 func TestDetectsAfterEdgePixel(t *testing.T) {
+	camera := new(TestCamera)
+
 	config := defaultMotionParams()
 	config.EdgePixels = 1
 	config.WarmerOnly = true
 	config.CountThresh = 4
-	detector := NewMotionDetector(config, defaultPreviewFrames())
+	detector := NewMotionDetector(config, defaultPreviewFrames(), camera)
 
-	detects, pixels := newFrameGen(detector).MovementInColumn(1, 4)
+	detects, pixels := newFrameGen(detector, camera).MovementInColumn(1, 4)
 	assert.Equal(t, []bool{false, false, true, true}, detects)
 	assert.Equal(t, []int{0, 0, 6, 6}, pixels)
 
-	detects, pixels = newFrameGen(detector).MovementInColumn(lepton3.FrameCols-2, 4)
+	detects, pixels = newFrameGen(detector, camera).MovementInColumn(lepton3.FrameCols-2, 4)
 	assert.Equal(t, []bool{false, true, true, true}, detects)
 	assert.Equal(t, []int{0, 6, 6, 6}, pixels)
 
-	detects, pixels = newFrameGen(detector).MovementInRow(1, 4)
+	detects, pixels = newFrameGen(detector, camera).MovementInRow(1, 4)
 	assert.Equal(t, []bool{false, true, true, true}, detects)
 	assert.Equal(t, []int{0, 6, 6, 6}, pixels)
 
-	detects, pixels = newFrameGen(detector).MovementInRow(lepton3.FrameRows-2, 4)
+	detects, pixels = newFrameGen(detector, camera).MovementInRow(lepton3.FrameRows-2, 4)
 	assert.Equal(t, []bool{false, true, true, true}, detects)
 	assert.Equal(t, []int{0, 6, 6, 6}, pixels)
 }
 
 func TestCanChangeEdgePixelsValue(t *testing.T) {
+	camera := new(TestCamera)
+
 	config := defaultMotionParams()
 	config.EdgePixels = 0
 	config.WarmerOnly = true
 	config.CountThresh = 4
-	detector := NewMotionDetector(config, defaultPreviewFrames())
+	detector := NewMotionDetector(config, defaultPreviewFrames(), camera)
 
-	detects, pixels := newFrameGen(detector).MovementInColumn(0, 4)
+	detects, pixels := newFrameGen(detector, camera).MovementInColumn(0, 4)
 	assert.Equal(t, []bool{false, false, true, true}, detects)
 	assert.Equal(t, []int{0, 0, 6, 6}, pixels)
 }
 
 func TestSomethingMovingDuringFFC(t *testing.T) {
+	camera := new(TestCamera)
+
 	config := defaultMotionParams()
 	config.UseOneDiffOnly = true
 	config.CountThresh = 4
-	detector := NewMotionDetector(config, defaultPreviewFrames())
+	detector := NewMotionDetector(config, defaultPreviewFrames(), camera)
 
-	gen := newFrameGen(detector)
+	gen := newFrameGen(detector, camera)
 
 	// Fill frame loop.
 	detects, pixels := gen.NoMovement(6)
@@ -170,11 +196,12 @@ func defaultPreviewFrames() int {
 
 const frameInterval = time.Second / 9
 
-func newFrameGen(detector *motionDetector) *frameGen {
+func newFrameGen(detector *motionDetector, camera cptvframe.CameraSpec) *frameGen {
 	return &frameGen{
 		detector:    detector,
 		now:         time.Minute,
 		lastFFCTime: time.Second,
+		camera:      camera,
 	}
 }
 
@@ -182,6 +209,7 @@ type frameGen struct {
 	detector    *motionDetector
 	now         time.Duration
 	lastFFCTime time.Duration
+	camera      cptvframe.CameraSpec
 }
 
 func (g *frameGen) FFC() {
@@ -233,8 +261,8 @@ func (g *frameGen) MovementInRow(row, frames int) ([]bool, []int) {
 	return results, pixels
 }
 
-func (g *frameGen) setupFrame(background int) *lepton3.Frame {
-	frame := new(lepton3.Frame)
+func (g *frameGen) setupFrame(background int) *cptvframe.Frame {
+	frame := cptvframe.NewFrame(g.camera)
 	frame.Status.TimeOn = g.now
 	frame.Status.LastFFCTime = g.lastFFCTime
 	g.now += frameInterval
@@ -249,7 +277,7 @@ func (g *frameGen) setupFrame(background int) *lepton3.Frame {
 	return frame
 }
 
-func (g *frameGen) makeSpot(background, warmPosition, warmTempOffset int) *lepton3.Frame {
+func (g *frameGen) makeSpot(background, warmPosition, warmTempOffset int) *cptvframe.Frame {
 
 	frame := g.setupFrame(background)
 
@@ -264,7 +292,7 @@ func (g *frameGen) makeSpot(background, warmPosition, warmTempOffset int) *lepto
 	return frame
 }
 
-func (g *frameGen) makeColSpot(background, startRow, col, warmTempOffset int) *lepton3.Frame {
+func (g *frameGen) makeColSpot(background, startRow, col, warmTempOffset int) *cptvframe.Frame {
 
 	frame := g.setupFrame(background)
 
@@ -276,7 +304,7 @@ func (g *frameGen) makeColSpot(background, startRow, col, warmTempOffset int) *l
 	return frame
 }
 
-func (g *frameGen) makeRowSpot(background, row, startCol, warmTempOffset int) *lepton3.Frame {
+func (g *frameGen) makeRowSpot(background, row, startCol, warmTempOffset int) *cptvframe.Frame {
 
 	frame := g.setupFrame(background)
 

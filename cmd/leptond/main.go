@@ -26,12 +26,27 @@ import (
 
 	"github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/thermal-recorder/headers"
 	arg "github.com/alexflint/go-arg"
 	"github.com/coreos/go-systemd/daemon"
+	"gopkg.in/yaml.v1"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
 )
+
+type TestCamera struct {
+}
+
+func (cam *TestCamera) ResX() int {
+	return 160
+}
+func (cam *TestCamera) ResY() int {
+	return 120
+}
+func (cam *TestCamera) FPS() int {
+	return 9
+}
 
 const (
 	framesHz = 9 // approx
@@ -90,8 +105,8 @@ func runMain() error {
 	logConfig(conf)
 
 	log.Print("dialing frame output socket")
-	conn, err := net.DialUnix("unixpacket", nil, &net.UnixAddr{
-		Net:  "unixgram",
+	conn, err := net.DialUnix("unix", nil, &net.UnixAddr{
+		Net:  "unix",
 		Name: conf.FrameOutput,
 	})
 	if err != nil {
@@ -152,8 +167,25 @@ func runMain() error {
 }
 
 func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error {
-	conn.SetWriteBuffer(lepton3.FrameCols * lepton3.FrameRows * 2 * 20)
+	conn.SetWriteBuffer(camera.ResX() * camera.ResY() * 2 * 20)
 
+	camera_specs := map[string]interface{}{
+		headers.XResolution: camera.ResX(),
+		headers.YResolution: camera.ResY(),
+		headers.FrameSize:   camera.ResX() * camera.ResY() * 2,
+		headers.Model:       lepton3.Model,
+		headers.Brand:       lepton3.Brand,
+		headers.FPS:         camera.FPS(),
+	}
+
+	cameraYAML, err := yaml.Marshal(camera_specs)
+	if err != nil {
+		return err
+	}
+	if _, err := conn.Write(cameraYAML); err != nil {
+		return err
+	}
+	conn.Write([]byte("\n"))
 	log.Print("reading frames")
 	frame := new(lepton3.RawFrame)
 	notifyCount := 0

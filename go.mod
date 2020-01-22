@@ -4,8 +4,8 @@ go 1.12
 
 require (
 	github.com/TheCacophonyProject/go-config v1.1.1
-	github.com/TheCacophonyProject/go-cptv v0.0.0-20190829021603-992765fceb9b
-	github.com/TheCacophonyProject/lepton3 v0.0.0-20190715012645-46e70a4e1b3f
+	github.com/TheCacophonyProject/go-cptv v0.0.0-20200121021233-067055d0edf0
+	github.com/TheCacophonyProject/lepton3 v0.0.0-20200121020734-2ae28662e1bc
 	github.com/TheCacophonyProject/window v0.0.0-20190821235241-ab92c2ee24b6
 	github.com/alexflint/go-arg v1.1.0
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
@@ -20,6 +20,7 @@ require (
 	github.com/stretchr/testify v1.3.0
 	golang.org/x/sys v0.0.0-20191117211529-81af7394a238 // indirect
 	golang.org/x/text v0.3.2 // indirect
+	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
 	gopkg.in/yaml.v2 v2.2.5
 	periph.io/x/periph v3.6.2+incompatible
 )

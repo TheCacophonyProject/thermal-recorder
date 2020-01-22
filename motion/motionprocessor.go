@@ -20,6 +20,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/window"
 
@@ -34,13 +35,13 @@ func NewMotionProcessor(motionConf *config.ThermalMotion,
 	recorderConf *recorder.RecorderConfig,
 	locationConf *config.Location,
 	listener RecordingListener,
-	recorder recorder.Recorder,
+	recorder recorder.Recorder, c cptvframe.CameraSpec,
 ) *MotionProcessor {
 	return &MotionProcessor{
-		minFrames:      recorderConf.MinSecs * lepton3.FramesHz,
-		maxFrames:      recorderConf.MaxSecs * lepton3.FramesHz,
-		motionDetector: NewMotionDetector(*motionConf, recorderConf.PreviewSecs*lepton3.FramesHz),
-		frameLoop:      NewFrameLoop(recorderConf.PreviewSecs*lepton3.FramesHz + motionConf.TriggerFrames),
+		minFrames:      recorderConf.MinSecs * c.FPS(),
+		maxFrames:      recorderConf.MaxSecs * c.FPS(),
+		motionDetector: NewMotionDetector(*motionConf, recorderConf.PreviewSecs*c.FPS(), c),
+		frameLoop:      NewFrameLoop(recorderConf.PreviewSecs*c.FPS()+motionConf.TriggerFrames, c),
 		isRecording:    false,
 		window:         recorderConf.Window,
 		listener:       listener,
@@ -86,7 +87,7 @@ func (mp *MotionProcessor) Process(rawFrame *lepton3.RawFrame) {
 	mp.process(frame)
 }
 
-func (mp *MotionProcessor) process(frame *lepton3.Frame) {
+func (mp *MotionProcessor) process(frame *cptvframe.Frame) {
 	if mp.motionDetector.Detect(frame) {
 		if mp.listener != nil {
 			mp.listener.MotionDetected()
@@ -128,14 +129,14 @@ func (mp *MotionProcessor) process(frame *lepton3.Frame) {
 	}
 }
 
-func (mp *MotionProcessor) ProcessFrame(srcFrame *lepton3.Frame) {
+func (mp *MotionProcessor) ProcessFrame(srcFrame *cptvframe.Frame) {
 	frame := mp.frameLoop.Current()
 	frame.Copy(srcFrame)
 	mp.process(frame)
 }
 
-func (mp *MotionProcessor) GetRecentFrame(frame *lepton3.Frame) *lepton3.Frame {
-	return mp.frameLoop.CopyRecent(frame)
+func (mp *MotionProcessor) GetRecentFrame() *cptvframe.Frame {
+	return mp.frameLoop.CopyRecent()
 }
 
 func (mp *MotionProcessor) canStartWriting() error {
@@ -177,7 +178,7 @@ func (mp *MotionProcessor) stopRecording() error {
 
 func (mp *MotionProcessor) recordPreTriggerFrames() error {
 	frames := mp.frameLoop.GetHistory()
-	var frame *lepton3.Frame
+	var frame *cptvframe.Frame
 	ii := 0
 
 	// it never writes the current frame as this will be written later

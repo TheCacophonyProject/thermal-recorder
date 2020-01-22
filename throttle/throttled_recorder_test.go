@@ -24,9 +24,23 @@ import (
 	"github.com/stretchr/testify/assert"
 
 	config "github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 )
+
+type TestCamera struct {
+}
+
+func (cam *TestCamera) ResX() int {
+	return 160
+}
+func (cam *TestCamera) ResY() int {
+	return 120
+}
+func (cam *TestCamera) FPS() int {
+	return 9
+}
 
 const (
 	throttleAfter = 30 * time.Second
@@ -51,7 +65,7 @@ func newTestThrottledRecorder() (*writeRecorder, *throttleListener, *ThrottledRe
 	clock := new(testClock)
 	recorder := new(writeRecorder)
 	listener := new(throttleListener)
-	return recorder, listener, NewThrottledRecorderWithClock(recorder, newTestConfig(), minRecordingSecs, listener, clock), clock
+	return recorder, listener, NewThrottledRecorderWithClock(recorder, newTestConfig(), minRecordingSecs, listener, clock, new(TestCamera)), clock
 }
 
 type writeRecorder struct {
@@ -59,7 +73,7 @@ type writeRecorder struct {
 	writes int
 }
 
-func (rec *writeRecorder) WriteFrame(*lepton3.Frame) error {
+func (rec *writeRecorder) WriteFrame(*cptvframe.Frame) error {
 	rec.writes++
 	return nil
 }
@@ -83,7 +97,8 @@ func recordFrames(recorder *ThrottledRecorder, frames int) {
 }
 
 func writeFrames(recorder *ThrottledRecorder, frames int) {
-	f := new(lepton3.Frame)
+
+	f := cptvframe.NewFrame(new(TestCamera))
 	for i := 0; i < frames; i++ {
 		recorder.WriteFrame(f)
 	}
@@ -181,7 +196,7 @@ func TestUsingDifferentRefillRate(t *testing.T) {
 	config := newTestConfig()
 	config.MinRefill = 60 * time.Second
 	recorder := new(writeRecorder)
-	throtRecorder := NewThrottledRecorderWithClock(recorder, config, minRecordingSecs, nil, clock)
+	throtRecorder := NewThrottledRecorderWithClock(recorder, config, minRecordingSecs, nil, clock, new(TestCamera))
 
 	recordFrames(throtRecorder, throttleFrames) //empty bucket
 	clock.Sleep(config.MinRefill)               // allow to fill
