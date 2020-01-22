@@ -166,9 +166,8 @@ func NewHeader(headerInfo map[string]interface{}) *HeaderInfo {
 	}
 }
 
-func readHeader(conn net.Conn) (*HeaderInfo, error) {
+func readHeader(reader *bufio.Reader) (*HeaderInfo, error) {
 	var buf bytes.Buffer
-	reader := bufio.NewReader(conn)
 	for {
 		line, err := reader.ReadString(byte('\n'))
 		if err != nil {
@@ -187,7 +186,8 @@ func readHeader(conn net.Conn) (*HeaderInfo, error) {
 func handleConn(conn net.Conn, conf *Config) error {
 
 	totalFrames := 0
-	header, err := readHeader(conn)
+	reader := bufio.NewReader(conn)
+	header, err := readHeader(reader)
 	if err != nil {
 		return err
 	}
@@ -209,7 +209,7 @@ func handleConn(conn net.Conn, conf *Config) error {
 
 	rawFrame := new(lepton3.RawFrame)
 	for {
-		_, err := io.ReadFull(conn, rawFrame[:])
+		_, err := io.ReadFull(reader, rawFrame[:])
 		if err != nil {
 			return err
 		}
