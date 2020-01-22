@@ -180,7 +180,7 @@ func readHeader(reader *bufio.Reader) (*HeaderInfo, error) {
 	}
 	header := make(map[string]interface{})
 	err := yaml.Unmarshal(buf.Bytes(), &header)
-	return nil, err
+	return NewHeader(header), err
 }
 
 func handleConn(conn net.Conn, conf *Config) error {
