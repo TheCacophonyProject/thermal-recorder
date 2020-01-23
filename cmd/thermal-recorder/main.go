@@ -162,7 +162,7 @@ func NewHeader(headerInfo map[string]interface{}) *HeaderInfo {
 		fps:       headerInfo[headers.FPS].(int),
 		framesize: headerInfo[headers.FrameSize].(int),
 		model:     headerInfo[headers.Model].(string),
-		brand:     headerInfo[headers.Model].(string),
+		brand:     headerInfo[headers.Brand].(string),
 	}
 }
 
