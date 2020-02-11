@@ -21,7 +21,6 @@ import (
 	"time"
 
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
-	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/window"
 
 	config "github.com/TheCacophonyProject/go-config"
@@ -31,13 +30,18 @@ import (
 
 const minLogInterval = time.Minute
 
-func NewMotionProcessor(motionConf *config.ThermalMotion,
+type FrameParser func([]byte, *cptvframe.Frame) error
+
+func NewMotionProcessor(
+	parseFrame FrameParser,
+	motionConf *config.ThermalMotion,
 	recorderConf *recorder.RecorderConfig,
 	locationConf *config.Location,
 	listener RecordingListener,
 	recorder recorder.Recorder, c cptvframe.CameraSpec,
 ) *MotionProcessor {
 	return &MotionProcessor{
+		parseFrame:     parseFrame,
 		minFrames:      recorderConf.MinSecs * c.FPS(),
 		maxFrames:      recorderConf.MaxSecs * c.FPS(),
 		motionDetector: NewMotionDetector(*motionConf, recorderConf.PreviewSecs*c.FPS(), c),
@@ -54,6 +58,7 @@ func NewMotionProcessor(motionConf *config.ThermalMotion,
 }
 
 type MotionProcessor struct {
+	parseFrame          FrameParser
 	minFrames           int
 	maxFrames           int
 	framesWritten       int
@@ -81,10 +86,13 @@ type RecordingListener interface {
 	RecordingEnded()
 }
 
-func (mp *MotionProcessor) Process(rawFrame *lepton3.RawFrame) {
+func (mp *MotionProcessor) Process(rawFrame []byte) error {
 	frame := mp.frameLoop.Current()
-	rawFrame.ToFrame(frame)
+	if err := mp.parseFrame(rawFrame, frame); err != nil {
+		return err
+	}
 	mp.process(frame)
+	return nil
 }
 
 func (mp *MotionProcessor) process(frame *cptvframe.Frame) {

@@ -26,6 +26,7 @@ import (
 	"testing"
 
 	config "github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/window"
 	"github.com/stretchr/testify/assert"
 
@@ -215,7 +216,7 @@ func BenchmarkMotionDetection(b *testing.B) {
 
 	recorder := new(recorder.NoWriteRecorder)
 
-	processor := motion.NewMotionProcessor(&config.Motion, &config.Recorder, &config.Location, nil, recorder, new(TestCamera))
+	processor := motion.NewMotionProcessor(lepton3.ParseRawFrame, &config.Motion, &config.Recorder, &config.Location, nil, recorder, new(TestCamera))
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {
