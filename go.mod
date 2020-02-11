@@ -18,6 +18,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.5.0 // indirect
 	github.com/stretchr/testify v1.3.0
+	golang.org/x/net v0.0.0-20200202094626-16171245cfb2 // indirect
 	golang.org/x/sys v0.0.0-20191117211529-81af7394a238 // indirect
 	golang.org/x/text v0.3.2 // indirect
 	gopkg.in/yaml.v1 v1.0.0-20140924161607-9f9df34309c0
@@ -27,3 +28,5 @@ require (
 
 // We maintain a custom fork of periph.io at the moment.
 replace periph.io/x/periph => github.com/TheCacophonyProject/periph v2.0.1-0.20171123021141-d06ef89e37e8+incompatible
+
+replace github.com/TheCacophonyProject/lepton3 => /home/menno/gohack/github.com/TheCacophonyProject/lepton3

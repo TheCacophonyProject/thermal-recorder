@@ -23,6 +23,7 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/lepton3"
@@ -174,12 +175,23 @@ func handleConn(conn net.Conn, conf *Config) error {
 	frameLogIntervalFirstMin *= header.FPS()
 	frameLogInterval *= header.FPS()
 	rawFrame := make([]byte, header.FrameSize())
+
+	count := 0
+	t0 := time.Now()
 	for {
 		_, err := io.ReadFull(reader, rawFrame[:])
 		if err != nil {
 			return err
 		}
 		totalFrames++
+
+		count++
+		if count == 100 {
+			t1 := time.Now()
+			log.Printf("100 frames in %s", t1.Sub(t0))
+			t0 = t1
+			count = 0
+		}
 
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
 			totalFrames <= 60*header.FPS() || totalFrames%frameLogInterval == 0 {
