@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with this program. If not, see <http://www.gnu.org/licenses/>.
 
-package main
+package headers
 
 import (
 	"bufio"
@@ -22,8 +22,6 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v1"
-
-	"github.com/TheCacophonyProject/thermal-recorder/headers"
 )
 
 // HeaderInfo contains the camera description fields returned by a
@@ -87,12 +85,12 @@ func ReadHeaderInfo(reader *bufio.Reader) (*HeaderInfo, error) {
 	}
 
 	return &HeaderInfo{
-		resX:      toInt(h[headers.XResolution]),
-		resY:      toInt(h[headers.YResolution]),
-		fps:       toInt(h[headers.FPS]),
-		framesize: toInt(h[headers.FrameSize]),
-		brand:     toStr(h[headers.Brand]),
-		model:     toStr(h[headers.Model]),
+		resX:      toInt(h[XResolution]),
+		resY:      toInt(h[YResolution]),
+		fps:       toInt(h[FPS]),
+		framesize: toInt(h[FrameSize]),
+		brand:     toStr(h[Brand]),
+		model:     toStr(h[Model]),
 	}, nil
 }
 

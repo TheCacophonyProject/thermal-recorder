@@ -30,6 +30,7 @@ import (
 	"periph.io/x/periph/host"
 
 	config "github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/thermal-recorder/headers"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
@@ -138,7 +139,7 @@ func handleConn(conn net.Conn, conf *Config) error {
 
 	totalFrames := 0
 	reader := bufio.NewReader(conn)
-	header, err := ReadHeaderInfo(reader)
+	header, err := headers.ReadHeaderInfo(reader)
 	if err != nil {
 		return err
 	}
@@ -150,7 +151,7 @@ func handleConn(conn net.Conn, conf *Config) error {
 		return fmt.Errorf("unable to handle frames for %s %s", header.Brand(), header.Model())
 	}
 
-	cptvRecorder := NewCPTVFileRecorder(conf, header, header.brand, header.model)
+	cptvRecorder := NewCPTVFileRecorder(conf, header, header.Brand(), header.Model())
 	defer cptvRecorder.Stop()
 	var recorder recorder.Recorder = cptvRecorder
 
