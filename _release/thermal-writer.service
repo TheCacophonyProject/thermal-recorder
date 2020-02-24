@@ -1,0 +1,19 @@
+# Note: This service is not intended to be enabled by default. It only
+# exists for specialised use cases.
+
+[Unit]
+Description=Thermal video frame dumper
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/thermal-writer
+Restart=on-failure
+RestartSec=5s
+
+# Give real-time priority
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=1
+
+[Install]
+WantedBy=multi-user.target
