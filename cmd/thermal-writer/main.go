@@ -38,6 +38,8 @@ var (
 	frameLogInterval         = 60 * 5
 )
 
+const newFileInterval = time.Minute
+
 type Args struct {
 	ConfigDir  string `arg:"-c,--config" help:"path to configuration directory"`
 	Timestamps bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
@@ -157,25 +159,39 @@ func handleConn(conn net.Conn, conf *Config) error {
 }
 
 func writer(inFrames <-chan []byte, outDir string, outFrames chan []byte) {
-	f, err := newBufferedFile(nextFileName(outDir))
-	if err != nil {
-		panic(err)
-	}
-	defer f.Close()
+	f := nextFile(outDir)
+	changeFile := time.After(newFileInterval)
 	for {
-		frame, ok := <-inFrames
-		if !ok {
-			return
+		select {
+		case <-changeFile:
+			f.Close()
+			f = nextFile(outDir)
+			changeFile = time.After(newFileInterval)
+		case frame, ok := <-inFrames:
+			if !ok {
+				f.Close()
+				return
+			}
+			if _, err := f.Write(frame); err != nil {
+				panic(err)
+			}
+			outFrames <- frame // Return the frame to be reused
 		}
-		if _, err := f.Write(frame); err != nil {
-			panic(err)
-		}
-		outFrames <- frame
 	}
 }
 
+func nextFile(outDir string) *bufferedFile {
+	n := nextFileName(outDir)
+	log.Println("writing to", n)
+	f, err := newBufferedFile(n)
+	if err != nil {
+		panic(err)
+	}
+	return f
+}
+
 func nextFileName(outDir string) string {
-	name := fmt.Sprintf("%s.thermalraw", time.Now().Format("2006-01-02T15:04:05"))
+	name := fmt.Sprintf("%s.thermalraw", time.Now().Format("2006_01_02T15_04_05"))
 	return filepath.Join(outDir, name)
 }
 
