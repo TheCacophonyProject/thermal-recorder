@@ -18,6 +18,7 @@ package main
 
 import (
 	"bufio"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -156,26 +157,57 @@ func handleConn(conn net.Conn, conf *Config) error {
 }
 
 func writer(inFrames <-chan []byte, outDir string, outFrames chan []byte) {
-	f, err := os.Create(filepath.Join(outDir, "out.raw"))
+	f, err := newBufferedFile(nextFileName(outDir))
 	if err != nil {
 		panic(err)
 	}
 	defer f.Close()
-	bw := bufio.NewWriterSize(f, 64*1024*1024)
 	for {
 		frame, ok := <-inFrames
 		if !ok {
 			return
 		}
-		if _, err = bw.Write(frame); err != nil {
+		if _, err := f.Write(frame); err != nil {
 			panic(err)
 		}
 		outFrames <- frame
 	}
 }
 
+func nextFileName(outDir string) string {
+	name := fmt.Sprintf("%s.thermalraw", time.Now().Format("2006-01-02T15:04:05"))
+	return filepath.Join(outDir, name)
+}
+
 func logConfig(conf *Config) {
 	log.Printf("device name: %s", conf.DeviceName)
 	log.Printf("frame input: %s", conf.FrameInput)
 	log.Printf("output dir: %s", conf.OutputDir)
+}
+
+func newBufferedFile(filename string) (*bufferedFile, error) {
+	f, err := os.Create(filename)
+	if err != nil {
+		return nil, err
+	}
+	return &bufferedFile{
+		f: f,
+		w: bufio.NewWriterSize(f, 32*1024*1024),
+	}, nil
+}
+
+type bufferedFile struct {
+	f *os.File
+	w *bufio.Writer
+}
+
+func (bf *bufferedFile) Write(p []byte) (int, error) {
+	return bf.w.Write(p)
+}
+
+func (bf *bufferedFile) Close() error {
+	if err := bf.w.Flush(); err != nil {
+		return err
+	}
+	return bf.f.Close()
 }
