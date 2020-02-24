@@ -35,19 +35,6 @@ import (
 	"periph.io/x/periph/host"
 )
 
-type TestCamera struct {
-}
-
-func (cam *TestCamera) ResX() int {
-	return 160
-}
-func (cam *TestCamera) ResY() int {
-	return 120
-}
-func (cam *TestCamera) FPS() int {
-	return 9
-}
-
 const (
 	framesHz = 9 // approx
 
@@ -172,7 +159,7 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 	camera_specs := map[string]interface{}{
 		headers.XResolution: camera.ResX(),
 		headers.YResolution: camera.ResY(),
-		headers.FrameSize:   camera.ResX() * camera.ResY() * 2,
+		headers.FrameSize:   lepton3.BytesPerFrame,
 		headers.Model:       lepton3.Model,
 		headers.Brand:       lepton3.Brand,
 		headers.FPS:         camera.FPS(),
@@ -187,7 +174,8 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 	}
 	conn.Write([]byte("\n"))
 	log.Print("reading frames")
-	frame := new(lepton3.RawFrame)
+	frame := lepton3.NewRawFrame()
+
 	notifyCount := 0
 	for {
 		if err := camera.NextFrame(frame); err != nil {

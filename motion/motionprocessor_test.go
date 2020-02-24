@@ -24,6 +24,7 @@ import (
 
 	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
+	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/window"
 )
@@ -109,7 +110,7 @@ func FramesFrom(start, end int) []int {
 func SetupTest(mConf *config.ThermalMotion, rConf *recorder.RecorderConfig, lConf *config.Location) (*TestRecorder, *TestFrameMaker) {
 	recorder := new(TestRecorder)
 	camera := new(TestCamera)
-	processor := NewMotionProcessor(mConf, rConf, lConf, nil, recorder, camera)
+	processor := NewMotionProcessor(lepton3.ParseRawFrame, mConf, rConf, lConf, nil, recorder, camera)
 
 	scenarioMaker := MakeTestFrameMaker(processor, camera)
 	return recorder, scenarioMaker

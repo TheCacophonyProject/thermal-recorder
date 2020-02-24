@@ -5,8 +5,6 @@ github.com/Masterminds/glide v0.13.2/go.mod h1:STyF5vcenH/rUqTEv+/hBXlSTo7KYwg2o
 github.com/Masterminds/semver v1.4.2/go.mod h1:MB6lktGJrhw8PrUyiEoblNEGEQ+RzHPF078ddwwvV3Y=
 github.com/Masterminds/vcs v1.13.0/go.mod h1:N09YCmOQr6RLxC6UNHzuVwAdodYbbnycGHSmwVJjcKA=
 github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAElWljhcU=
-github.com/TheCacophonyProject/go-config v1.1.1 h1:46UuL+FpR+hJTAIaOVkx76idzVptMcID8DjQ4by3syU=
-github.com/TheCacophonyProject/go-config v1.1.1/go.mod h1:WuesghaKfkLjOSR07Aaw3el/KPOSB8rRsL3pg5RMr8o=
 github.com/TheCacophonyProject/go-config v1.4.0 h1:G7YOqMrRljWQ0BWVHJiZNe79KaMNJMP5QyCa2fP27cs=
 github.com/TheCacophonyProject/go-config v1.4.0/go.mod h1:oARW/N3eJbcewCqB+Jc7TBwuODawwYgpo56UO6yBdKU=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200116020937-858bd8b71512/go.mod h1:8H6Aaft5549sIWxcsuCIL2o60/TQkoF93fVoSTpgZb8=
@@ -14,6 +12,8 @@ github.com/TheCacophonyProject/go-cptv v0.0.0-20200121021233-067055d0edf0 h1:MfQ
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200121021233-067055d0edf0/go.mod h1:Vg73Ezn4kr8qDNP9LNgjki9qgi+5T/0Uc9oDyflaYUY=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20200121020734-2ae28662e1bc h1:4Sq5LC0foeSOx5iE/m0AjhsqAwVrfOF7PbYjKbtNWnU=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20200121020734-2ae28662e1bc/go.mod h1:xzPAWtvVCbJdJC2Gn1cG0Ovs/VP7XGGiQpUU8wU4HME=
+github.com/TheCacophonyProject/lepton3 v0.0.0-20200213011619-1934a9300bd3 h1:y0LtZ2cO/xuBCr7Sj4p/DhqEVYI+PtMyNfRiEjym9hg=
+github.com/TheCacophonyProject/lepton3 v0.0.0-20200213011619-1934a9300bd3/go.mod h1:xzPAWtvVCbJdJC2Gn1cG0Ovs/VP7XGGiQpUU8wU4HME=
 github.com/TheCacophonyProject/periph v2.0.1-0.20171123021141-d06ef89e37e8+incompatible h1:HNEla6Hv+j5M3rdH4D+1MTZeVhsyi17zqpvl998/ssI=
 github.com/TheCacophonyProject/periph v2.0.1-0.20171123021141-d06ef89e37e8+incompatible/go.mod h1:K1wa07sGXKzV0G9p+4R069mZk4GOpqKW8GU6/k+BrIo=
 github.com/TheCacophonyProject/window v0.0.0-20190821235241-ab92c2ee24b6 h1:aLER2Au+/pJe9FzTW7lmQJIOLO8bgio5i/Uzx/EGEmE=
@@ -174,6 +174,8 @@ golang.org/x/net v0.0.0-20190522155817-f3200d17e092 h1:4QSRKanuywn15aTZvI/mIDEgP
 golang.org/x/net v0.0.0-20190522155817-f3200d17e092/go.mod h1:HSz+uSET+XFnRR8LxR5pz3Of3rY3CfYBVs4xY44aLks=
 golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa h1:F+8P+gmewFQYRk6JoLQLwjBCTu3mcIURZfNkVweuRKA=
 golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
+golang.org/x/net v0.0.0-20200222125558-5a598a2470a0 h1:MsuvTghUPjX762sGLnGsxC3HM0B5r83wEtYcYR8/vRs=
+golang.org/x/net v0.0.0-20200222125558-5a598a2470a0/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
 golang.org/x/sync v0.0.0-20180314180146-1d60e4601c6f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=
 golang.org/x/sync v0.0.0-20181108010431-42b317875d0f/go.mod h1:RxMgew5VJxzue5/jJTE5uejpjVlOe/izrB70Jof72aM=

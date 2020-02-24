@@ -18,19 +18,18 @@ package main
 
 import (
 	"bufio"
-	"bytes"
+	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
-	"strings"
 
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
+	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
-	"gopkg.in/yaml.v1"
 	"periph.io/x/periph/host"
 
 	config "github.com/TheCacophonyProject/go-config"
-	"github.com/TheCacophonyProject/lepton3"
 	"github.com/TheCacophonyProject/thermal-recorder/headers"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
@@ -136,62 +135,23 @@ func runMain() error {
 	}
 }
 
-type HeaderInfo struct {
-	resX      int
-	resY      int
-	fps       int
-	framesize int
-	model     string
-	brand     string
-}
-
-func (h *HeaderInfo) ResX() int {
-	return h.resX
-}
-func (h *HeaderInfo) ResY() int {
-	return h.resY
-}
-func (h *HeaderInfo) FPS() int {
-	return h.fps
-}
-
-func NewHeader(headerInfo map[string]interface{}) *HeaderInfo {
-	return &HeaderInfo{
-		resX:      headerInfo[headers.XResolution].(int),
-		resY:      headerInfo[headers.YResolution].(int),
-		fps:       headerInfo[headers.FPS].(int),
-		framesize: headerInfo[headers.FrameSize].(int),
-		model:     headerInfo[headers.Model].(string),
-		brand:     headerInfo[headers.Brand].(string),
-	}
-}
-
-func readHeader(reader *bufio.Reader) (*HeaderInfo, error) {
-	var buf bytes.Buffer
-	for {
-		line, err := reader.ReadString(byte('\n'))
-		if err != nil {
-			return nil, err
-		}
-		if strings.Trim(line, " ") == "\n" {
-			break
-		}
-		buf.WriteString(line)
-	}
-	header := make(map[string]interface{})
-	err := yaml.Unmarshal(buf.Bytes(), &header)
-	return NewHeader(header), err
-}
-
 func handleConn(conn net.Conn, conf *Config) error {
 
 	totalFrames := 0
 	reader := bufio.NewReader(conn)
-	header, err := readHeader(reader)
+	header, err := headers.ReadHeaderInfo(reader)
 	if err != nil {
 		return err
 	}
-	cptvRecorder := NewCPTVFileRecorder(conf, header, header.brand, header.model)
+
+	log.Printf("connection from %s %s (%dx%d@%dfps)", header.Brand(), header.Model(), header.ResX(), header.ResY(), header.FPS())
+
+	parseFrame := frameParser(header.Brand(), header.Model())
+	if parseFrame == nil {
+		return fmt.Errorf("unable to handle frames for %s %s", header.Brand(), header.Model())
+	}
+
+	cptvRecorder := NewCPTVFileRecorder(conf, header, header.Brand(), header.Model())
 	defer cptvRecorder.Stop()
 	var recorder recorder.Recorder = cptvRecorder
 
@@ -200,14 +160,21 @@ func handleConn(conn net.Conn, conf *Config) error {
 		recorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength, new(throttle.ThrottledEventRecorder), header)
 	}
 
-	processor = motion.NewMotionProcessor(&conf.Motion, &conf.Recorder, &conf.Location, nil, recorder, header)
+	processor = motion.NewMotionProcessor(
+		parseFrame,
+		&conf.Motion,
+		&conf.Recorder,
+		&conf.Location,
+		nil,
+		recorder,
+		header,
+	)
 
-	log.Print("new camera connection, reading frames")
+	log.Print("reading frames")
 
 	frameLogIntervalFirstMin *= header.FPS()
 	frameLogInterval *= header.FPS()
-
-	rawFrame := new(lepton3.RawFrame)
+	rawFrame := make([]byte, header.FrameSize())
 	for {
 		_, err := io.ReadFull(reader, rawFrame[:])
 		if err != nil {
@@ -222,6 +189,20 @@ func handleConn(conn net.Conn, conf *Config) error {
 
 		processor.Process(rawFrame)
 	}
+}
+
+func frameParser(brand, model string) func([]byte, *cptvframe.Frame) error {
+	if brand != "flir" {
+		return nil
+	}
+
+	switch model {
+	case "lepton3":
+		return lepton3.ParseRawFrame
+	case "boson":
+		return convertRawBosonFrame
+	}
+	return nil
 }
 
 func logConfig(conf *Config) {
