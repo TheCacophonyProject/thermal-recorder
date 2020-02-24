@@ -43,6 +43,7 @@ const newFileInterval = time.Minute
 type Args struct {
 	ConfigDir  string `arg:"-c,--config" help:"path to configuration directory"`
 	Timestamps bool   `arg:"-t,--timestamps" help:"include timestamps in log output"`
+	FrameRate  bool   `arg:"-r,--frame-rate" help:"log frame rate"`
 }
 
 func (Args) Version() string {
@@ -93,15 +94,14 @@ func runMain() error {
 			continue
 		}
 
-		// Prevent concurrent connections.
-		listener.Close()
+		listener.Close() // Prevent concurrent connections.
 
-		err = handleConn(conn, conf)
+		err = handleConn(conn, conf, args.FrameRate)
 		log.Printf("camera connection ended with: %v", err)
 	}
 }
 
-func handleConn(conn net.Conn, conf *Config) error {
+func handleConn(conn net.Conn, conf *Config, logFrameRate bool) error {
 
 	totalFrames := 0
 	reader := bufio.NewReader(conn)
@@ -137,12 +137,14 @@ func handleConn(conn net.Conn, conf *Config) error {
 		}
 		totalFrames++
 
-		count++
-		if count == 100 {
-			t1 := time.Now()
-			log.Printf("%.1f Hz", float64(count)/t1.Sub(t0).Seconds())
-			t0 = t1
-			count = 0
+		if logFrameRate {
+			count++
+			if count == 100 {
+				t1 := time.Now()
+				log.Printf("%.1f Hz", float64(count)/t1.Sub(t0).Seconds())
+				t0 = t1
+				count = 0
+			}
 		}
 
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
