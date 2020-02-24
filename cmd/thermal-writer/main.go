@@ -152,8 +152,8 @@ func handleConn(conn net.Conn, conf *Config) error {
 
 		writeFrames <- frame
 		chLen := len(writeFrames)
-		if chLen > 0 && totalFrames%60 == 0 {
-			log.Printf("write channel length: %d", chLen)
+		if chLen > 10 && totalFrames%60 == 0 {
+			log.Printf("warning: high write backlog (%d)", chLen)
 		}
 	}
 }
