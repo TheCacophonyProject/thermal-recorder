@@ -10,7 +10,7 @@ import (
 func convertRawBosonFrame(raw []byte, out *cptvframe.Frame) error {
 	// TODO populate telemetry once bosond is sending it
 	out.Status = cptvframe.Telemetry{
-		// Make it appear like there hasn't been a FFC recent. Without
+		// Make it appear like there hasn't been a FFC recently. Without
 		// this the motion detector will never trigger.
 		LastFFCTime: time.Second,
 		TimeOn:      time.Minute,
