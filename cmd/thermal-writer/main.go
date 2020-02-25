@@ -131,6 +131,7 @@ func handleConn(conn net.Conn, conf *Config, logFrameRate bool) error {
 		frame := <-spentFrames
 		_, err := io.ReadFull(reader, frame)
 		if err != nil {
+			close(writeFrames)
 			return err
 		}
 		totalFrames++
