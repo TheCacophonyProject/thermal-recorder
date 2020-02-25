@@ -71,7 +71,7 @@ func nextFile(outDir string) (*bufferedFile, error) {
 }
 
 func nextFileName(outDir string) string {
-	name := fmt.Sprintf("%s.thermalraw", time.Now().Format("2006_01_02T15_04_05"))
+	name := fmt.Sprintf("%s.cptr", time.Now().Format("2006_01_02T15_04_05"))
 	return filepath.Join(outDir, name)
 }
 
