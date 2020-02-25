@@ -18,12 +18,10 @@ package main
 
 import (
 	"bufio"
-	"fmt"
 	"io"
 	"log"
 	"net"
 	"os"
-	"path/filepath"
 	"time"
 
 	config "github.com/TheCacophonyProject/go-config"
@@ -120,7 +118,7 @@ func handleConn(conn net.Conn, conf *Config, logFrameRate bool) error {
 		spentFrames <- make([]byte, header.FrameSize())
 	}
 
-	go writer(writeFrames, conf.OutputDir, spentFrames)
+	go writer(writeFrames, conf, header, spentFrames)
 
 	log.Print("reading frames")
 
@@ -133,6 +131,7 @@ func handleConn(conn net.Conn, conf *Config, logFrameRate bool) error {
 		frame := <-spentFrames
 		_, err := io.ReadFull(reader, frame)
 		if err != nil {
+			close(writeFrames)
 			return err
 		}
 		totalFrames++
@@ -160,21 +159,27 @@ func handleConn(conn net.Conn, conf *Config, logFrameRate bool) error {
 	}
 }
 
-func writer(inFrames <-chan []byte, outDir string, outFrames chan []byte) {
-	f := nextFile(outDir)
+func writer(inFrames <-chan []byte, conf *Config, h *headers.HeaderInfo, outFrames chan []byte) {
+	builder, err := newThermalRaw(conf, time.Now(), h)
+	if err != nil {
+		panic(err)
+	}
 	changeFile := time.After(newFileInterval)
 	for {
 		select {
 		case <-changeFile:
-			f.Close()
-			f = nextFile(outDir)
+			builder.Close()
+			builder, err = newThermalRaw(conf, time.Now(), h)
+			if err != nil {
+				panic(err)
+			}
 			changeFile = time.After(newFileInterval)
 		case frame, ok := <-inFrames:
 			if !ok {
-				f.Close()
+				builder.Close()
 				return
 			}
-			if _, err := f.Write(frame); err != nil {
+			if err := writeFrame(builder, frame); err != nil {
 				panic(err)
 			}
 			outFrames <- frame // Return the frame to be reused
@@ -182,50 +187,8 @@ func writer(inFrames <-chan []byte, outDir string, outFrames chan []byte) {
 	}
 }
 
-func nextFile(outDir string) *bufferedFile {
-	n := nextFileName(outDir)
-	log.Println("writing to", n)
-	f, err := newBufferedFile(n)
-	if err != nil {
-		panic(err)
-	}
-	return f
-}
-
-func nextFileName(outDir string) string {
-	name := fmt.Sprintf("%s.thermalraw", time.Now().Format("2006_01_02T15_04_05"))
-	return filepath.Join(outDir, name)
-}
-
 func logConfig(conf *Config) {
 	log.Printf("device name: %s", conf.DeviceName)
 	log.Printf("frame input: %s", conf.FrameInput)
 	log.Printf("output dir: %s", conf.OutputDir)
-}
-
-func newBufferedFile(filename string) (*bufferedFile, error) {
-	f, err := os.Create(filename)
-	if err != nil {
-		return nil, err
-	}
-	return &bufferedFile{
-		f: f,
-		w: bufio.NewWriterSize(f, 32*1024*1024),
-	}, nil
-}
-
-type bufferedFile struct {
-	f *os.File
-	w *bufio.Writer
-}
-
-func (bf *bufferedFile) Write(p []byte) (int, error) {
-	return bf.w.Write(p)
-}
-
-func (bf *bufferedFile) Close() error {
-	if err := bf.w.Flush(); err != nil {
-		return err
-	}
-	return bf.f.Close()
 }

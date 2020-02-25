@@ -4,7 +4,7 @@ go 1.12
 
 require (
 	github.com/TheCacophonyProject/go-config v1.4.0
-	github.com/TheCacophonyProject/go-cptv v0.0.0-20200121021233-067055d0edf0
+	github.com/TheCacophonyProject/go-cptv v0.0.0-20200225002107-8095b1b6b929
 	github.com/TheCacophonyProject/lepton3 v0.0.0-20200213011619-1934a9300bd3
 	github.com/TheCacophonyProject/window v0.0.0-20190821235241-ab92c2ee24b6
 	github.com/alexflint/go-arg v1.1.0

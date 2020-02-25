@@ -10,6 +10,8 @@ github.com/TheCacophonyProject/go-config v1.4.0/go.mod h1:oARW/N3eJbcewCqB+Jc7TB
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200116020937-858bd8b71512/go.mod h1:8H6Aaft5549sIWxcsuCIL2o60/TQkoF93fVoSTpgZb8=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200121021233-067055d0edf0 h1:MfQaZ2ZAdmRi2CfB+dp/kDT53QG/NCcp6N0qjcWeItU=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200121021233-067055d0edf0/go.mod h1:Vg73Ezn4kr8qDNP9LNgjki9qgi+5T/0Uc9oDyflaYUY=
+github.com/TheCacophonyProject/go-cptv v0.0.0-20200225002107-8095b1b6b929 h1:Ew+XHCyNuokz/1mmsyMBvpdDfYgwGd1Wc9V+RfWvTWM=
+github.com/TheCacophonyProject/go-cptv v0.0.0-20200225002107-8095b1b6b929/go.mod h1:Vg73Ezn4kr8qDNP9LNgjki9qgi+5T/0Uc9oDyflaYUY=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20200121020734-2ae28662e1bc h1:4Sq5LC0foeSOx5iE/m0AjhsqAwVrfOF7PbYjKbtNWnU=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20200121020734-2ae28662e1bc/go.mod h1:xzPAWtvVCbJdJC2Gn1cG0Ovs/VP7XGGiQpUU8wU4HME=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20200213011619-1934a9300bd3 h1:y0LtZ2cO/xuBCr7Sj4p/DhqEVYI+PtMyNfRiEjym9hg=
