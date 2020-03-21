@@ -18,6 +18,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
@@ -33,6 +34,7 @@ import (
 
 const (
 	snapshotName          = "still.png"
+	rawSnapshotName       = "still-raw.png"
 	allowedSnapshotPeriod = 500 * time.Millisecond
 )
 
@@ -42,7 +44,7 @@ var (
 	mu                   sync.Mutex
 )
 
-func newSnapshot(dir string) error {
+func newSnapshot(dir string, raw bool) error {
 	mu.Lock()
 	defer mu.Unlock()
 
@@ -76,14 +78,24 @@ func newSnapshot(dir string) error {
 	}
 	previousSnapshotID = id
 
+	fmt.Printf("val min=%d max=%d\n", valMin, valMax)
+
 	var norm = math.MaxUint16 / (valMax - valMin)
 	for y, row := range f.Pix {
 		for x, val := range row {
-			g16.SetGray16(x, y, color.Gray16{Y: (val - valMin) * norm})
+			if raw {
+				g16.SetGray16(x, y, color.Gray16{Y: val})
+			} else {
+				g16.SetGray16(x, y, color.Gray16{Y: (val - valMin) * norm})
+			}
 		}
 	}
 
-	out, err := os.Create(path.Join(dir, snapshotName))
+	filename := snapshotName
+	if raw {
+		filename = rawSnapshotName
+	}
+	out, err := os.Create(path.Join(dir, filename))
 	if err != nil {
 		return err
 	}
@@ -99,8 +111,13 @@ func newSnapshot(dir string) error {
 }
 
 func deleteSnapshot(dir string) {
-	if err := os.Remove(path.Join(dir, snapshotName)); err != nil && !os.IsNotExist(err) {
-		log.Printf("error with deleting snapshot image %s", err)
+	deleteSnapshotFile(dir, snapshotName)
+	deleteSnapshotFile(dir, rawSnapshotName)
+}
+
+func deleteSnapshotFile(dir, basename string) {
+	if err := os.Remove(path.Join(dir, basename)); err != nil && !os.IsNotExist(err) {
+		log.Printf("error deleting snapshot image: %v", err)
 	}
 }
 

@@ -66,10 +66,22 @@ func genIntrospectable(v interface{}) introspect.Introspectable {
 
 // TakeSnapshot will save the next frame as a still
 func (s *service) TakeSnapshot() *dbus.Error {
-	err := newSnapshot(s.dir)
+	err := newSnapshot(s.dir, false)
 	if err != nil {
 		return &dbus.Error{
-			Name: dbusName + ".StayOnForError",
+			Name: dbusName + ".TakeSnapshot",
+			Body: []interface{}{err.Error()},
+		}
+	}
+	return nil
+}
+
+// TakeRawSnapshot will save the next frame as a unnormalised still
+func (s *service) TakeRawSnapshot() *dbus.Error {
+	err := newSnapshot(s.dir, true)
+	if err != nil {
+		return &dbus.Error{
+			Name: dbusName + ".TakeRawSnapshot",
 			Body: []interface{}{err.Error()},
 		}
 	}
