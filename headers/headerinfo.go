@@ -33,6 +33,8 @@ type HeaderInfo struct {
 	framesize int
 	brand     string
 	model     string
+	serial    int
+	firmware  string
 }
 
 // ResX implements cptvframe.CameraSpec.
@@ -66,6 +68,16 @@ func (h *HeaderInfo) Brand() string {
 	return h.brand
 }
 
+// Camera module firmware revision i.e. 1.2.3
+func (h *HeaderInfo) Firmware() string {
+	return h.firmware
+}
+
+// Camera module unique serial#
+func (h *HeaderInfo) CameraSerial() int {
+	return h.serial
+}
+
 func ReadHeaderInfo(reader *bufio.Reader) (*HeaderInfo, error) {
 	var buf bytes.Buffer
 	for {
@@ -91,6 +103,8 @@ func ReadHeaderInfo(reader *bufio.Reader) (*HeaderInfo, error) {
 		framesize: toInt(h[FrameSize]),
 		brand:     toStr(h[Brand]),
 		model:     toStr(h[Model]),
+		serial:    toInt(h[Serial]),
+		firmware:  toStr(h[Firmware]),
 	}, nil
 }
 
