@@ -8,4 +8,6 @@ const (
 	Brand       = "Brand"
 	PixelBits   = "PixelBits"
 	FrameSize   = "FrameSize"
+	Firmware    = "Firmware"
+	Serial      = "CameraSerial"
 )
