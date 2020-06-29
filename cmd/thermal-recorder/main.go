@@ -197,6 +197,7 @@ func frameParser(brand, model string) func([]byte, *cptvframe.Frame) error {
 	}
 	switch model {
 	case "lepton3":
+	case "lepton3.5":
 		return lepton3.ParseRawFrame
 	case "lepton3.5":
 		return lepton3.ParseRawFrame
