@@ -195,9 +195,9 @@ func frameParser(brand, model string) func([]byte, *cptvframe.Frame) error {
 	if brand != "flir" {
 		return nil
 	}
-	log.Println("Got model", model)
 	switch model {
 	case "lepton3":
+		fallthrough
 	case "lepton3.5":
 		return lepton3.ParseRawFrame
 	case "boson":
