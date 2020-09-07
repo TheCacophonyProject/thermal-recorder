@@ -17,17 +17,20 @@
 package main
 
 import (
+	//"math"
 	"bufio"
+	"encoding/binary"
+	config "github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/thermal-recorder/headers"
+	arg "github.com/alexflint/go-arg"
+	"github.com/gonutz/framebuffer"
+	"image"
+	"image/draw"
 	"io"
 	"log"
 	"net"
 	"os"
 	"time"
-
-	config "github.com/TheCacophonyProject/go-config"
-	arg "github.com/alexflint/go-arg"
-
-	"github.com/TheCacophonyProject/thermal-recorder/headers"
 )
 
 var (
@@ -77,6 +80,8 @@ func runMain() error {
 
 	logConfig(conf)
 
+	// Setup HDMI output:
+
 	for {
 		// Set up listener for frames sent by leptond.
 		os.Remove(conf.FrameInput)
@@ -100,6 +105,12 @@ func runMain() error {
 }
 
 func handleConn(conn net.Conn, conf *Config, logFrameRate bool) error {
+	gray := image.NewGray(image.Rect(0, 0, 640, 512))
+	fb, err := framebuffer.Open("/dev/fb0")
+	if err != nil {
+		panic(err)
+	}
+	defer fb.Close()
 
 	totalFrames := 0
 	reader := bufio.NewReader(conn)
@@ -149,6 +160,28 @@ func handleConn(conn net.Conn, conf *Config, logFrameRate bool) error {
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
 			totalFrames <= 60*header.FPS() || totalFrames%frameLogInterval == 0 {
 			log.Printf("%d frames for this connection", totalFrames)
+		}
+
+		{
+			max := uint16(0)
+			min := uint16((1 << 16) - 1)
+			for i := 0; i < len(frame); i += 2 {
+				val := binary.LittleEndian.Uint16(frame[i : i+2])
+				if val < min {
+					min = val
+				}
+				if val > max {
+					max = val
+				}
+			}
+			valRange := float64(max - min)
+			j := 0
+			for i := 0; i < len(frame); i += 2 {
+				val := binary.LittleEndian.Uint16(frame[i : i+2])
+				gray.Pix[j] = uint8((float64(val-min) / valRange) * 255.0)
+				j++
+			}
+			draw.Draw(fb, gray.Bounds(), gray, image.ZP, draw.Src)
 		}
 
 		writeFrames <- frame

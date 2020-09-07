@@ -46,7 +46,7 @@ nfpms:
   maintainer: Menno Finlay-Smits <menno@cacophony.org.nz>
   description: Record thermal video footage from FLIR Lepton 3 camera
   license: GPL v3.0
-  name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}"
+  file_name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Arch }}"
   formats:
     - deb
   bindir: /usr/bin

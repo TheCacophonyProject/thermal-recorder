@@ -10,6 +10,7 @@ require (
 	github.com/alexflint/go-arg v1.1.0
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/godbus/dbus v4.1.0+incompatible
+	github.com/gonutz/framebuffer v0.0.0-20161010133700-868cfcb58bff
 	github.com/juju/ratelimit v1.0.1
 	github.com/nathan-osman/go-sunrise v0.0.0-20171121204956-7c449e7c690b // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect
