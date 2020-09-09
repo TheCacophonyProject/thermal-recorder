@@ -98,8 +98,8 @@ func (throttler *ThrottledRecorder) CheckCanRecord() error {
 	return throttler.recorder.CheckCanRecord()
 }
 
-func (throttler *ThrottledRecorder) StartRecording() error {
-	if err := throttler.maybeStartRecording(); err != nil {
+func (throttler *ThrottledRecorder) StartRecording(tempThresh uint16) error {
+	if err := throttler.maybeStartRecording(tempThresh); err != nil {
 		return err
 	}
 	if !throttler.recording {
@@ -117,9 +117,9 @@ func (throttler *ThrottledRecorder) StopRecording() error {
 	return nil
 }
 
-func (throttler *ThrottledRecorder) WriteFrame(frame *cptvframe.Frame) error {
+func (throttler *ThrottledRecorder) WriteFrame(frame *cptvframe.Frame, tempThresh uint16) error {
 	if !throttler.recording {
-		if err := throttler.maybeStartRecording(); err != nil {
+		if err := throttler.maybeStartRecording(tempThresh); err != nil {
 			return err
 		}
 		if !throttler.recording {
@@ -128,7 +128,7 @@ func (throttler *ThrottledRecorder) WriteFrame(frame *cptvframe.Frame) error {
 	}
 
 	if throttler.bucket.TakeAvailable(1) > 0 {
-		return throttler.recorder.WriteFrame(frame)
+		return throttler.recorder.WriteFrame(frame, tempThresh)
 	}
 
 	log.Print("recording throttled")
@@ -136,9 +136,9 @@ func (throttler *ThrottledRecorder) WriteFrame(frame *cptvframe.Frame) error {
 	return throttler.StopRecording()
 }
 
-func (throttler *ThrottledRecorder) maybeStartRecording() error {
+func (throttler *ThrottledRecorder) maybeStartRecording(tempThresh uint16) error {
 	if throttler.bucket.Available() >= throttler.minRecordingLength {
-		if err := throttler.recorder.StartRecording(); err != nil {
+		if err := throttler.recorder.StartRecording(tempThresh); err != nil {
 			return err
 		}
 		throttler.recording = true
