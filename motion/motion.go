@@ -32,7 +32,7 @@ const ffcPeriod = 10 * time.Second
 
 const debugLogSecs = 5
 const frameBackgroundWeighting = 0.99
-const weightEveryNFrames = 3
+const weightEveryNFrames = 10
 
 func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptvframe.CameraSpec) *motionDetector {
 	d := new(motionDetector)
@@ -42,7 +42,8 @@ func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptv
 	d.deltaThresh = args.DeltaThresh
 	d.countThresh = args.CountThresh
 	d.tempThresh = args.TempThresh
-	d.defaultTempThresh = args.TempThresh
+	d.tempThreshMin = args.TempThreshMin
+	d.tempThreshMax = args.TempThreshMax
 	d.warmerOnly = args.WarmerOnly
 	d.dynamicThresh = args.DynamicThreshold
 	d.start = args.EdgePixels
@@ -63,38 +64,45 @@ func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptv
 }
 
 type motionDetector struct {
-	flooredFrames     FrameLoop
-	diffFrames        FrameLoop
-	firstDiff         bool
-	dynamicThresh     bool
-	useOneDiff        bool
-	tempThresh        uint16
-	defaultTempThresh uint16
-	deltaThresh       uint16
-	countThresh       int
-	warmerOnly        bool
-	start             int
-	rowStop           int
-	columnStop        int
-	count             int
-	background        [][]uint16
-	backgroundWeight  float32
-	backgroundFrames  int
-	debug             *debugTracker
-	previewFrames     int
-	numPixels         float64
-	affectedByFCC     bool
-	framesHz          int
+	flooredFrames    FrameLoop
+	diffFrames       FrameLoop
+	firstDiff        bool
+	dynamicThresh    bool
+	useOneDiff       bool
+	tempThresh       uint16
+	tempThreshMax    uint16
+	tempThreshMin    uint16
+	deltaThresh      uint16
+	countThresh      int
+	warmerOnly       bool
+	start            int
+	rowStop          int
+	columnStop       int
+	count            int
+	background       [][]uint16
+	backgroundWeight float32
+	backgroundFrames int
+	debug            *debugTracker
+	previewFrames    int
+	numPixels        float64
+	affectedByFCC    bool
+	framesHz         int
 }
 
 func (d *motionDetector) calculateThreshold(backAverage float64) {
-	d.tempThresh = uint16(math.Min(backAverage, float64(d.defaultTempThresh)))
+	if d.tempThreshMin != 0 {
+		d.tempThresh = uint16(math.Max(backAverage, float64(d.tempThreshMin)))
+	} else {
+		d.tempThresh = uint16(backAverage)
+	}
+	if d.tempThreshMax != 0 {
+		d.tempThresh = uint16(math.Min(backAverage, float64(d.tempThreshMax)))
+	}
 }
 
 func (d *motionDetector) Detect(frame *cptvframe.Frame) bool {
 	prevFFC := d.affectedByFCC
 	d.affectedByFCC = isAffectedByFFC(frame)
-
 	if d.dynamicThresh && !d.affectedByFCC {
 		backAverage, changed := d.updateBackground(frame, prevFFC)
 		if changed && d.backgroundFrames > d.previewFrames {

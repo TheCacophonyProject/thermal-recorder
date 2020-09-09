@@ -48,7 +48,7 @@ func CurrentConfig() *Config {
 		FrameInput:   config.DefaultLepton().FrameOutput,
 		Location:     config.Location{},
 		MinDiskSpace: config.DefaultThermalRecorder().MinDiskSpaceMB,
-		Motion:       config.DefaultThermalMotion(),
+		Motion:       config.DefaultThermalMotion(lepton3.Model),
 		OutputDir:    config.DefaultThermalRecorder().OutputDir,
 		Recorder:     recorder,
 		Throttler:    config.DefaultThermalThrottler(),

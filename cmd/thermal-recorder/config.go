@@ -24,6 +24,7 @@ import (
 )
 
 type Config struct {
+	ConfigDir    string
 	DeviceID     int
 	DeviceName   string
 	FrameInput   string
@@ -33,6 +34,20 @@ type Config struct {
 	Motion       goconfig.ThermalMotion
 	Throttler    goconfig.ThermalThrottler
 	Location     goconfig.Location
+	Verbose      bool
+}
+
+func (c *Config) LoadMotionConfig(cameraModel string) error {
+	configRW, err := goconfig.New(c.ConfigDir)
+	if err != nil {
+		return err
+	}
+	motionConfig, err := motion.NewConfig(configRW, cameraModel)
+	if err != nil {
+		return err
+	}
+	c.Motion = *motionConfig
+	return nil
 }
 
 func ParseConfig(configFolder string) (*Config, error) {
@@ -42,11 +57,6 @@ func ParseConfig(configFolder string) (*Config, error) {
 	}
 
 	recorderConfig, err := recorder.NewConfig(configRW)
-	if err != nil {
-		return nil, err
-	}
-
-	motionConfig, err := motion.NewConfig(configRW)
 	if err != nil {
 		return nil, err
 	}
@@ -77,14 +87,15 @@ func ParseConfig(configFolder string) (*Config, error) {
 	}
 
 	return &Config{
+		ConfigDir:    configFolder,
 		DeviceID:     deviceConfig.ID,
 		DeviceName:   deviceConfig.Name,
 		FrameInput:   leptonConfig.FrameOutput,
 		OutputDir:    thermalRecorderConfig.OutputDir,
 		MinDiskSpace: thermalRecorderConfig.MinDiskSpaceMB,
 		Recorder:     *recorderConfig,
-		Motion:       *motionConfig,
 		Throttler:    *throttlerConfig,
 		Location:     locationConfig,
+		Verbose:      false,
 	}, nil
 }

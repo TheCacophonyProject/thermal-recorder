@@ -87,8 +87,8 @@ func runMain() error {
 
 	logConfig(conf)
 
+	conf.Verbose = args.Verbose
 	if args.TestCptvFile != "" {
-		conf.Motion.Verbose = args.Verbose
 		results := NewCPTVPlaybackTester(conf).Detect(args.TestCptvFile)
 		log.Printf("Detected: %-16s Recorded: %-16s Motion frames: %d/%d", results.motionDetectedFrames, results.recordedFrames, results.motionDetectedCount, results.frameCount)
 		return nil
@@ -145,7 +145,7 @@ func handleConn(conn net.Conn, conf *Config) error {
 	}
 
 	log.Printf("connection from %s %s (%dx%d@%dfps)", header.Brand(), header.Model(), header.ResX(), header.ResY(), header.FPS())
-
+	conf.LoadMotionConfig(header.Model())
 	parseFrame := frameParser(header.Brand(), header.Model())
 	if parseFrame == nil {
 		return fmt.Errorf("unable to handle frames for %s %s", header.Brand(), header.Model())
@@ -196,9 +196,9 @@ func frameParser(brand, model string) func([]byte, *cptvframe.Frame) error {
 		return nil
 	}
 	switch model {
-	case "lepton3":
+	case lepton3.Model:
 		return lepton3.ParseRawFrame
-	case "lepton3.5":
+	case lepton3.Model35:
 		return lepton3.ParseRawFrame
 	case "boson":
 		return convertRawBosonFrame

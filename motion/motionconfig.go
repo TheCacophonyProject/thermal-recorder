@@ -20,8 +20,8 @@ import (
 	config "github.com/TheCacophonyProject/go-config"
 )
 
-func NewConfig(configRW *config.Config) (*config.ThermalMotion, error) {
-	thermalMotionConfig := config.DefaultThermalMotion()
+func NewConfig(configRW *config.Config, cameraModel string) (*config.ThermalMotion, error) {
+	thermalMotionConfig := config.DefaultThermalMotion(cameraModel)
 	if err := configRW.Unmarshal(config.ThermalMotionKey, &thermalMotionConfig); err != nil {
 		return nil, err
 	}
