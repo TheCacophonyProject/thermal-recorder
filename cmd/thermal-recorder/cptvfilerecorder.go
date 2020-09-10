@@ -91,7 +91,7 @@ func (fw *CPTVFileRecorder) StartRecording(tempThreshold uint16) error {
 	if err != nil {
 		return err
 	}
-	motionYAML := fmt.Sprintf("%smotion-thresh: %d\n", fw.motionYAML, tempThreshold)
+	motionYAML := fmt.Sprintf("%striggeredthresh: %d\n", fw.motionYAML, tempThreshold)
 	fw.header.MotionConfig = motionYAML
 	if err = writer.WriteHeader(fw.header); err != nil {
 		writer.Close()
