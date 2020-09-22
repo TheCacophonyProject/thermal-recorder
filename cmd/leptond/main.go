@@ -20,17 +20,18 @@ import (
 	"encoding/binary"
 	"errors"
 	"fmt"
-	arg "github.com/alexflint/go-arg"
-	"github.com/coreos/go-systemd/daemon"
-	"gopkg.in/yaml.v1"
 	"log"
 	"net"
 	"os/exec"
+	"strings"
+	"time"
+
+	arg "github.com/alexflint/go-arg"
+	"github.com/coreos/go-systemd/daemon"
+	"gopkg.in/yaml.v1"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
-	"strings"
-	"time"
 
 	"github.com/TheCacophonyProject/event-reporter/eventclient"
 	"github.com/TheCacophonyProject/go-config"
@@ -239,6 +240,7 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 func firstPixel(frame []byte) uint16 {
 	return binary.BigEndian.Uint16(frame[telemetryBytes : telemetryBytes+2])
 }
+
 func logConfig(conf *Config) {
 	log.Printf("SPI speed: %d", conf.SPISpeed)
 	log.Printf("power pin: %s", conf.PowerPin)
