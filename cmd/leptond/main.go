@@ -223,7 +223,7 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 				Details:   map[string]interface{}{"description": map[string]interface{}{"details": "Bad Pixel (0,0)", "type": "leptond"}},
 			}
 			eventclient.AddEvent(event)
-			return errors.New("Bad pixel (0,0)")
+			return &nextFrameErr{errors.New("Bad pixel (0,0)")}
 		}
 		if notifyCount++; notifyCount >= framesPerSdNotify {
 			daemon.SdNotify(false, "WATCHDOG=1")
