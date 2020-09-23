@@ -17,6 +17,7 @@
 package main
 
 import (
+	"encoding/binary"
 	"errors"
 	"fmt"
 	"log"
@@ -25,15 +26,17 @@ import (
 	"strings"
 	"time"
 
-	"github.com/TheCacophonyProject/go-config"
-	"github.com/TheCacophonyProject/lepton3"
-	"github.com/TheCacophonyProject/thermal-recorder/headers"
 	arg "github.com/alexflint/go-arg"
 	"github.com/coreos/go-systemd/daemon"
 	"gopkg.in/yaml.v1"
 	"periph.io/x/periph/conn/gpio"
 	"periph.io/x/periph/conn/gpio/gpioreg"
 	"periph.io/x/periph/host"
+
+	"github.com/TheCacophonyProject/event-reporter/eventclient"
+	"github.com/TheCacophonyProject/go-config"
+	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/thermal-recorder/headers"
 )
 
 const (
@@ -43,6 +46,8 @@ const (
 	frameLogInterval         = 60 * 5 * framesHz
 
 	framesPerSdNotify = 5 * framesHz
+
+	telemetryBytes = 160 * 4 //this should be made public in lepton3
 )
 
 var version = "<not set>"
@@ -212,6 +217,15 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 			return &nextFrameErr{err}
 		}
 
+		if firstPixel(frame) == 0 {
+			event := eventclient.Event{
+				Timestamp: time.Now(),
+				Type:      "leptond",
+				Details:   map[string]interface{}{"description": map[string]interface{}{"details": "Bad Pixel (0,0)"}},
+			}
+			eventclient.AddEvent(event)
+			return &nextFrameErr{errors.New("Bad pixel (0,0)")}
+		}
 		if notifyCount++; notifyCount >= framesPerSdNotify {
 			daemon.SdNotify(false, "WATCHDOG=1")
 			notifyCount = 0
@@ -221,6 +235,10 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 			return err
 		}
 	}
+}
+
+func firstPixel(frame []byte) uint16 {
+	return binary.BigEndian.Uint16(frame[telemetryBytes : telemetryBytes+2])
 }
 
 func logConfig(conf *Config) {
