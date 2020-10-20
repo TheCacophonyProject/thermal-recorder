@@ -243,7 +243,9 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *cptvframe.Frame) *cptvframe
 func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bool) (float64, bool) {
 	d.backgroundFrames++
 	if d.backgroundFrames == 1 {
-		d.background = new_frame.Pix
+		for i := range new_frame.Pix {
+			copy(d.background[i], new_frame.Pix[i])
+		}
 		return 0, true
 	}
 
