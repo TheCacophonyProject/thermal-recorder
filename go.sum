@@ -8,9 +8,11 @@ github.com/OneOfOne/xxhash v1.2.2/go.mod h1:HSdplMjZKSmBqAxg5vPj2TmRDmfkzw+cTzAE
 github.com/TheCacophonyProject/event-reporter v1.3.2-0.20200210010421-ca3fcb76a231 h1:nLqfSx3zDBzghlP/S8X2j/WRtW0e3BZvSkMm1J/Fa8U=
 github.com/TheCacophonyProject/event-reporter v1.3.2-0.20200210010421-ca3fcb76a231/go.mod h1:kei6S/4x+VHp5yiwYPqvcNnhuRpZ8iLsh95Sue6kPvc=
 github.com/TheCacophonyProject/go-api v0.0.0-20190923033957-174cea2ac81c/go.mod h1:FfMpa4cFhNXQ9tuKG18HO6yLExezcJhzjUjBOFocrQw=
+github.com/TheCacophonyProject/go-config v0.0.0-20190922224052-7c2a21bc6b88/go.mod h1:gPUJLVu408NRz9/P3BrsxzOzLc+KJLrv+jVdDw3RI0Y=
+github.com/TheCacophonyProject/go-config v1.4.0 h1:G7YOqMrRljWQ0BWVHJiZNe79KaMNJMP5QyCa2fP27cs=
+github.com/TheCacophonyProject/go-config v1.4.0/go.mod h1:oARW/N3eJbcewCqB+Jc7TBwuODawwYgpo56UO6yBdKU=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200116020937-858bd8b71512/go.mod h1:8H6Aaft5549sIWxcsuCIL2o60/TQkoF93fVoSTpgZb8=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200616224711-fc633122087a/go.mod h1:Vg73Ezn4kr8qDNP9LNgjki9qgi+5T/0Uc9oDyflaYUY=
-github.com/TheCacophonyProject/go-cptv v0.0.0-20200818214604-bd5d4aa36043/go.mod h1:wG4/P/TsGtk33uBClYPjRlSbcdQrIASXutOUV8LMn2o=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200928004402-97185afb2458 h1:Eyn0FLdeDFQGS5fpZeZzEZzcDCbg/pkAEMPxSvOFZzk=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200928004402-97185afb2458/go.mod h1:pExPO/gk28kgWnd1z55xJ7YtC0KgQBDKvJoGYExc+l0=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20200121020734-2ae28662e1bc/go.mod h1:xzPAWtvVCbJdJC2Gn1cG0Ovs/VP7XGGiQpUU8wU4HME=
@@ -20,6 +22,7 @@ github.com/TheCacophonyProject/lepton3 v0.0.0-20200909032119-e2b2b778a8ee/go.mod
 github.com/TheCacophonyProject/modemd v0.0.0-20190605010435-ae5b0f2eb760/go.mod h1:bfwJ/WcvDY9XtHKC5tcRfVrU8RWaW8DLYAAUfsrJr/4=
 github.com/TheCacophonyProject/periph v2.1.1-0.20200615222341-6834cd5be8c1+incompatible h1:0pEn1FoMTgOZR3EkqOTiqd0++jOS/jWlGrbvOHK0/KM=
 github.com/TheCacophonyProject/periph v2.1.1-0.20200615222341-6834cd5be8c1+incompatible/go.mod h1:K1wa07sGXKzV0G9p+4R069mZk4GOpqKW8GU6/k+BrIo=
+github.com/TheCacophonyProject/window v0.0.0-20190821235241-ab92c2ee24b6/go.mod h1:Vww417iimOb0s46Ndsm8U/vYtwc0dZUet4uW8QzBo4M=
 github.com/TheCacophonyProject/window v0.0.0-20200312071457-7fc8799fdce7 h1:JlTPDD6dwFU/OZfD/E2a2ByA4jgzzBhM0QMwwuYrjLg=
 github.com/TheCacophonyProject/window v0.0.0-20200312071457-7fc8799fdce7/go.mod h1:6FLliyNjkbVlhGVA51M83YM0U+DgJl29QMtKDjA93pQ=
 github.com/alecthomas/template v0.0.0-20160405071501-a0175ee3bccc/go.mod h1:LOuyumcjzFXgccqObfd/Ljyb9UuFJ6TxHnclSeseNhc=
@@ -174,9 +177,7 @@ golang.org/x/net v0.0.0-20190311183353-d8887717615a/go.mod h1:t9HGtf8HONx5eT2rtn
 golang.org/x/net v0.0.0-20190404232315-eb5bcb51f2a3/go.mod h1:t9HGtf8HONx5eT2rtn7q6eTqICYqUVnKs3thJo3Qplg=
 golang.org/x/net v0.0.0-20190522155817-f3200d17e092/go.mod h1:HSz+uSET+XFnRR8LxR5pz3Of3rY3CfYBVs4xY44aLks=
 golang.org/x/net v0.0.0-20200114155413-6afb5195e5aa/go.mod h1:z5CRVTTTmAJ677TzLLGU+0bjPO0LkuOLi4/5GtJWs/s=
-golang.org/x/net v0.0.0-20200324143707-d3edc9973b7e/go.mod h1:qpuaurCH72eLCgpAm/N6yyVIVM9cpaDIP3A8BGJEC5A=
 golang.org/x/net v0.0.0-20200822124328-c89045814202/go.mod h1:/O7V0waA8r7cgGh81Ro3o1hOxt32SMVPicZroKQ2sZA=
-golang.org/x/net v0.0.0-20200904194848-62affa334b73/go.mod h1:/O7V0waA8r7cgGh81Ro3o1hOxt32SMVPicZroKQ2sZA=
 golang.org/x/net v0.0.0-20200927032502-5d4f70055728 h1:5wtQIAulKU5AbLQOkjxl32UufnIOqgBX72pS0AV14H0=
 golang.org/x/net v0.0.0-20200927032502-5d4f70055728/go.mod h1:/O7V0waA8r7cgGh81Ro3o1hOxt32SMVPicZroKQ2sZA=
 golang.org/x/oauth2 v0.0.0-20180821212333-d2e6202438be/go.mod h1:N/0e6XlmueqKjAGxoOufVs8QHGRruUQn6yWY3a++T0U=
@@ -206,9 +207,8 @@ google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZi
 google.golang.org/grpc v1.21.0/go.mod h1:oYelfM1adQP15Ek0mdvEgi9Df8B9CZIaU1084ijfRaM=
 gopkg.in/alecthomas/kingpin.v2 v2.2.6/go.mod h1:FMv+mEhP44yOT+4EoQTLFTRgOQ1FBLkstjWtayDeSgw=
 gopkg.in/check.v1 v0.0.0-20161208181325-20d25e280405/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
+gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127 h1:qIbj1fsPNlZgppZ+VLlY7N33q108Sa+fhmuc+sWQYwY=
 gopkg.in/check.v1 v1.0.0-20180628173108-788fd7840127/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
-gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15 h1:YR8cESwS4TdDjEe65xsg0ogRM/Nc3DYOhEAlW+xobZo=
-gopkg.in/check.v1 v1.0.0-20190902080502-41f04d3bba15/go.mod h1:Co6ibVJAznAaIkqp8huTwlJQCZ016jof/cbN4VW5Yz0=
 gopkg.in/resty.v1 v1.12.0/go.mod h1:mDo4pnntr5jdWRML875a/NmxYqAlA73dVijT2AXvQQo=
 gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 h1:yiW+nvdHb9LVqSHQBXfZCieqV4fzYhNBql77zY0ykqs=
 gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637/go.mod h1:BHsqpu/nsuzkT5BpiH1EMZPLyqSMM8JbIavyFACoFNk=
