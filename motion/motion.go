@@ -49,7 +49,7 @@ func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptv
 	d.start = args.EdgePixels
 	d.columnStop = camera.ResX() - args.EdgePixels
 	d.rowStop = camera.ResY() - args.EdgePixels
-	d.backgroundWeight = frameBackgroundWeighting
+
 	d.previewFrames = previewFrames
 	d.numPixels = float64((d.rowStop - d.start) * (d.columnStop - d.start))
 	d.framesHz = camera.FPS()
@@ -58,6 +58,11 @@ func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptv
 	}
 	d.background = cptvframe.NewFrame(camera)
 	d.background.Status.BackgroundFrame = true
+	d.backgroundWeight = make([][]float32, camera.ResY())
+	for i := range d.backgroundWeight {
+		d.backgroundWeight[i] = make([]float32, camera.ResX())
+	}
+
 	return d
 }
 
@@ -78,7 +83,7 @@ type motionDetector struct {
 	columnStop       int
 	count            int
 	background       *cptvframe.Frame
-	backgroundWeight float32
+	backgroundWeight [][]float32
 	backgroundFrames int
 	debug            *debugTracker
 	previewFrames    int
@@ -105,11 +110,6 @@ func (d *motionDetector) Detect(frame *cptvframe.Frame) bool {
 		backAverage, changed := d.updateBackground(frame, prevFFC)
 		if changed && d.backgroundFrames > d.previewFrames {
 			d.calculateThreshold(backAverage)
-			d.backgroundWeight = frameBackgroundWeighting
-		} else {
-			if d.count%weightEveryNFrames == 0 {
-				d.backgroundWeight = d.backgroundWeight * frameBackgroundWeighting
-			}
 		}
 		d.debug.update("thresh", int(d.tempThresh))
 	}
@@ -256,9 +256,17 @@ func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bo
 	var average float64 = 0
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
-			if prevFFC || uint16(float32(new_frame.Pix[y][x])*d.backgroundWeight) < d.background.Pix[y][x] {
+			weight := d.backgroundWeight[y][x]
+			if prevFFC || (float32(new_frame.Pix[y][x])-weight) < float32(d.background.Pix[y][x]) {
 				d.background.Pix[y][x] = new_frame.Pix[y][x]
+				d.backgroundWeight[y][x] = 0
 				changed = true
+			} else {
+				weight += 0.1
+				if weight > math.MaxFloat32 {
+					weight = math.MaxFloat32
+				}
+				d.backgroundWeight[y][x] = weight
 			}
 			average = average + float64(d.background.Pix[y][x])/d.numPixels
 		}

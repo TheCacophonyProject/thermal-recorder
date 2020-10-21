@@ -73,7 +73,7 @@ type writeRecorder struct {
 	writes int
 }
 
-func (rec *writeRecorder) WriteFrame(frame *cptvframe.Frame, tempThresh uint16) error {
+func (rec *writeRecorder) WriteFrame(frame *cptvframe.Frame) error {
 	rec.writes++
 	return nil
 }
@@ -91,7 +91,7 @@ func (tc *throttleListener) WhenThrottled() {
 }
 
 func recordFrames(recorder *ThrottledRecorder, frames int) {
-	recorder.StartRecording(0)
+	recorder.StartRecording(nil, 0)
 	writeFrames(recorder, frames)
 	recorder.StopRecording()
 }
@@ -100,7 +100,7 @@ func writeFrames(recorder *ThrottledRecorder, frames int) {
 
 	f := cptvframe.NewFrame(new(TestCamera))
 	for i := 0; i < frames; i++ {
-		recorder.WriteFrame(f, 0)
+		recorder.WriteFrame(f)
 	}
 }
 
@@ -170,7 +170,7 @@ func TestNotifiesEvenWhenRecordingDoesntStart(t *testing.T) {
 func TestIntraRecordingRestart(t *testing.T) {
 	recorder, listener, throtRecorder, clock := newTestThrottledRecorder()
 
-	recorder.StartRecording(0)                   // start a fresh recording
+	recorder.StartRecording(nil, 0)              // start a fresh recording
 	writeFrames(throtRecorder, throttleFrames+1) // Trigger throttling.
 	assert.Equal(t, 1, listener.events)
 

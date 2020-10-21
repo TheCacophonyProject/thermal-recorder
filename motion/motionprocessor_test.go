@@ -44,13 +44,13 @@ func (tr *TestRecorder) StopRecording() error {
 
 func (tr *TestRecorder) CheckCanRecord() error { return tr.CanRecordReturn }
 
-func (tr *TestRecorder) StartRecording(tempThresh uint16) error {
+func (tr *TestRecorder) StartRecording(background *cptvframe.Frame, tempThresh uint16) error {
 	tr.frameIds = make([]int, 200)
 	tr.index = 0
 	return nil
 }
 
-func (tr *TestRecorder) WriteFrame(frame *cptvframe.Frame, tempThresh uint16) error {
+func (tr *TestRecorder) WriteFrame(frame *cptvframe.Frame) error {
 	tr.frameIds[tr.index] = int(frame.Pix[0][0])
 	tr.index++
 	return nil
