@@ -168,17 +168,7 @@ func isAffectedByFFC(f *cptvframe.Frame) bool {
 }
 
 func (d *motionDetector) setFloor(f, out *cptvframe.Frame) *cptvframe.Frame {
-	for y := d.start; y < d.rowStop; y++ {
-		for x := d.start; x < d.columnStop; x++ {
-			v := f.Pix[y][x]
-			d.debug.update("temp", int(v))
-			if v < d.tempThresh {
-				out.Pix[y][x] = d.tempThresh
-			} else {
-				out.Pix[y][x] = v
-			}
-		}
-	}
+	out.Copy(f)
 	return out
 }
 
@@ -223,7 +213,15 @@ func (d *motionDetector) hasMotion(f1 *cptvframe.Frame, f2 *cptvframe.Frame) (bo
 func (d *motionDetector) absDiffFrames(a, b, out *cptvframe.Frame) *cptvframe.Frame {
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
-			out.Pix[y][x] = absDiff(a.Pix[y][x], b.Pix[y][x])
+			va := a.Pix[y][x]
+			if va < d.tempThresh{
+				va = d.tempThresh
+			}
+			vb :=b.Pix[y][x]
+			if vb < d.tempThresh{
+				vb = d.tempThresh
+			}
+			out.Pix[y][x] = absDiff(va,vb)
 		}
 	}
 	return out
@@ -234,7 +232,14 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *cptvframe.Frame) *cptvframe
 		for x := d.start; x < d.columnStop; x++ {
 			va := a.Pix[y][x]
 			d.debug.update("ftemp", int(va))
-			out.Pix[y][x] = warmerDiff(va, b.Pix[y][x])
+			if va < d.tempThresh{
+				va = d.tempThresh
+			}
+			vb :=b.Pix[y][x]
+			if vb < d.tempThresh{
+				vb = d.tempThresh
+			}
+			out.Pix[y][x] = warmerDiff(va,vb)
 		}
 	}
 	return out
