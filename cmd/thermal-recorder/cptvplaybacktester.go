@@ -138,7 +138,7 @@ func (cpt *CPTVPlaybackTester) LoadAllCptvFrames(filename string) []*cptvframe.F
 }
 
 func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingListener {
-	verbose := cpt.config.Motion.Verbose
+	verbose := cpt.config.Verbose
 	if verbose {
 		log.Printf("TestFile is %s", filename)
 	}
@@ -146,6 +146,8 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 	recorder := new(recorder.NoWriteRecorder)
 
 	file, reader, err := motionTesterLoadFile(filename)
+	cpt.config.LoadMotionConfig(reader.ModelName())
+	cpt.config.Motion.Verbose = verbose
 	camera := new(TestCamera)
 	listener := new(EventLoggingRecordingListener)
 	listener.config = cpt.config

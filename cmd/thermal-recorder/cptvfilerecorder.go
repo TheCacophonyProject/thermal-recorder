@@ -59,6 +59,7 @@ func NewCPTVFileRecorder(config *Config, camera cptvframe.CameraSpec, brand, mod
 		header:       cptvHeader,
 		minDiskSpace: config.MinDiskSpace,
 		camera:       camera,
+		motionYAML:   string(motionYAML),
 	}
 }
 
@@ -68,6 +69,7 @@ type CPTVFileRecorder struct {
 	minDiskSpace uint64
 	camera       cptvframe.CameraSpec
 	writer       *cptv.FileWriter
+	motionYAML   string
 }
 
 func (cfr *CPTVFileRecorder) CheckCanRecord() error {
@@ -80,7 +82,8 @@ func (cfr *CPTVFileRecorder) CheckCanRecord() error {
 	return nil
 }
 
-func (fw *CPTVFileRecorder) StartRecording() error {
+func (fw *CPTVFileRecorder) StartRecording(tempThreshold uint16) error {
+
 	filename := filepath.Join(fw.outputDir, newRecordingTempName())
 	log.Printf("recording started: %s", filename)
 
@@ -88,7 +91,8 @@ func (fw *CPTVFileRecorder) StartRecording() error {
 	if err != nil {
 		return err
 	}
-
+	motionYAML := fmt.Sprintf("%striggeredthresh: %d\n", fw.motionYAML, tempThreshold)
+	fw.header.MotionConfig = motionYAML
 	if err = writer.WriteHeader(fw.header); err != nil {
 		writer.Close()
 		return err
@@ -119,7 +123,7 @@ func (fw *CPTVFileRecorder) Stop() {
 	}
 }
 
-func (fw *CPTVFileRecorder) WriteFrame(frame *cptvframe.Frame) error {
+func (fw *CPTVFileRecorder) WriteFrame(frame *cptvframe.Frame, tempThresh uint16) error {
 	return fw.writer.WriteFrame(frame)
 }
 

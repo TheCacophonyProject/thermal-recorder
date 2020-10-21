@@ -23,7 +23,6 @@ import (
 	"log"
 	"net"
 	"os/exec"
-	"strings"
 	"time"
 
 	arg "github.com/alexflint/go-arg"
@@ -172,23 +171,10 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 	}
 	firmware := fmt.Sprintf("%d.%d.%d", firmwareDsp.Gpp_major, firmwareDsp.Gpp_minor, firmwareDsp.Gpp_build)
 
-	partNum, err := camera.GetPartNum()
+	model, err := camera.GetModel()
 	if err != nil {
-		partNum = "<unknown>"
+		return err
 	}
-	partNum = strings.TrimRight(partNum, "\000")
-
-	model := "<unknown>"
-	switch partNum {
-	default:
-	case "500-0726-01":
-		model = "lepton3"
-		break
-	case "500-0771-01":
-		model = "lepton3.5"
-		break
-	}
-
 	camera_specs := map[string]interface{}{
 		headers.XResolution: camera.ResX(),
 		headers.YResolution: camera.ResY(),
