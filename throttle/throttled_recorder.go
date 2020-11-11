@@ -84,6 +84,8 @@ type ThrottledRecorder struct {
 	bucket             *ratelimit.Bucket
 	recording          bool
 	minRecordingLength int64
+	tempThresh         uint16
+	backgroundFrame    *cptvframe.Frame
 }
 
 type ThrottledEventListener interface {
@@ -98,14 +100,16 @@ func (throttler *ThrottledRecorder) CheckCanRecord() error {
 	return throttler.recorder.CheckCanRecord()
 }
 
-func (throttler *ThrottledRecorder) StartRecording(tempThresh uint16) error {
-	if err := throttler.maybeStartRecording(tempThresh); err != nil {
+func (throttler *ThrottledRecorder) StartRecording(background *cptvframe.Frame, tempThresh uint16) error {
+	if err := throttler.maybeStartRecording(background, tempThresh); err != nil {
 		return err
 	}
 	if !throttler.recording {
 		log.Print("recording not started due to throttling")
 		throttler.listener.WhenThrottled()
 	}
+	throttler.backgroundFrame = background
+	throttler.tempThresh = tempThresh
 	return nil
 }
 
@@ -117,9 +121,9 @@ func (throttler *ThrottledRecorder) StopRecording() error {
 	return nil
 }
 
-func (throttler *ThrottledRecorder) WriteFrame(frame *cptvframe.Frame, tempThresh uint16) error {
+func (throttler *ThrottledRecorder) WriteFrame(frame *cptvframe.Frame) error {
 	if !throttler.recording {
-		if err := throttler.maybeStartRecording(tempThresh); err != nil {
+		if err := throttler.maybeStartRecording(throttler.backgroundFrame, throttler.tempThresh); err != nil {
 			return err
 		}
 		if !throttler.recording {
@@ -128,7 +132,7 @@ func (throttler *ThrottledRecorder) WriteFrame(frame *cptvframe.Frame, tempThres
 	}
 
 	if throttler.bucket.TakeAvailable(1) > 0 {
-		return throttler.recorder.WriteFrame(frame, tempThresh)
+		return throttler.recorder.WriteFrame(frame)
 	}
 
 	log.Print("recording throttled")
@@ -136,9 +140,9 @@ func (throttler *ThrottledRecorder) WriteFrame(frame *cptvframe.Frame, tempThres
 	return throttler.StopRecording()
 }
 
-func (throttler *ThrottledRecorder) maybeStartRecording(tempThresh uint16) error {
+func (throttler *ThrottledRecorder) maybeStartRecording(background *cptvframe.Frame, tempThresh uint16) error {
 	if throttler.bucket.Available() >= throttler.minRecordingLength {
-		if err := throttler.recorder.StartRecording(tempThresh); err != nil {
+		if err := throttler.recorder.StartRecording(background, tempThresh); err != nil {
 			return err
 		}
 		throttler.recording = true

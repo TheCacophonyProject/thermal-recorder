@@ -120,7 +120,7 @@ func (mp *MotionProcessor) process(frame *cptvframe.Frame) {
 
 	// If recording, write the frame.
 	if mp.isRecording {
-		err := mp.recorder.WriteFrame(frame, mp.motionDetector.tempThresh)
+		err := mp.recorder.WriteFrame(frame)
 		if err != nil {
 			mp.log.Printf("Failed to write to CPTV file %v", err)
 		}
@@ -155,7 +155,8 @@ func (mp *MotionProcessor) canStartWriting() error {
 }
 
 func (mp *MotionProcessor) startRecording() error {
-	if err := mp.recorder.StartRecording(mp.motionDetector.tempThresh); err != nil {
+
+	if err := mp.recorder.StartRecording(mp.motionDetector.background, mp.motionDetector.tempThresh); err != nil {
 		return err
 	}
 
@@ -192,7 +193,7 @@ func (mp *MotionProcessor) recordPreTriggerFrames() error {
 	// it never writes the current frame as this will be written later
 	for ii < len(frames)-1 {
 		frame = frames[ii]
-		if err := mp.recorder.WriteFrame(frame, mp.motionDetector.tempThresh); err != nil {
+		if err := mp.recorder.WriteFrame(frame); err != nil {
 			return err
 		}
 		ii++

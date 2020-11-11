@@ -22,15 +22,17 @@ import (
 
 type Recorder interface {
 	StopRecording() error
-	StartRecording(tempThresh uint16) error
-	WriteFrame(frame *cptvframe.Frame, tempThresh uint16) error
+	StartRecording(backgroundFrame *cptvframe.Frame, tempThresh uint16) error
+	WriteFrame(frame *cptvframe.Frame) error
 	CheckCanRecord() error
 }
 
 type NoWriteRecorder struct {
 }
 
-func (*NoWriteRecorder) StopRecording() error                                       { return nil }
-func (*NoWriteRecorder) StartRecording(tempThresh uint16) error                     { return nil }
-func (*NoWriteRecorder) WriteFrame(frame *cptvframe.Frame, tempThresh uint16) error { return nil }
-func (*NoWriteRecorder) CheckCanRecord() error                                      { return nil }
+func (*NoWriteRecorder) StopRecording() error { return nil }
+func (*NoWriteRecorder) StartRecording(backgroundFrame *cptvframe.Frame, tempThresh uint16) error {
+	return nil
+}
+func (*NoWriteRecorder) WriteFrame(frame *cptvframe.Frame) error { return nil }
+func (*NoWriteRecorder) CheckCanRecord() error                   { return nil }

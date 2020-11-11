@@ -49,17 +49,20 @@ func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptv
 	d.start = args.EdgePixels
 	d.columnStop = camera.ResX() - args.EdgePixels
 	d.rowStop = camera.ResY() - args.EdgePixels
-	d.backgroundWeight = frameBackgroundWeighting
+
 	d.previewFrames = previewFrames
 	d.numPixels = float64((d.rowStop - d.start) * (d.columnStop - d.start))
 	d.framesHz = camera.FPS()
 	if args.Verbose {
 		d.debug = newDebugTracker()
 	}
-	d.background = make([][]uint16, camera.ResY())
-	for i := range d.background {
-		d.background[i] = make([]uint16, camera.ResX())
+	d.background = cptvframe.NewFrame(camera)
+	d.background.Status.BackgroundFrame = true
+	d.backgroundWeight = make([][]float32, camera.ResY())
+	for i := range d.backgroundWeight {
+		d.backgroundWeight[i] = make([]float32, camera.ResX())
 	}
+
 	return d
 }
 
@@ -79,8 +82,8 @@ type motionDetector struct {
 	rowStop          int
 	columnStop       int
 	count            int
-	background       [][]uint16
-	backgroundWeight float32
+	background       *cptvframe.Frame
+	backgroundWeight [][]float32
 	backgroundFrames int
 	debug            *debugTracker
 	previewFrames    int
@@ -107,11 +110,6 @@ func (d *motionDetector) Detect(frame *cptvframe.Frame) bool {
 		backAverage, changed := d.updateBackground(frame, prevFFC)
 		if changed && d.backgroundFrames > d.previewFrames {
 			d.calculateThreshold(backAverage)
-			d.backgroundWeight = frameBackgroundWeighting
-		} else {
-			if d.count%weightEveryNFrames == 0 {
-				d.backgroundWeight = d.backgroundWeight * frameBackgroundWeighting
-			}
 		}
 		d.debug.update("thresh", int(d.tempThresh))
 	}
@@ -214,14 +212,14 @@ func (d *motionDetector) absDiffFrames(a, b, out *cptvframe.Frame) *cptvframe.Fr
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
 			va := a.Pix[y][x]
-			if va < d.tempThresh{
+			if va < d.tempThresh {
 				va = d.tempThresh
 			}
-			vb :=b.Pix[y][x]
-			if vb < d.tempThresh{
+			vb := b.Pix[y][x]
+			if vb < d.tempThresh {
 				vb = d.tempThresh
 			}
-			out.Pix[y][x] = absDiff(va,vb)
+			out.Pix[y][x] = absDiff(va, vb)
 		}
 	}
 	return out
@@ -232,14 +230,14 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *cptvframe.Frame) *cptvframe
 		for x := d.start; x < d.columnStop; x++ {
 			va := a.Pix[y][x]
 			d.debug.update("ftemp", int(va))
-			if va < d.tempThresh{
+			if va < d.tempThresh {
 				va = d.tempThresh
 			}
-			vb :=b.Pix[y][x]
-			if vb < d.tempThresh{
+			vb := b.Pix[y][x]
+			if vb < d.tempThresh {
 				vb = d.tempThresh
 			}
-			out.Pix[y][x] = warmerDiff(va,vb)
+			out.Pix[y][x] = warmerDiff(va, vb)
 		}
 	}
 	return out
@@ -249,7 +247,7 @@ func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bo
 	d.backgroundFrames++
 	if d.backgroundFrames == 1 {
 		for i := range new_frame.Pix {
-			copy(d.background[i], new_frame.Pix[i])
+			copy(d.background.Pix[i], new_frame.Pix[i])
 		}
 		return 0, true
 	}
@@ -258,11 +256,19 @@ func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bo
 	var average float64 = 0
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
-			if prevFFC || uint16(float32(new_frame.Pix[y][x])*d.backgroundWeight) < d.background[y][x] {
-				d.background[y][x] = new_frame.Pix[y][x]
+			weight := d.backgroundWeight[y][x]
+			if prevFFC || (float32(new_frame.Pix[y][x])-weight) < float32(d.background.Pix[y][x]) {
+				d.background.Pix[y][x] = new_frame.Pix[y][x]
+				d.backgroundWeight[y][x] = 0
 				changed = true
+			} else {
+				weight += 0.1
+				if weight > math.MaxFloat32 {
+					weight = math.MaxFloat32
+				}
+				d.backgroundWeight[y][x] = weight
 			}
-			average = average + float64(d.background[y][x])/d.numPixels
+			average = average + float64(d.background.Pix[y][x])/d.numPixels
 		}
 	}
 	return average, changed

@@ -82,7 +82,7 @@ func (cfr *CPTVFileRecorder) CheckCanRecord() error {
 	return nil
 }
 
-func (fw *CPTVFileRecorder) StartRecording(tempThreshold uint16) error {
+func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThreshold uint16) error {
 
 	filename := filepath.Join(fw.outputDir, newRecordingTempName())
 	log.Printf("recording started: %s", filename)
@@ -93,11 +93,12 @@ func (fw *CPTVFileRecorder) StartRecording(tempThreshold uint16) error {
 	}
 	motionYAML := fmt.Sprintf("%striggeredthresh: %d\n", fw.motionYAML, tempThreshold)
 	fw.header.MotionConfig = motionYAML
+	fw.header.BackgroundFrame = background
 	if err = writer.WriteHeader(fw.header); err != nil {
 		writer.Close()
 		return err
 	}
-
+	fw.header.BackgroundFrame = nil
 	fw.writer = writer
 	return nil
 }
@@ -123,7 +124,7 @@ func (fw *CPTVFileRecorder) Stop() {
 	}
 }
 
-func (fw *CPTVFileRecorder) WriteFrame(frame *cptvframe.Frame, tempThresh uint16) error {
+func (fw *CPTVFileRecorder) WriteFrame(frame *cptvframe.Frame) error {
 	return fw.writer.WriteFrame(frame)
 }
 
