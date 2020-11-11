@@ -40,7 +40,7 @@ func CurrentConfig() *Config {
 	recorder := recorder.RecorderConfig{
 		MaxSecs:     config.DefaultThermalRecorder().MaxSecs,
 		MinSecs:     1, // Use smaller min secs to detect more clearly when we stop detecting.
-		PreviewSecs: config.DefaultThermalRecorder().PreviewSecs,
+		PreviewSecs: 3,
 		Window:      *w,
 	}
 	return &Config{
