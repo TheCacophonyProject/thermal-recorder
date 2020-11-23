@@ -110,7 +110,7 @@ func runMain() error {
 		if camera != nil {
 			camera.Close()
 		}
-		 conn.Close()
+		conn.Close()
 	}()
 
 	log.Print("host initialisation")
@@ -125,12 +125,12 @@ func runMain() error {
 	}
 
 	camera, err = startCamera(conf)
-	if err !=nil{
+	if err != nil {
 		return err
 	}
 
-	err= sendCameraSpecs(conf,camera, conn)
-	if err !=nil{
+	err = sendCameraSpecs(conf, camera, conn)
+	if err != nil {
 		return err
 	}
 
@@ -151,27 +151,27 @@ func runMain() error {
 			return err
 		}
 		camera, err = startCamera(conf)
-		if err !=nil{
+		if err != nil {
 			return err
 		}
 	}
 }
 
-func startCamera(conf *Config) (*lepton3.Lepton3,error){
+func startCamera(conf *Config) (*lepton3.Lepton3, error) {
 	camera, err := lepton3.New(conf.SPISpeed)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	camera.SetLogFunc(func(t string) { log.Printf(t) })
 
 	log.Print("enabling radiometry")
 	if err := camera.SetRadiometry(true); err != nil {
-		return nil,err
+		return nil, err
 	}
 
 	log.Print("opening camera")
 	if err := camera.Open(); err != nil {
-		return nil,err
+		return nil, err
 	}
 	return camera, err
 }
