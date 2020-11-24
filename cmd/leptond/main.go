@@ -104,7 +104,14 @@ func runMain() error {
 	if err != nil {
 		return errors.New("error: connecting to frame output socket failed")
 	}
-	defer conn.Close()
+
+	var camera *lepton3.Lepton3
+	defer func() {
+		if camera != nil {
+			camera.Close()
+		}
+		conn.Close()
+	}()
 
 	log.Print("host initialisation")
 	if _, err := host.Init(); err != nil {
@@ -117,30 +124,18 @@ func runMain() error {
 		}
 	}
 
-	var camera *lepton3.Lepton3
-	defer func() {
-		if camera != nil {
-			camera.Close()
-		}
-	}()
+	camera, err = startCamera(conf)
+	if err != nil {
+		return err
+	}
+
+	err = sendCameraSpecs(conf, camera, conn)
+	if err != nil {
+		return err
+	}
+
 	for {
-		camera, err = lepton3.New(conf.SPISpeed)
-		if err != nil {
-			return err
-		}
-		camera.SetLogFunc(func(t string) { log.Printf(t) })
-
-		log.Print("enabling radiometry")
-		if err := camera.SetRadiometry(true); err != nil {
-			return err
-		}
-
-		log.Print("opening camera")
-		if err := camera.Open(); err != nil {
-			return err
-		}
-
-		err := runCamera(conf, camera, conn)
+		err = runCamera(conf, camera, conn)
 		if err != nil {
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
 				return err
@@ -155,12 +150,33 @@ func runMain() error {
 		if err != nil {
 			return err
 		}
+		camera, err = startCamera(conf)
+		if err != nil {
+			return err
+		}
 	}
 }
 
-func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error {
-	conn.SetWriteBuffer(camera.ResX() * camera.ResY() * 2 * 20)
+func startCamera(conf *Config) (*lepton3.Lepton3, error) {
+	camera, err := lepton3.New(conf.SPISpeed)
+	if err != nil {
+		return nil, err
+	}
+	camera.SetLogFunc(func(t string) { log.Printf(t) })
 
+	log.Print("enabling radiometry")
+	if err := camera.SetRadiometry(true); err != nil {
+		return nil, err
+	}
+
+	log.Print("opening camera")
+	if err := camera.Open(); err != nil {
+		return nil, err
+	}
+	return camera, err
+}
+
+func sendCameraSpecs(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error {
 	serial, err := camera.GetSerial()
 	if err != nil {
 		serial = 0
@@ -194,6 +210,11 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 		return err
 	}
 	conn.Write([]byte("\n"))
+	return nil
+}
+
+func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error {
+	conn.SetWriteBuffer(camera.ResX() * camera.ResY() * 2 * 20)
 	log.Print("reading frames")
 	frame := lepton3.NewRawFrame()
 
