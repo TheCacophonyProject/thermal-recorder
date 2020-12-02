@@ -246,9 +246,19 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *cptvframe.Frame) *cptvframe
 func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bool) (float64, bool) {
 	d.backgroundFrames++
 	if d.backgroundFrames == 1 {
-		for i := range new_frame.Pix {
-			copy(d.background.Pix[i], new_frame.Pix[i])
+
+		for y := d.start; y < d.rowStop; y++ {
+			copy(d.background.Pix[y][d.start:d.columnStop], new_frame.Pix[y][d.start:d.columnStop])
+			for x := 0; x < d.start; x++ {
+				d.background.Pix[y][x] = new_frame.Pix[y][d.start]
+				d.background.Pix[y][d.columnStop+x] = new_frame.Pix[y][d.columnStop]
+			}
 		}
+		for x := 0; x < d.start; x++ {
+			copy(d.background.Pix[x][d.start:d.columnStop], d.background.Pix[d.start])
+			copy(d.background.Pix[d.rowStop+x][d.start:d.columnStop], d.background.Pix[d.columnStop])
+		}
+
 		return 0, true
 	}
 
@@ -269,7 +279,17 @@ func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bo
 				d.backgroundWeight[y][x] = weight
 			}
 			average = average + float64(d.background.Pix[y][x])/d.numPixels
+			for x := 0; x < d.start; x++ {
+				// copy valid pixels into edge pixels
+				d.background.Pix[y][x] = d.background.Pix[y][d.start]
+				d.background.Pix[y][d.columnStop+x] = d.background.Pix[y][d.columnStop]
+			}
 		}
+	}
+	// copy valid pixels into edge pixels
+	for x := 0; x < d.start; x++ {
+		copy(d.background.Pix[x][d.start:d.columnStop], d.background.Pix[d.start])
+		copy(d.background.Pix[d.rowStop+x][d.start:d.columnStop], d.background.Pix[d.columnStop])
 	}
 	return average, changed
 }

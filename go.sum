@@ -11,8 +11,8 @@ github.com/TheCacophonyProject/go-api v0.0.0-20190923033957-174cea2ac81c/go.mod 
 github.com/TheCacophonyProject/go-config v0.0.0-20190922224052-7c2a21bc6b88/go.mod h1:gPUJLVu408NRz9/P3BrsxzOzLc+KJLrv+jVdDw3RI0Y=
 github.com/TheCacophonyProject/go-config v1.4.0 h1:G7YOqMrRljWQ0BWVHJiZNe79KaMNJMP5QyCa2fP27cs=
 github.com/TheCacophonyProject/go-config v1.4.0/go.mod h1:oARW/N3eJbcewCqB+Jc7TBwuODawwYgpo56UO6yBdKU=
-github.com/TheCacophonyProject/go-config v1.6.0 h1:iCejQaBh9JhW9/5NAy2d7wOK4YbR4vx1Efgr4nbDCvk=
-github.com/TheCacophonyProject/go-config v1.6.0/go.mod h1:eDQfBjmTDh/l+2QLBgsotmJFd/1x/7w4SwwBUxMM86w=
+github.com/TheCacophonyProject/go-config v1.6.3 h1:2g3mKWBF4wiHtXL8W86k/Q8iLN5b98tO04onJPMKFmM=
+github.com/TheCacophonyProject/go-config v1.6.3/go.mod h1:eDQfBjmTDh/l+2QLBgsotmJFd/1x/7w4SwwBUxMM86w=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200116020937-858bd8b71512/go.mod h1:8H6Aaft5549sIWxcsuCIL2o60/TQkoF93fVoSTpgZb8=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200616224711-fc633122087a/go.mod h1:Vg73Ezn4kr8qDNP9LNgjki9qgi+5T/0Uc9oDyflaYUY=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200818214604-bd5d4aa36043/go.mod h1:wG4/P/TsGtk33uBClYPjRlSbcdQrIASXutOUV8LMn2o=
