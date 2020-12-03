@@ -1,6 +1,6 @@
 module github.com/TheCacophonyProject/thermal-recorder
 
-go 1.12
+go 1.15
 
 require (
 	github.com/TheCacophonyProject/event-reporter v1.3.2-0.20200210010421-ca3fcb76a231

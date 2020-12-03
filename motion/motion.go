@@ -254,9 +254,9 @@ func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bo
 				d.background.Pix[y][d.columnStop+x] = new_frame.Pix[y][d.columnStop]
 			}
 		}
-		for x := 0; x < d.start; x++ {
-			copy(d.background.Pix[x][d.start:d.columnStop], d.background.Pix[d.start])
-			copy(d.background.Pix[d.rowStop+x][d.start:d.columnStop], d.background.Pix[d.columnStop])
+		for y := 0; y < d.start; y++ {
+			copy(d.background.Pix[y], d.background.Pix[d.start])
+			copy(d.background.Pix[d.rowStop+y], d.background.Pix[d.rowStop])
 		}
 
 		return 0, true
@@ -287,9 +287,9 @@ func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bo
 		}
 	}
 	// copy valid pixels into edge pixels
-	for x := 0; x < d.start; x++ {
-		copy(d.background.Pix[x][d.start:d.columnStop], d.background.Pix[d.start])
-		copy(d.background.Pix[d.rowStop+x][d.start:d.columnStop], d.background.Pix[d.columnStop])
+	for y := 0; y < d.start; y++ {
+		copy(d.background.Pix[y], d.background.Pix[d.start])
+		copy(d.background.Pix[d.rowStop+y], d.background.Pix[d.rowStop])
 	}
 	return average, changed
 }
