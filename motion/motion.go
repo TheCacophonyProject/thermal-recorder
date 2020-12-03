@@ -255,7 +255,6 @@ func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bo
 		}
 		for y := 0; y < d.start; y++ {
 			copy(d.background.Pix[y], d.background.Pix[d.start])
-			// log.Print("copying", d.rowStop-1, " to ", d.rowStop+y, "of background", d.columnStop, "start", d.start, "length is", len)
 			copy(d.background.Pix[d.rowStop+y], d.background.Pix[d.rowStop-1])
 		}
 
