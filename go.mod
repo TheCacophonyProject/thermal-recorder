@@ -1,10 +1,10 @@
 module github.com/TheCacophonyProject/thermal-recorder
 
-go 1.12
+go 1.15
 
 require (
 	github.com/TheCacophonyProject/event-reporter v1.3.2-0.20200210010421-ca3fcb76a231
-	github.com/TheCacophonyProject/go-config v1.6.0
+	github.com/TheCacophonyProject/go-config v1.6.3
 	github.com/TheCacophonyProject/go-cptv v0.0.0-20201110014247-4e8fc2c763ab
 	github.com/TheCacophonyProject/lepton3 v0.0.0-20200909032119-e2b2b778a8ee
 	github.com/TheCacophonyProject/window v0.0.0-20200312071457-7fc8799fdce7

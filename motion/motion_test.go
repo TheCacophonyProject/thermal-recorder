@@ -134,6 +134,50 @@ func TestDetectsAfterEdgePixel(t *testing.T) {
 	assert.Equal(t, []int{0, 6, 6, 6}, pixels)
 }
 
+func TestBackgroundEdges(t *testing.T) {
+	camera := new(TestCamera)
+
+	config := defaultMotionParams()
+	config.EdgePixels = 2
+	detector := NewMotionDetector(config, defaultPreviewFrames(), camera)
+
+	edgeValue := uint16(999)
+	backgroundValue := 3000
+	g := newFrameGen(detector, camera)
+	frame := g.setupFrame(backgroundValue)
+	SetFrameEdge(frame, config.EdgePixels, edgeValue)
+
+	detector.updateBackground(frame, false)
+	for y := range frame.Pix {
+		for x := 0; x < len(frame.Pix[y]); x++ {
+			assert.Equal(t, detector.background.Pix[y][x], uint16(backgroundValue))
+		}
+	}
+	edgeValue = 100
+	backgroundValue = 2000
+	frame = g.setupFrame(backgroundValue)
+	SetFrameEdge(frame, config.EdgePixels, edgeValue)
+	detector.updateBackground(frame, false)
+
+	for y := range frame.Pix {
+		for x := 0; x < len(frame.Pix[y]); x++ {
+			assert.Equal(t, detector.background.Pix[y][x], uint16(backgroundValue))
+		}
+	}
+}
+
+func SetFrameEdge(frame *cptvframe.Frame, edges int, edgeValue uint16) {
+	for y := range frame.Pix {
+		cols := edges
+		if y < edges || y >= len(frame.Pix)-edges {
+			cols = len(frame.Pix[y])
+		}
+		for x := 0; x < cols; x++ {
+			frame.Pix[y][x] = edgeValue
+		}
+	}
+}
+
 func TestCanChangeEdgePixelsValue(t *testing.T) {
 	camera := new(TestCamera)
 
