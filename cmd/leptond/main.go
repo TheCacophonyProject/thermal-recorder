@@ -47,6 +47,7 @@ const (
 	framesPerSdNotify = 5 * framesHz
 
 	telemetryBytes = 160 * 4 //this should be made public in lepton3
+	clearBuffer = "clear"
 )
 
 var version = "<not set>"
@@ -154,6 +155,7 @@ func runMain() error {
 		if err != nil {
 			return err
 		}
+		conn.Write([]byte(clearBuffer))
 	}
 }
 
