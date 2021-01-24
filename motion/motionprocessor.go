@@ -86,15 +86,19 @@ type RecordingListener interface {
 	RecordingEnded()
 }
 
-func (mp *MotionProcessor) Process(rawFrame []byte) error {
-       frame := mp.frameLoop.Current()
-       if err := mp.parseFrame(rawFrame, frame); err != nil {
-               return err
-       }
-       mp.process(frame)
-       return nil
+func (mp *MotionProcessor) Reset(camera cptvframe.CameraSpec) {
+	mp.stopRecording()
+	mp.motionDetector.Reset(camera)
 }
 
+func (mp *MotionProcessor) Process(rawFrame []byte) error {
+	frame := mp.frameLoop.Current()
+	if err := mp.parseFrame(rawFrame, frame); err != nil {
+		return err
+	}
+	mp.process(frame)
+	return nil
+}
 
 func (mp *MotionProcessor) process(frame *cptvframe.Frame) {
 	if mp.motionDetector.Detect(frame) {
@@ -131,7 +135,7 @@ func (mp *MotionProcessor) process(frame *cptvframe.Frame) {
 	mp.frameLoop.Move()
 
 	if mp.isRecording && mp.framesWritten >= mp.writeUntil {
-		err := mp.StopRecording()
+		err := mp.stopRecording()
 		if err != nil {
 			mp.log.Printf("Failed to stop recording CPTV file %v", err)
 		}
@@ -169,7 +173,7 @@ func (mp *MotionProcessor) startRecording() error {
 	return mp.recordPreTriggerFrames()
 }
 
-func (mp *MotionProcessor) StopRecording() error {
+func (mp *MotionProcessor) stopRecording() error {
 	if !mp.isRecording {
 		return nil
 	}

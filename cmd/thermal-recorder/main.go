@@ -178,30 +178,22 @@ func handleConn(conn net.Conn, conf *Config) error {
 	frameLogInterval *= header.FPS()
 	rawFrame := make([]byte, header.FrameSize())
 	for {
-		_, err := io.ReadFull(reader, rawFrame[:8])
+		_, err := io.ReadFull(reader, rawFrame[:5])
 		if err != nil {
 			return err
 		}
-		message := string(rawFrame[:8])
-		if message == clearBuffer{
+		message := string(rawFrame[:5])
+		if message == clearBuffer {
 			log.Print("clearing motion buffer")
-			processor.StopRecording()
-			processor = motion.NewMotionProcessor(
-				parseFrame,
-				&conf.Motion,
-				&conf.Recorder,
-				&conf.Location,
-				nil,
-				recorder,
-				header,
-			)
+			processor.Reset(header)
 			continue
 		}
 
-		_, err = io.ReadFull(reader, rawFrame[8:])
+		_, err = io.ReadFull(reader, rawFrame[5:])
 		if err != nil {
 			return err
 		}
+		message = string(rawFrame[:5])
 		totalFrames++
 
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
