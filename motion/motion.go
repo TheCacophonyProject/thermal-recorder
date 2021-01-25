@@ -92,6 +92,13 @@ type motionDetector struct {
 	framesHz         int
 }
 
+func (d *motionDetector) Reset(camera cptvframe.CameraSpec) {
+	d.backgroundFrames = 0
+	d.count = 0
+	d.flooredFrames.Reset()
+	d.diffFrames.Reset()
+}
+
 func (d *motionDetector) calculateThreshold(backAverage float64) {
 	if d.tempThreshMin != 0 {
 		d.tempThresh = uint16(math.Max(backAverage, float64(d.tempThreshMin)))

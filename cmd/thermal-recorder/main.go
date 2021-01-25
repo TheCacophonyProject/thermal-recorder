@@ -38,6 +38,7 @@ import (
 
 const (
 	cptvTempExt = "cptv.temp"
+	clearBuffer = "clear"
 )
 
 var (
@@ -137,7 +138,6 @@ func runMain() error {
 }
 
 func handleConn(conn net.Conn, conf *Config) error {
-
 	totalFrames := 0
 	reader := bufio.NewReader(conn)
 	header, err := headers.ReadHeaderInfo(reader)
@@ -174,15 +174,26 @@ func handleConn(conn net.Conn, conf *Config) error {
 	)
 
 	log.Print("reading frames")
-
 	frameLogIntervalFirstMin *= header.FPS()
 	frameLogInterval *= header.FPS()
 	rawFrame := make([]byte, header.FrameSize())
 	for {
-		_, err := io.ReadFull(reader, rawFrame[:])
+		_, err := io.ReadFull(reader, rawFrame[:5])
 		if err != nil {
 			return err
 		}
+		message := string(rawFrame[:5])
+		if message == clearBuffer {
+			log.Print("clearing motion buffer")
+			processor.Reset(header)
+			continue
+		}
+
+		_, err = io.ReadFull(reader, rawFrame[5:])
+		if err != nil {
+			return err
+		}
+		message = string(rawFrame[:5])
 		totalFrames++
 
 		if totalFrames%frameLogIntervalFirstMin == 0 &&

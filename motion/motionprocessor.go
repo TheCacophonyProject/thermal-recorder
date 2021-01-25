@@ -86,6 +86,11 @@ type RecordingListener interface {
 	RecordingEnded()
 }
 
+func (mp *MotionProcessor) Reset(camera cptvframe.CameraSpec) {
+	mp.stopRecording()
+	mp.motionDetector.Reset(camera)
+}
+
 func (mp *MotionProcessor) Process(rawFrame []byte) error {
 	frame := mp.frameLoop.Current()
 	if err := mp.parseFrame(rawFrame, frame); err != nil {
@@ -169,6 +174,9 @@ func (mp *MotionProcessor) startRecording() error {
 }
 
 func (mp *MotionProcessor) stopRecording() error {
+	if !mp.isRecording {
+		return nil
+	}
 	if mp.listener != nil {
 		mp.listener.RecordingEnded()
 	}

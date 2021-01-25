@@ -47,6 +47,7 @@ const (
 	framesPerSdNotify = 5 * framesHz
 
 	telemetryBytes = 160 * 4 //this should be made public in lepton3
+	clearBuffer    = "clear"
 )
 
 var version = "<not set>"
@@ -154,6 +155,8 @@ func runMain() error {
 		if err != nil {
 			return err
 		}
+		log.Print("Clearing Buffer")
+		conn.Write([]byte(clearBuffer))
 	}
 }
 
@@ -217,13 +220,11 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 	conn.SetWriteBuffer(camera.ResX() * camera.ResY() * 2 * 20)
 	log.Print("reading frames")
 	frame := lepton3.NewRawFrame()
-
 	notifyCount := 0
 	for {
 		if err := camera.NextFrame(frame); err != nil {
 			return &nextFrameErr{err}
 		}
-
 		if firstPixel(frame) == 0 {
 			event := eventclient.Event{
 				Timestamp: time.Now(),

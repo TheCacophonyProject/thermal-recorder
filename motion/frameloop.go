@@ -52,6 +52,12 @@ type FrameLoop struct {
 	mu            sync.Mutex
 }
 
+func (fl *FrameLoop) Reset() {
+	fl.currentIndex = 0
+	fl.oldest = 0
+	fl.bufferFull = false
+
+}
 func (fl *FrameLoop) nextIndexAfter(index int) int {
 	return (index + 1) % fl.size
 }
