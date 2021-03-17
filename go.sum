@@ -22,6 +22,8 @@ github.com/TheCacophonyProject/lepton3 v0.0.0-20200121020734-2ae28662e1bc/go.mod
 github.com/TheCacophonyProject/lepton3 v0.0.0-20200213011619-1934a9300bd3/go.mod h1:xzPAWtvVCbJdJC2Gn1cG0Ovs/VP7XGGiQpUU8wU4HME=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20200909032119-e2b2b778a8ee h1:ZSZeQ8iX3JjPH47ME/jhwZ3MQ32PLKjePVPpFmHUWwo=
 github.com/TheCacophonyProject/lepton3 v0.0.0-20200909032119-e2b2b778a8ee/go.mod h1:+FTQKx63hdEbuTe/nxNv9TQ2EWqdlzMZx7UNLGCX9SE=
+github.com/TheCacophonyProject/lepton3 v0.0.0-20210317024955-bf673cfdf869 h1:a4GR1sIANx2oeTL9pc4ES0LxgEuHtoYnUMEYcrtDatI=
+github.com/TheCacophonyProject/lepton3 v0.0.0-20210317024955-bf673cfdf869/go.mod h1:+FTQKx63hdEbuTe/nxNv9TQ2EWqdlzMZx7UNLGCX9SE=
 github.com/TheCacophonyProject/modemd v0.0.0-20190605010435-ae5b0f2eb760/go.mod h1:bfwJ/WcvDY9XtHKC5tcRfVrU8RWaW8DLYAAUfsrJr/4=
 github.com/TheCacophonyProject/periph v2.1.1-0.20200615222341-6834cd5be8c1+incompatible h1:0pEn1FoMTgOZR3EkqOTiqd0++jOS/jWlGrbvOHK0/KM=
 github.com/TheCacophonyProject/periph v2.1.1-0.20200615222341-6834cd5be8c1+incompatible/go.mod h1:K1wa07sGXKzV0G9p+4R069mZk4GOpqKW8GU6/k+BrIo=
