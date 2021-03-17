@@ -2,6 +2,8 @@ module github.com/TheCacophonyProject/thermal-recorder
 
 go 1.15
 
+replace github.com/TheCacophonyProject/lepton3 => /home/cam/cac/go/lepton3
+
 require (
 	github.com/TheCacophonyProject/event-reporter v1.3.2-0.20200210010421-ca3fcb76a231
 	github.com/TheCacophonyProject/go-config v1.6.3

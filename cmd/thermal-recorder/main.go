@@ -31,6 +31,7 @@ import (
 
 	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/thermal-recorder/headers"
+	"github.com/TheCacophonyProject/thermal-recorder/leptondController"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
 	"github.com/TheCacophonyProject/thermal-recorder/throttle"
@@ -138,6 +139,7 @@ func runMain() error {
 }
 
 func handleConn(conn net.Conn, conf *Config) error {
+	leptondController.SetAutoFFC(true)
 	totalFrames := 0
 	reader := bufio.NewReader(conn)
 	header, err := headers.ReadHeaderInfo(reader)

@@ -97,6 +97,11 @@ func runMain() error {
 	}
 	logConfig(conf)
 
+	service, err := startService()
+	if err != nil {
+		return err
+	}
+
 	log.Print("dialing frame output socket")
 	conn, err := net.DialUnix("unix", nil, &net.UnixAddr{
 		Net:  "unix",
@@ -129,6 +134,7 @@ func runMain() error {
 	if err != nil {
 		return err
 	}
+	service.addCamera(camera)
 
 	err = sendCameraSpecs(conf, camera, conn)
 	if err != nil {
@@ -145,6 +151,7 @@ func runMain() error {
 		}
 
 		log.Print("closing camera")
+		service.removeCamera()
 		camera.Close()
 
 		err = cycleCameraPower(conf.PowerPin)
@@ -152,6 +159,7 @@ func runMain() error {
 			return err
 		}
 		camera, err = startCamera(conf)
+		service.addCamera(camera)
 		if err != nil {
 			return err
 		}
