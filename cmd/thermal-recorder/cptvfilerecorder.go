@@ -28,6 +28,7 @@ import (
 
 	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
+	"github.com/TheCacophonyProject/thermal-recorder/leptondController"
 	yaml "gopkg.in/yaml.v2"
 )
 
@@ -83,7 +84,7 @@ func (cfr *CPTVFileRecorder) CheckCanRecord() error {
 }
 
 func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThreshold uint16) error {
-
+	leptondController.SetAutoFFC(false)
 	filename := filepath.Join(fw.outputDir, newRecordingTempName())
 	log.Printf("recording started: %s", filename)
 
@@ -104,6 +105,7 @@ func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThre
 }
 
 func (fw *CPTVFileRecorder) StopRecording() error {
+	leptondController.SetAutoFFC(true)
 	if fw.writer != nil {
 		fw.writer.Close()
 

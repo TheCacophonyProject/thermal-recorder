@@ -57,6 +57,9 @@ nfpms:
     "set-thermal-recorder-output/set-thermal-recorder-output.service": "/etc/systemd/system/set-thermal-recorder-output.service"
     "set-thermal-recorder-output/set-thermal-recorder-output": "/usr/bin/set-thermal-recorder-output"
     "_release/org.cacophony.thermalrecorder.conf": "/etc/dbus-1/system.d/org.cacophony.thermalrecorder.conf"
+    "_release/org.cacophony.leptond.conf": "/etc/dbus-1/system.d/org.cacophony.leptond.conf"
+  scripts:
+    postinstall: "_release/postinstall.sh"
 
 checksum:
   name_template: '{{ .ProjectName }}_{{ .Version }}_checksums.txt'
