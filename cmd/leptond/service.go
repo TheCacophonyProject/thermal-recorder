@@ -65,7 +65,7 @@ func genIntrospectable(v interface{}) introspect.Introspectable {
 	return introspect.NewIntrospectable(node)
 }
 
-func (s *leptondService) addCamera(camera *lepton3.Lepton3) {
+func (s *leptondService) setCamera(camera *lepton3.Lepton3) {
 	mu.Lock()
 	defer mu.Unlock()
 	s.camera = camera
@@ -81,10 +81,10 @@ func (s leptondService) RunFFC() *dbus.Error {
 	mu.Lock()
 	defer mu.Unlock()
 	if s.camera == nil {
-		return makeDbusError(".RunFFC", fmt.Errorf("no camera available"))
+		return makeDbusError("RunFFC", fmt.Errorf("no camera available"))
 	}
 	if err := s.camera.RunFFC(); err != nil {
-		return makeDbusError(".RunFFC", err)
+		return makeDbusError("RunFFC", err)
 	}
 	return nil
 }
@@ -93,17 +93,17 @@ func (s leptondService) SetAutoFFC(automatic bool) *dbus.Error {
 	mu.Lock()
 	defer mu.Unlock()
 	if s.camera == nil {
-		return makeDbusError(".SetAutoFFC", fmt.Errorf("no camera available"))
+		return makeDbusError("SetAutoFFC", fmt.Errorf("no camera available"))
 	}
 	if err := s.camera.SetAutoFFC(automatic); err != nil {
-		return makeDbusError(".SetAutoFFC", err)
+		return makeDbusError("SetAutoFFC", err)
 	}
 	return nil
 }
 
 func makeDbusError(name string, err error) *dbus.Error {
 	return &dbus.Error{
-		Name: dbusName + name,
+		Name: dbusName + "." + name,
 		Body: []interface{}{err.Error()},
 	}
 }

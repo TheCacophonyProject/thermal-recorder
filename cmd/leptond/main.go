@@ -134,7 +134,7 @@ func runMain() error {
 	if err != nil {
 		return err
 	}
-	service.addCamera(camera)
+	service.setCamera(camera)
 
 	err = sendCameraSpecs(conf, camera, conn)
 	if err != nil {
@@ -159,7 +159,7 @@ func runMain() error {
 			return err
 		}
 		camera, err = startCamera(conf)
-		service.addCamera(camera)
+		service.setCamera(camera)
 		if err != nil {
 			return err
 		}
