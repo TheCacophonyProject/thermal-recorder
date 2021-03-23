@@ -203,11 +203,15 @@ func handleConn(conn net.Conn, conf *Config) error {
 			log.Printf("%d frames for this connection", totalFrames)
 		}
 
-		processor.Process(rawFrame)
+		err = processor.Process(rawFrame)
+		if _, isBadFrame := err.(*lepton3.BaxPixelErr); !isBadFrame {
+			// this should cause camera power to be cycled
+			return err
+		}
 	}
 }
 
-func frameParser(brand, model string) func([]byte, *cptvframe.Frame) error {
+func frameParser(brand, model string) func([]byte, *cptvframe.Frame, int) error {
 	if brand != "flir" {
 		return nil
 	}

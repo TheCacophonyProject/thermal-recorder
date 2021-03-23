@@ -30,7 +30,7 @@ import (
 
 const minLogInterval = time.Minute
 
-type FrameParser func([]byte, *cptvframe.Frame) error
+type FrameParser func([]byte, *cptvframe.Frame, int) error
 
 func NewMotionProcessor(
 	parseFrame FrameParser,
@@ -93,7 +93,7 @@ func (mp *MotionProcessor) Reset(camera cptvframe.CameraSpec) {
 
 func (mp *MotionProcessor) Process(rawFrame []byte) error {
 	frame := mp.frameLoop.Current()
-	if err := mp.parseFrame(rawFrame, frame); err != nil {
+	if err := mp.parseFrame(rawFrame, frame, mp.motionDetector.start); err != nil {
 		return err
 	}
 	mp.process(frame)
