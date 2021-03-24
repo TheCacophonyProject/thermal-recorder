@@ -10,6 +10,8 @@ script:
   - go test ./...
   - sudo rm cmd/thermal-recorder/config.toml.lock
 
+before_deploy:
+  - git fetch --unshallow
 # calls goreleaser
 deploy:
 - provider: script
