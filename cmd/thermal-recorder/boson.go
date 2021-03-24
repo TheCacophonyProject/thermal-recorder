@@ -25,7 +25,7 @@ func convertRawBosonFrame(raw []byte, out *cptvframe.Frame, edgePixels int) erro
 			onEdge := y < edgePixels || x < edgePixels || y >= (len(out.Pix)-edgePixels) || x >= (len(row)-edgePixels)
 			if onEdge && out.Pix[y][x] == 0 {
 				err := fmt.Errorf("Bad pixel (%d,%d) of %d", y, x, out.Pix[y][x])
-				return &lepton3.BaxPixelErr{err}
+				return &lepton3.BadFrameErr{err}
 			}
 			i += 2
 		}

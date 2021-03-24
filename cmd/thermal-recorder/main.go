@@ -23,7 +23,9 @@ import (
 	"log"
 	"net"
 	"os"
+	"time"
 
+	"github.com/TheCacophonyProject/event-reporter/eventclient"
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/lepton3"
 	arg "github.com/alexflint/go-arg"
@@ -204,8 +206,14 @@ func handleConn(conn net.Conn, conf *Config) error {
 		}
 
 		err = processor.Process(rawFrame)
-		if _, isBadFrame := err.(*lepton3.BaxPixelErr); !isBadFrame {
-			// this should cause camera power to be cycled
+		if _, isBadFrame := err.(*lepton3.BadFrameErr); isBadFrame {
+			event := eventclient.Event{
+				Timestamp: time.Now(),
+				Type:      "bad-thermal-frame",
+				Details:   map[string]interface{}{"description": map[string]interface{}{"details": err.Error()}},
+			}
+			eventclient.AddEvent(event)
+			// this will cause camera power to be cycled
 			return err
 		}
 	}
