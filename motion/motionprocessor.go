@@ -94,6 +94,7 @@ func (mp *MotionProcessor) Reset(camera cptvframe.CameraSpec) {
 func (mp *MotionProcessor) Process(rawFrame []byte) error {
 	frame := mp.frameLoop.Current()
 	if err := mp.parseFrame(rawFrame, frame, mp.motionDetector.start); err != nil {
+		mp.stopRecording()
 		return err
 	}
 	mp.process(frame)
