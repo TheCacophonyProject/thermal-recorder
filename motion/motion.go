@@ -122,6 +122,7 @@ func (d *motionDetector) Detect(frame *cptvframe.Frame) bool {
 	}
 	d.count++
 	movement, deltaCount := d.pixelsChanged(frame, prevFFC)
+	log.Print("Pixels changed", deltaCount, "temp thresh", d.tempThresh)
 	if movement {
 		d.debug.update("detect", 1)
 	}
@@ -311,7 +312,6 @@ func absDiff(a, b uint16) uint16 {
 
 func warmerDiff(a, b uint16) uint16 {
 	d := int32(a) - int32(b)
-
 	if d < 0 {
 		return 0
 	}

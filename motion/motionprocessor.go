@@ -86,6 +86,15 @@ type RecordingListener interface {
 	RecordingEnded()
 }
 
+func (d *MotionProcessor) SetTempThresh(tempThresh uint16) {
+	d.motionDetector.tempThresh = tempThresh
+	d.motionDetector.deltaThresh = 100
+}
+
+func (d *MotionProcessor) SetBackground(frame *cptvframe.Frame) {
+	d.motionDetector.background.Pix = frame.Pix
+}
+
 func (mp *MotionProcessor) Reset(camera cptvframe.CameraSpec) {
 	mp.stopRecording()
 	mp.motionDetector.Reset(camera)
