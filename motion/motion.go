@@ -31,8 +31,6 @@ import (
 const ffcPeriod = 10 * time.Second
 
 const debugLogSecs = 5
-const frameBackgroundWeighting = 0.99
-const weightEveryNFrames = 3
 
 func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptvframe.CameraSpec) *motionDetector {
 	d := new(motionDetector)

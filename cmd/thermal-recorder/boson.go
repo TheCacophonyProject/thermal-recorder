@@ -24,7 +24,7 @@ func convertRawBosonFrame(raw []byte, out *cptvframe.Frame, edgePixels int) erro
 			out.Pix[y][x] = binary.LittleEndian.Uint16(raw[i : i+2])
 			onEdge := y < edgePixels || x < edgePixels || y >= (len(out.Pix)-edgePixels) || x >= (len(row)-edgePixels)
 			if !onEdge && out.Pix[y][x] == 0 {
-				err := fmt.Errorf("Bad pixel (%d,%d) of %d", y, x, out.Pix[y][x])
+				err := fmt.Errorf("bad pixel (%d,%d) of %d", y, x, out.Pix[y][x])
 				return &lepton3.BadFrameErr{Cause: err}
 			}
 			i += 2

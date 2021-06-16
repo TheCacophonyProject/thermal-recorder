@@ -61,6 +61,7 @@ func NewCPTVFileRecorder(config *Config, camera cptvframe.CameraSpec, brand, mod
 		minDiskSpace: config.MinDiskSpace,
 		camera:       camera,
 		motionYAML:   string(motionYAML),
+		disableFFC:   true,
 	}
 }
 
@@ -71,20 +72,23 @@ type CPTVFileRecorder struct {
 	camera       cptvframe.CameraSpec
 	writer       *cptv.FileWriter
 	motionYAML   string
+	disableFFC   bool
 }
 
 func (cfr *CPTVFileRecorder) CheckCanRecord() error {
 	enoughSpace, err := checkDiskSpace(cfr.minDiskSpace, cfr.outputDir)
 	if err != nil {
-		return fmt.Errorf("Problem with checking disk space: %v", err)
+		return fmt.Errorf("problem with checking disk space: %v", err)
 	} else if !enoughSpace {
-		return errors.New("Motion detected but not enough free disk space to start recording")
+		return errors.New("motion detected but not enough free disk space to start recording")
 	}
 	return nil
 }
 
 func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThreshold uint16) error {
-	leptondController.SetAutoFFC(false)
+	if fw.disableFFC {
+		leptondController.SetAutoFFC(false)
+	}
 	filename := filepath.Join(fw.outputDir, newRecordingTempName())
 	log.Printf("recording started: %s", filename)
 

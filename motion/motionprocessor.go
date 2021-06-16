@@ -58,26 +58,22 @@ func NewMotionProcessor(
 }
 
 type MotionProcessor struct {
-	parseFrame          FrameParser
-	minFrames           int
-	maxFrames           int
-	framesWritten       int
-	motionDetector      *motionDetector
-	frameLoop           *FrameLoop
-	isRecording         bool
-	writeUntil          int
-	window              window.Window
-	conf                *recorder.RecorderConfig
-	listener            RecordingListener
-	triggerFrames       int
-	triggered           int
-	recorder            recorder.Recorder
-	locationConfig      *config.Location
-	sunriseSunsetWindow bool
-	sunriseOffset       int
-	sunsetOffset        int
-	nextSunriseCheck    time.Time
-	log                 *loglimiter.LogLimiter
+	parseFrame     FrameParser
+	minFrames      int
+	maxFrames      int
+	framesWritten  int
+	motionDetector *motionDetector
+	frameLoop      *FrameLoop
+	isRecording    bool
+	writeUntil     int
+	window         window.Window
+	conf           *recorder.RecorderConfig
+	listener       RecordingListener
+	triggerFrames  int
+	triggered      int
+	recorder       recorder.Recorder
+	locationConfig *config.Location
+	log            *loglimiter.LogLimiter
 }
 
 type RecordingListener interface {
