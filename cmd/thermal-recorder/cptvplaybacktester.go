@@ -166,7 +166,7 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 	// load thresh used for recording
 	motionConfig := make(map[string]interface{})
 	err = yaml.Unmarshal([]byte(reader.MotionConfig()), &motionConfig)
-	if trigThresh, ok :=  motionConfig["triggeredthresh"]; ok {
+	if trigThresh, ok := motionConfig["triggeredthresh"]; ok {
 		processor.SetTempThresh(uint16(trigThresh.(int)))
 		log.Printf("Triggered thresh: %v", trigThresh)
 	}
