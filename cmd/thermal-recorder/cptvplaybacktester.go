@@ -28,6 +28,7 @@ import (
 	cptv "github.com/TheCacophonyProject/go-cptv"
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/lepton3"
+	"gopkg.in/yaml.v1"
 
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
@@ -154,7 +155,6 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 	listener.verbose = verbose
 	listener.framesHz = camera.FPS()
 	processor := motion.NewMotionProcessor(lepton3.ParseRawFrame, &cpt.config.Motion, &cpt.config.Recorder, &cpt.config.Location, listener, recorder, camera)
-
 	if err != nil {
 		log.Printf("Could not open file %v", err)
 	}
@@ -162,6 +162,14 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 
 	log.Printf("Device name: %v", reader.DeviceName())
 	log.Printf("Timestamp: %v", reader.Timestamp())
+
+	// load thresh used for recording
+	motionConfig := make(map[string]interface{})
+	err = yaml.Unmarshal([]byte(reader.MotionConfig()), &motionConfig)
+	if trigThresh, ok := motionConfig["triggeredthresh"]; ok {
+		processor.SetTempThresh(uint16(trigThresh.(int)))
+		log.Printf("Triggered thresh: %v", trigThresh)
+	}
 
 	fakeTime := time.Minute
 	frame := reader.EmptyFrame()
@@ -183,9 +191,13 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 		if frame.Status.TimeOn == time.Duration(0) {
 			frame.Status.TimeOn = fakeTime
 		}
+		if frame.Status.BackgroundFrame {
+			processor.SetBackground(frame)
+		} else {
 
-		processor.ProcessFrame(frame)
-		listener.frameCount++
+			processor.ProcessFrame(frame)
+			listener.frameCount++
+		}
 	}
 }
 

@@ -29,10 +29,8 @@ import (
 // Field Correction.
 // TODO - this should probably be configurable (although 10s does seem right).
 const ffcPeriod = 10 * time.Second
-
 const debugLogSecs = 5
-const frameBackgroundWeighting = 0.99
-const weightEveryNFrames = 3
+const weightPercent = 0.002
 
 func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptvframe.CameraSpec) *motionDetector {
 	d := new(motionDetector)
@@ -62,34 +60,35 @@ func NewMotionDetector(args config.ThermalMotion, previewFrames int, camera cptv
 	for i := range d.backgroundWeight {
 		d.backgroundWeight[i] = make([]float32, camera.ResX())
 	}
-
+	d.backgroundWeighting = weightPercent * float32(d.deltaThresh)
 	return d
 }
 
 type motionDetector struct {
-	flooredFrames    FrameLoop
-	diffFrames       FrameLoop
-	firstDiff        bool
-	dynamicThresh    bool
-	useOneDiff       bool
-	tempThresh       uint16
-	tempThreshMax    uint16
-	tempThreshMin    uint16
-	deltaThresh      uint16
-	countThresh      int
-	warmerOnly       bool
-	start            int
-	rowStop          int
-	columnStop       int
-	count            int
-	background       *cptvframe.Frame
-	backgroundWeight [][]float32
-	backgroundFrames int
-	debug            *debugTracker
-	previewFrames    int
-	numPixels        float64
-	affectedByFCC    bool
-	framesHz         int
+	flooredFrames       FrameLoop
+	diffFrames          FrameLoop
+	firstDiff           bool
+	dynamicThresh       bool
+	useOneDiff          bool
+	tempThresh          uint16
+	tempThreshMax       uint16
+	tempThreshMin       uint16
+	deltaThresh         uint16
+	countThresh         int
+	warmerOnly          bool
+	start               int
+	rowStop             int
+	columnStop          int
+	count               int
+	background          *cptvframe.Frame
+	backgroundWeight    [][]float32
+	backgroundFrames    int
+	backgroundWeighting float32
+	debug               *debugTracker
+	previewFrames       int
+	numPixels           float64
+	affectedByFCC       bool
+	framesHz            int
 }
 
 func (d *motionDetector) Reset(camera cptvframe.CameraSpec) {
@@ -278,7 +277,7 @@ func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bo
 				d.backgroundWeight[y][x] = 0
 				changed = true
 			} else {
-				weight += 0.1
+				weight += d.backgroundWeighting
 				if weight > math.MaxFloat32 {
 					weight = math.MaxFloat32
 				}
@@ -311,7 +310,6 @@ func absDiff(a, b uint16) uint16 {
 
 func warmerDiff(a, b uint16) uint16 {
 	d := int32(a) - int32(b)
-
 	if d < 0 {
 		return 0
 	}
