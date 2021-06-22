@@ -58,8 +58,15 @@ func NewMotionProcessor(
 		locationConfig:    locationConf,
 		log:               loglimiter.New(minLogInterval),
 		constantRecorder:  constantRecorder,
-		constantRecording: !reflect.ValueOf(constantRecorder).IsNil(),
+		constantRecording: !isNullOrNullPointer(constantRecorder),
 	}
+}
+
+func isNullOrNullPointer(i interface{}) bool {
+	if i == nil {
+		return true
+	}
+	return reflect.ValueOf(i).IsNil()
 }
 
 type MotionProcessor struct {
