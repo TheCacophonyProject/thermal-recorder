@@ -216,7 +216,7 @@ func BenchmarkMotionDetection(b *testing.B) {
 
 	recorder := new(recorder.NoWriteRecorder)
 
-	processor := motion.NewMotionProcessor(lepton3.ParseRawFrame, &config.Motion, &config.Recorder, &config.Location, nil, recorder, new(TestCamera))
+	processor := motion.NewMotionProcessor(lepton3.ParseRawFrame, &config.Motion, &config.Recorder, &config.Location, nil, recorder, new(TestCamera), nil)
 	b.ResetTimer()
 
 	for i := 0; i < b.N; i++ {

@@ -18,6 +18,7 @@ package motion
 
 import (
 	"errors"
+	"reflect"
 	"time"
 
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
@@ -38,42 +39,52 @@ func NewMotionProcessor(
 	recorderConf *recorder.RecorderConfig,
 	locationConf *config.Location,
 	listener RecordingListener,
-	recorder recorder.Recorder, c cptvframe.CameraSpec,
+	recorder recorder.Recorder,
+	c cptvframe.CameraSpec,
+	constantRecorder recorder.Recorder,
 ) *MotionProcessor {
-	return &MotionProcessor{
-		parseFrame:     parseFrame,
-		minFrames:      recorderConf.MinSecs * c.FPS(),
-		maxFrames:      recorderConf.MaxSecs * c.FPS(),
-		motionDetector: NewMotionDetector(*motionConf, recorderConf.PreviewSecs*c.FPS(), c),
-		frameLoop:      NewFrameLoop(recorderConf.PreviewSecs*c.FPS()+motionConf.TriggerFrames, c),
-		isRecording:    false,
-		window:         recorderConf.Window,
-		listener:       listener,
-		conf:           recorderConf,
-		triggerFrames:  motionConf.TriggerFrames,
-		recorder:       recorder,
-		locationConfig: locationConf,
-		log:            loglimiter.New(minLogInterval),
+	mp := &MotionProcessor{
+		parseFrame:       parseFrame,
+		minFrames:        recorderConf.MinSecs * c.FPS(),
+		maxFrames:        recorderConf.MaxSecs * c.FPS(),
+		motionDetector:   NewMotionDetector(*motionConf, recorderConf.PreviewSecs*c.FPS(), c),
+		frameLoop:        NewFrameLoop(recorderConf.PreviewSecs*c.FPS()+motionConf.TriggerFrames, c),
+		isRecording:      false,
+		window:           recorderConf.Window,
+		listener:         listener,
+		conf:             recorderConf,
+		triggerFrames:    motionConf.TriggerFrames,
+		recorder:         recorder,
+		locationConfig:   locationConf,
+		log:              loglimiter.New(minLogInterval),
+		constantRecorder: constantRecorder,
 	}
+	if !reflect.ValueOf(mp.constantRecorder).IsNil() {
+		mp.constantRecording = true
+	}
+	return mp
 }
 
 type MotionProcessor struct {
-	parseFrame     FrameParser
-	minFrames      int
-	maxFrames      int
-	framesWritten  int
-	motionDetector *motionDetector
-	frameLoop      *FrameLoop
-	isRecording    bool
-	writeUntil     int
-	window         window.Window
-	conf           *recorder.RecorderConfig
-	listener       RecordingListener
-	triggerFrames  int
-	triggered      int
-	recorder       recorder.Recorder
-	locationConfig *config.Location
-	log            *loglimiter.LogLimiter
+	parseFrame        FrameParser
+	minFrames         int
+	maxFrames         int
+	framesWritten     int
+	motionDetector    *motionDetector
+	frameLoop         *FrameLoop
+	isRecording       bool
+	writeUntil        int
+	window            window.Window
+	conf              *recorder.RecorderConfig
+	listener          RecordingListener
+	triggerFrames     int
+	triggered         int
+	recorder          recorder.Recorder
+	locationConfig    *config.Location
+	log               *loglimiter.LogLimiter
+	constantRecording bool
+	constantRecorder  recorder.Recorder
+	crFrames          int
 }
 
 type RecordingListener interface {
@@ -91,10 +102,34 @@ func (mp *MotionProcessor) Process(rawFrame []byte) error {
 	frame := mp.frameLoop.Current()
 	if err := mp.parseFrame(rawFrame, frame, mp.motionDetector.start); err != nil {
 		mp.stopRecording()
+		mp.stopConstantRecorder()
 		return err
 	}
 	mp.process(frame)
+	mp.processConstantRecorder(frame)
 	return nil
+}
+
+func (mp *MotionProcessor) stopConstantRecorder() {
+	if !mp.constantRecording {
+		return
+	}
+	mp.constantRecorder.StopRecording()
+}
+
+func (mp *MotionProcessor) processConstantRecorder(frame *cptvframe.Frame) {
+	if !mp.constantRecording {
+		return
+	}
+	if mp.crFrames == 0 {
+		_ = mp.constantRecorder.StartRecording(mp.motionDetector.background, 0)
+	}
+	mp.constantRecorder.WriteFrame(frame)
+	mp.crFrames++
+	if mp.crFrames > mp.maxFrames {
+		_ = mp.constantRecorder.StopRecording()
+		mp.crFrames = 0
+	}
 }
 
 func (mp *MotionProcessor) process(frame *cptvframe.Frame) {

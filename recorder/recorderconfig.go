@@ -24,10 +24,11 @@ import (
 )
 
 type RecorderConfig struct {
-	MinSecs     int
-	MaxSecs     int
-	PreviewSecs int
-	Window      window.Window
+	MinSecs          int
+	MaxSecs          int
+	PreviewSecs      int
+	Window           window.Window
+	ConstantRecorder bool
 }
 
 func NewConfig(conf *config.Config) (*RecorderConfig, error) {
@@ -54,10 +55,11 @@ func NewConfig(conf *config.Config) (*RecorderConfig, error) {
 	}
 
 	recorderConfig := RecorderConfig{
-		MinSecs:     thermalRecorderConfig.MinSecs,
-		MaxSecs:     thermalRecorderConfig.MaxSecs,
-		PreviewSecs: thermalRecorderConfig.PreviewSecs,
-		Window:      *w,
+		MinSecs:          thermalRecorderConfig.MinSecs,
+		MaxSecs:          thermalRecorderConfig.MaxSecs,
+		PreviewSecs:      thermalRecorderConfig.PreviewSecs,
+		Window:           *w,
+		ConstantRecorder: thermalRecorderConfig.ConstantRecorder,
 	}
 
 	if err := recorderConfig.validate(); err != nil {

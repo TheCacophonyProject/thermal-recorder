@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"syscall"
@@ -61,18 +62,24 @@ func NewCPTVFileRecorder(config *Config, camera cptvframe.CameraSpec, brand, mod
 		minDiskSpace: config.MinDiskSpace,
 		camera:       camera,
 		motionYAML:   string(motionYAML),
-		disableFFC:   true,
 	}
 }
 
 type CPTVFileRecorder struct {
-	outputDir    string
-	header       cptv.Header
-	minDiskSpace uint64
-	camera       cptvframe.CameraSpec
-	writer       *cptv.FileWriter
-	motionYAML   string
-	disableFFC   bool
+	outputDir        string
+	header           cptv.Header
+	minDiskSpace     uint64
+	camera           cptvframe.CameraSpec
+	writer           *cptv.FileWriter
+	motionYAML       string
+	constantRecorder bool
+}
+
+func (cfr *CPTVFileRecorder) SetAsConstantRecorder() error {
+	folder := path.Join(cfr.outputDir, "/constant-recordings")
+	cfr.outputDir = folder
+	cfr.constantRecorder = true
+	return os.Mkdir(folder, 0755)
 }
 
 func (cfr *CPTVFileRecorder) CheckCanRecord() error {
@@ -86,7 +93,7 @@ func (cfr *CPTVFileRecorder) CheckCanRecord() error {
 }
 
 func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThreshold uint16) error {
-	if fw.disableFFC {
+	if !fw.constantRecorder {
 		leptondController.SetAutoFFC(false)
 	}
 	filename := filepath.Join(fw.outputDir, newRecordingTempName())
@@ -109,7 +116,9 @@ func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThre
 }
 
 func (fw *CPTVFileRecorder) StopRecording() error {
-	leptondController.SetAutoFFC(true)
+	if !fw.constantRecorder {
+		leptondController.SetAutoFFC(true)
+	}
 	if fw.writer != nil {
 		fw.writer.Close()
 
