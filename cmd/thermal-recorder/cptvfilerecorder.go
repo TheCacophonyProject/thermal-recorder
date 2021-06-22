@@ -94,7 +94,9 @@ func (cfr *CPTVFileRecorder) CheckCanRecord() error {
 
 func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThreshold uint16) error {
 	if fw.constantRecorder {
-		deleteExcessRecordings(fw.outputDir)
+		if err := deleteExcessRecordings(fw.outputDir); err != nil {
+			return err
+		}
 	} else {
 		leptondController.SetAutoFFC(false)
 	}
@@ -192,11 +194,14 @@ func deleteExcessRecordings(dir string) error {
 		if percentageLeft > 30 {
 			return nil
 		}
-		matches, _ := filepath.Glob(path.Join(dir, "*.cptv*"))
+		matches, err := filepath.Glob(path.Join(dir, "*.cptv*"))
+		if err != nil {
+			return err
+		}
 		if len(matches) == 0 {
 			return errors.New("no more recordings to delete and not enough space for new recordings")
 		}
-		err := os.Remove(matches[0]) // Because how the files are named with the date the first in the list should be the oldest
+		err = os.Remove(matches[0]) // Because how the files are named with the date the first in the list should be the oldest
 		if err != nil {
 			return err
 		}

@@ -43,26 +43,23 @@ func NewMotionProcessor(
 	c cptvframe.CameraSpec,
 	constantRecorder recorder.Recorder,
 ) *MotionProcessor {
-	mp := &MotionProcessor{
-		parseFrame:       parseFrame,
-		minFrames:        recorderConf.MinSecs * c.FPS(),
-		maxFrames:        recorderConf.MaxSecs * c.FPS(),
-		motionDetector:   NewMotionDetector(*motionConf, recorderConf.PreviewSecs*c.FPS(), c),
-		frameLoop:        NewFrameLoop(recorderConf.PreviewSecs*c.FPS()+motionConf.TriggerFrames, c),
-		isRecording:      false,
-		window:           recorderConf.Window,
-		listener:         listener,
-		conf:             recorderConf,
-		triggerFrames:    motionConf.TriggerFrames,
-		recorder:         recorder,
-		locationConfig:   locationConf,
-		log:              loglimiter.New(minLogInterval),
-		constantRecorder: constantRecorder,
+	return &MotionProcessor{
+		parseFrame:        parseFrame,
+		minFrames:         recorderConf.MinSecs * c.FPS(),
+		maxFrames:         recorderConf.MaxSecs * c.FPS(),
+		motionDetector:    NewMotionDetector(*motionConf, recorderConf.PreviewSecs*c.FPS(), c),
+		frameLoop:         NewFrameLoop(recorderConf.PreviewSecs*c.FPS()+motionConf.TriggerFrames, c),
+		isRecording:       false,
+		window:            recorderConf.Window,
+		listener:          listener,
+		conf:              recorderConf,
+		triggerFrames:     motionConf.TriggerFrames,
+		recorder:          recorder,
+		locationConfig:    locationConf,
+		log:               loglimiter.New(minLogInterval),
+		constantRecorder:  constantRecorder,
+		constantRecording: !reflect.ValueOf(constantRecorder).IsNil(),
 	}
-	if !reflect.ValueOf(mp.constantRecorder).IsNil() {
-		mp.constantRecording = true
-	}
-	return mp
 }
 
 type MotionProcessor struct {
@@ -122,12 +119,18 @@ func (mp *MotionProcessor) processConstantRecorder(frame *cptvframe.Frame) {
 		return
 	}
 	if mp.crFrames == 0 {
-		_ = mp.constantRecorder.StartRecording(mp.motionDetector.background, 0)
+		if err := mp.constantRecorder.StartRecording(mp.motionDetector.background, 0); err != nil {
+			mp.log.Printf("error with starting constant recorder: %v", err)
+			return
+		}
 	}
 	mp.constantRecorder.WriteFrame(frame)
 	mp.crFrames++
 	if mp.crFrames > mp.maxFrames {
-		_ = mp.constantRecorder.StopRecording()
+		if err := mp.constantRecorder.StopRecording(); err != nil {
+			mp.log.Printf("error with stoping constant recorder: %v", err)
+			return
+		}
 		mp.crFrames = 0
 	}
 }
