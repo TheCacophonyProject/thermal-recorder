@@ -101,7 +101,11 @@ func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThre
 		leptondController.SetAutoFFC(false)
 	}
 	filename := filepath.Join(fw.outputDir, newRecordingTempName())
-	log.Printf("recording started: %s", filename)
+	if fw.constantRecorder {
+		log.Printf("constant recording started: %s", filename)
+	} else {
+		log.Printf("recording started: %s", filename)
+	}
 
 	writer, err := cptv.NewFileWriter(filename, fw.camera)
 	if err != nil {
@@ -127,7 +131,11 @@ func (fw *CPTVFileRecorder) StopRecording() error {
 		fw.writer.Close()
 
 		finalName, err := renameTempRecording(fw.writer.Name())
-		log.Printf("recording stopped: %s\n", finalName)
+		if fw.constantRecorder {
+			log.Printf("constant recording stopped: %s", finalName)
+		} else {
+			log.Printf("recording stopped: %s", finalName)
+		}
 		fw.writer = nil
 
 		return err
