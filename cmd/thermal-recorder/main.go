@@ -167,6 +167,13 @@ func handleConn(conn net.Conn, conf *Config) error {
 		recorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength, new(throttle.ThrottledEventRecorder), header)
 	}
 
+	// Constant Recorder
+	var constantRecorder *CPTVFileRecorder
+	if conf.Recorder.ConstantRecorder {
+		constantRecorder = NewCPTVFileRecorder(conf, header, header.Brand(), header.Model(), header.CameraSerial(), header.Firmware())
+		constantRecorder.SetAsConstantRecorder()
+	}
+
 	processor = motion.NewMotionProcessor(
 		parseFrame,
 		&conf.Motion,
@@ -175,6 +182,7 @@ func handleConn(conn net.Conn, conf *Config) error {
 		nil,
 		recorder,
 		header,
+		constantRecorder,
 	)
 
 	log.Print("reading frames")

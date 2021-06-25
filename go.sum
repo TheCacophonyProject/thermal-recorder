@@ -10,8 +10,8 @@ github.com/TheCacophonyProject/event-reporter v1.3.2-0.20200210010421-ca3fcb76a2
 github.com/TheCacophonyProject/go-api v0.0.0-20190923033957-174cea2ac81c/go.mod h1:FfMpa4cFhNXQ9tuKG18HO6yLExezcJhzjUjBOFocrQw=
 github.com/TheCacophonyProject/go-config v0.0.0-20190922224052-7c2a21bc6b88/go.mod h1:gPUJLVu408NRz9/P3BrsxzOzLc+KJLrv+jVdDw3RI0Y=
 github.com/TheCacophonyProject/go-config v1.4.0/go.mod h1:oARW/N3eJbcewCqB+Jc7TBwuODawwYgpo56UO6yBdKU=
-github.com/TheCacophonyProject/go-config v1.6.3 h1:2g3mKWBF4wiHtXL8W86k/Q8iLN5b98tO04onJPMKFmM=
-github.com/TheCacophonyProject/go-config v1.6.3/go.mod h1:eDQfBjmTDh/l+2QLBgsotmJFd/1x/7w4SwwBUxMM86w=
+github.com/TheCacophonyProject/go-config v1.6.4 h1:7m2E+TUkrG8GlJW+eEqJMQMUPUm4cV2DY4MSrFcrzHU=
+github.com/TheCacophonyProject/go-config v1.6.4/go.mod h1:eDQfBjmTDh/l+2QLBgsotmJFd/1x/7w4SwwBUxMM86w=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200116020937-858bd8b71512/go.mod h1:8H6Aaft5549sIWxcsuCIL2o60/TQkoF93fVoSTpgZb8=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200616224711-fc633122087a/go.mod h1:Vg73Ezn4kr8qDNP9LNgjki9qgi+5T/0Uc9oDyflaYUY=
 github.com/TheCacophonyProject/go-cptv v0.0.0-20200818214604-bd5d4aa36043/go.mod h1:wG4/P/TsGtk33uBClYPjRlSbcdQrIASXutOUV8LMn2o=
@@ -60,6 +60,7 @@ github.com/dgryski/go-sip13 v0.0.0-20181026042036-e10d5fee7954/go.mod h1:vAd38F8
 github.com/fsnotify/fsnotify v1.4.7 h1:IXs+QLmnXW2CcXuY+8Mzv/fWEsPGWxqefPtCP5CnV9I=
 github.com/fsnotify/fsnotify v1.4.7/go.mod h1:jwhsz4b93w/PPRr/qN1Yymfu8t87LnFCMoQvtojpjFo=
 github.com/ghodss/yaml v1.0.0/go.mod h1:4dBDuWmgqj2HViK6kFavaiC9ZROes6MMH2rRYeMEF04=
+github.com/go-kit/kit v0.8.0 h1:Wz+5lgoB0kkuqLEc6NVmwRknTKP6dTGbSqvhZtBI/j0=
 github.com/go-kit/kit v0.8.0/go.mod h1:xBxKIO96dXMWWy0MnWVtmwkA9/13aqxPnvrjFYMA2as=
 github.com/go-logfmt/logfmt v0.3.0/go.mod h1:Qt1PoO58o5twSAckw1HlFXLmHsOX5/0LbT9GBnD5lWE=
 github.com/go-logfmt/logfmt v0.4.0/go.mod h1:3RMwSq7FuexP4Kalkev3ejPJsZTpXXBr9+V4qmtdjCk=

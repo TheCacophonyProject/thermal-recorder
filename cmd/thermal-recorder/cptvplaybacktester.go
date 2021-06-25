@@ -153,7 +153,7 @@ func (cpt *CPTVPlaybackTester) Detect(filename string) *EventLoggingRecordingLis
 	listener.config = cpt.config
 	listener.verbose = verbose
 	listener.framesHz = camera.FPS()
-	processor := motion.NewMotionProcessor(lepton3.ParseRawFrame, &cpt.config.Motion, &cpt.config.Recorder, &cpt.config.Location, listener, recorder, camera)
+	processor := motion.NewMotionProcessor(lepton3.ParseRawFrame, &cpt.config.Motion, &cpt.config.Recorder, &cpt.config.Location, listener, recorder, camera, nil)
 
 	if err != nil {
 		log.Printf("Could not open file %v", err)

@@ -110,7 +110,7 @@ func FramesFrom(start, end int) []int {
 func SetupTest(mConf *config.ThermalMotion, rConf *recorder.RecorderConfig, lConf *config.Location) (*TestRecorder, *TestFrameMaker) {
 	recorder := new(TestRecorder)
 	camera := new(TestCamera)
-	processor := NewMotionProcessor(lepton3.ParseRawFrame, mConf, rConf, lConf, nil, recorder, camera)
+	processor := NewMotionProcessor(lepton3.ParseRawFrame, mConf, rConf, lConf, nil, recorder, camera, nil)
 
 	scenarioMaker := MakeTestFrameMaker(processor, camera)
 	return recorder, scenarioMaker

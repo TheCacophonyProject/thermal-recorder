@@ -71,7 +71,7 @@ func (tfm *TestFrameMaker) makeFrame() *cptvframe.Frame {
 
 	if tfm.BackgroundVal != 0 {
 		for y, row := range frame.Pix {
-			for x, _ := range row {
+			for x := range row {
 				frame.Pix[y][x] = uint16(tfm.BackgroundVal)
 			}
 		}

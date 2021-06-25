@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"path/filepath"
 	"regexp"
 	"syscall"
@@ -65,28 +66,46 @@ func NewCPTVFileRecorder(config *Config, camera cptvframe.CameraSpec, brand, mod
 }
 
 type CPTVFileRecorder struct {
-	outputDir    string
-	header       cptv.Header
-	minDiskSpace uint64
-	camera       cptvframe.CameraSpec
-	writer       *cptv.FileWriter
-	motionYAML   string
+	outputDir        string
+	header           cptv.Header
+	minDiskSpace     uint64
+	camera           cptvframe.CameraSpec
+	writer           *cptv.FileWriter
+	motionYAML       string
+	constantRecorder bool
+}
+
+func (cfr *CPTVFileRecorder) SetAsConstantRecorder() error {
+	folder := path.Join(cfr.outputDir, "/constant-recordings")
+	cfr.outputDir = folder
+	cfr.constantRecorder = true
+	return os.Mkdir(folder, 0755)
 }
 
 func (cfr *CPTVFileRecorder) CheckCanRecord() error {
 	enoughSpace, err := checkDiskSpace(cfr.minDiskSpace, cfr.outputDir)
 	if err != nil {
-		return fmt.Errorf("Problem with checking disk space: %v", err)
+		return fmt.Errorf("problem with checking disk space: %v", err)
 	} else if !enoughSpace {
-		return errors.New("Motion detected but not enough free disk space to start recording")
+		return errors.New("motion detected but not enough free disk space to start recording")
 	}
 	return nil
 }
 
 func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThreshold uint16) error {
-	leptondController.SetAutoFFC(false)
+	if fw.constantRecorder {
+		if err := deleteExcessRecordings(fw.outputDir); err != nil {
+			return err
+		}
+	} else {
+		leptondController.SetAutoFFC(false)
+	}
 	filename := filepath.Join(fw.outputDir, newRecordingTempName())
-	log.Printf("recording started: %s", filename)
+	if fw.constantRecorder {
+		log.Printf("constant recording started: %s", filename)
+	} else {
+		log.Printf("recording started: %s", filename)
+	}
 
 	writer, err := cptv.NewFileWriter(filename, fw.camera)
 	if err != nil {
@@ -105,12 +124,18 @@ func (fw *CPTVFileRecorder) StartRecording(background *cptvframe.Frame, tempThre
 }
 
 func (fw *CPTVFileRecorder) StopRecording() error {
-	leptondController.SetAutoFFC(true)
+	if !fw.constantRecorder {
+		leptondController.SetAutoFFC(true)
+	}
 	if fw.writer != nil {
 		fw.writer.Close()
 
 		finalName, err := renameTempRecording(fw.writer.Name())
-		log.Printf("recording stopped: %s\n", finalName)
+		if fw.constantRecorder {
+			log.Printf("constant recording stopped: %s", finalName)
+		} else {
+			log.Printf("recording stopped: %s", finalName)
+		}
 		fw.writer = nil
 
 		return err
@@ -165,4 +190,29 @@ func checkDiskSpace(mb uint64, dir string) (bool, error) {
 		return false, err
 	}
 	return fs.Bavail*uint64(fs.Bsize)/1024/1024 >= mb, nil
+}
+
+func deleteExcessRecordings(dir string) error {
+	var fs syscall.Statfs_t
+	for {
+		if err := syscall.Statfs(dir, &fs); err != nil {
+			return err
+		}
+		percentageLeft := (fs.Bavail * 100) / fs.Blocks
+		if percentageLeft > 30 {
+			return nil
+		}
+		matches, err := filepath.Glob(path.Join(dir, "*.cptv*"))
+		if err != nil {
+			return err
+		}
+		if len(matches) == 0 {
+			return errors.New("no more recordings to delete and not enough space for new recordings")
+		}
+		err = os.Remove(matches[0]) // Because how the files are named with the date the first in the list should be the oldest
+		if err != nil {
+			return err
+		}
+		log.Println("deleted old recording: ", matches[0])
+	}
 }
