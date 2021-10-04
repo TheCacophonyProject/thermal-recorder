@@ -50,14 +50,21 @@ nfpms:
   formats:
     - deb
   bindir: /usr/bin
-  files:
-    "_release/thermal-recorder.service": "/etc/systemd/system/thermal-recorder.service"
-    "_release/leptond.service": "/etc/systemd/system/leptond.service"
-    "_release/thermal-writer.service": "/etc/systemd/system/thermal-writer.service"
-    "set-thermal-recorder-output/set-thermal-recorder-output.service": "/etc/systemd/system/set-thermal-recorder-output.service"
-    "set-thermal-recorder-output/set-thermal-recorder-output": "/usr/bin/set-thermal-recorder-output"
-    "_release/org.cacophony.thermalrecorder.conf": "/etc/dbus-1/system.d/org.cacophony.thermalrecorder.conf"
-    "_release/org.cacophony.leptond.conf": "/etc/dbus-1/system.d/org.cacophony.leptond.conf"
+  contents:
+    - src: _release/thermal-recorder.service
+      dst: /etc/systemd/system/thermal-recorder.service
+    - src: _release/leptond.service
+      dst: /etc/systemd/system/leptond.service
+    - src: _release/thermal-writer.service
+      dst: /etc/systemd/system/thermal-writer.service
+    - src: set-thermal-recorder-output/set-thermal-recorder-output.service
+      dst: /etc/systemd/system/set-thermal-recorder-output.service
+    - src: set-thermal-recorder-output/set-thermal-recorder-output
+      dst: /usr/bin/set-thermal-recorder-output
+    - src: _release/org.cacophony.thermalrecorder.conf
+      dst: /etc/dbus-1/system.d/org.cacophony.thermalrecorder.conf
+    - src: _release/org.cacophony.leptond.conf
+      dst: /etc/dbus-1/system.d/org.cacophony.leptond.conf
   scripts:
     postinstall: "_release/postinstall.sh"
 
