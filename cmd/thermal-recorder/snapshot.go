@@ -18,17 +18,12 @@ package main
 
 import (
 	"errors"
-	"image"
-	"image/color"
-	"image/png"
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"log"
-	"math"
 	"os"
 	"path"
 	"sync"
 	"time"
-
-	"github.com/TheCacophonyProject/lepton3"
 )
 
 const (
@@ -42,60 +37,65 @@ var (
 	mu                   sync.Mutex
 )
 
-func newSnapshot(dir string) error {
+func getHeaders() *headers.HeaderInfo {
+	return header
+}
+
+func newSnapshot(dir string) (*cptvframe.Frame, error) {
 	mu.Lock()
 	defer mu.Unlock()
 
 	if time.Since(previousSnapshotTime) < allowedSnapshotPeriod {
-		return nil
+		return nil, nil
 	}
 
 	if processor == nil {
-		return errors.New("reading from camera has not started yet")
+		return nil, errors.New("reading from camera has not started yet")
 	}
 	f := processor.GetRecentFrame()
 	if f == nil {
-		return errors.New("no frames yet")
+		return nil, errors.New("no frames yet")
 	}
-	g16 := image.NewGray16(image.Rect(0, 0, lepton3.FrameCols, lepton3.FrameRows))
-	// Max and min are needed for normalization of the frame
-	var valMax uint16
-	var valMin uint16 = math.MaxUint16
-	var id int
-	for _, row := range f.Pix {
-		for _, val := range row {
-			id += int(val)
-			valMax = maxUint16(valMax, val)
-			valMin = minUint16(valMin, val)
-		}
-	}
-
-	// Check if frame had already been processed
-	if id == previousSnapshotID {
-		return nil
-	}
-	previousSnapshotID = id
-
-	var norm = math.MaxUint16 / (valMax - valMin)
-	for y, row := range f.Pix {
-		for x, val := range row {
-			g16.SetGray16(x, y, color.Gray16{Y: (val - valMin) * norm})
-		}
-	}
-
-	out, err := os.Create(path.Join(dir, snapshotName))
-	if err != nil {
-		return err
-	}
-	defer out.Close()
-
-	if err := png.Encode(out, g16); err != nil {
-		return err
-	}
-
-	// the time will be changed only if the attempt is successful
-	previousSnapshotTime = time.Now()
-	return nil
+	return f, nil
+	// g16 := image.NewGray16(image.Rect(0, 0, lepton3.FrameCols, lepton3.FrameRows))
+	// // Max and min are needed for normalization of the frame
+	// var valMax uint16
+	// var valMin uint16 = math.MaxUint16
+	// var id int
+	// for _, row := range f.Pix {
+	// 	for _, val := range row {
+	// 		id += int(val)
+	// 		valMax = maxUint16(valMax, val)
+	// 		valMin = minUint16(valMin, val)
+	// 	}
+	// }
+	//
+	// // Check if frame had already been processed
+	// if id == previousSnapshotID {
+	// 	return nil
+	// }
+	// previousSnapshotID = id
+	//
+	// var norm = math.MaxUint16 / (valMax - valMin)
+	// for y, row := range f.Pix {
+	// 	for x, val := range row {
+	// 		g16.SetGray16(x, y, color.Gray16{Y: (val - valMin) * norm})
+	// 	}
+	// }
+	//
+	// out, err := os.Create(path.Join(dir, snapshotName))
+	// if err != nil {
+	// 	return err
+	// }
+	// defer out.Close()
+	//
+	// if err := png.Encode(out, g16); err != nil {
+	// 	return err
+	// }
+	//
+	// // the time will be changed only if the attempt is successful
+	// previousSnapshotTime = time.Now()
+	// return nil
 }
 
 func deleteSnapshot(dir string) {

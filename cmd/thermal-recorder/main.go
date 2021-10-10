@@ -45,8 +45,10 @@ const (
 )
 
 var (
-	version                  = "<not set>"
-	processor                *motion.MotionProcessor
+	version   = "<not set>"
+	processor *motion.MotionProcessor
+	header    *headers.HeaderInfo
+
 	frameLogIntervalFirstMin = 15
 	frameLogInterval         = 60 * 5
 )
@@ -102,8 +104,11 @@ func runMain() error {
 	log.Println("starting d-bus service")
 	err = startService(conf.OutputDir)
 	if err != nil {
+		log.Printf("serrrrrrrr %v", err)
+
 		return err
 	}
+	log.Println("started d-bus service")
 
 	deleteSnapshot(conf.OutputDir)
 
