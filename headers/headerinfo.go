@@ -95,8 +95,7 @@ func ReadHeaderInfo(reader *bufio.Reader) (*HeaderInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	return &HeaderInfo{
+	header := &HeaderInfo{
 		resX:      toInt(h[XResolution]),
 		resY:      toInt(h[YResolution]),
 		fps:       toInt(h[FPS]),
@@ -105,7 +104,8 @@ func ReadHeaderInfo(reader *bufio.Reader) (*HeaderInfo, error) {
 		model:     toStr(h[Model]),
 		serial:    toInt(h[Serial]),
 		firmware:  toStr(h[Firmware]),
-	}, nil
+	}
+	return header, nil
 }
 
 func toInt(v interface{}) int {
