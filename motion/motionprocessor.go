@@ -18,11 +18,12 @@ package motion
 
 import (
 	"errors"
-	"github.com/TheCacophonyProject/go-cptv/cptvframe"
-	"github.com/TheCacophonyProject/window"
 	"math"
 	"reflect"
 	"time"
+
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
+	"github.com/TheCacophonyProject/window"
 
 	config "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/thermal-recorder/loglimiter"

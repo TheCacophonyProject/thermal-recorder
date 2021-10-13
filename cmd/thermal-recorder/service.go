@@ -18,6 +18,7 @@ package main
 
 import (
 	"errors"
+
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/thermal-recorder/headers"
 

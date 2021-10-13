@@ -18,9 +18,10 @@ package main
 
 import (
 	"errors"
-	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"sync"
 	"time"
+
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 )
 
 const (
