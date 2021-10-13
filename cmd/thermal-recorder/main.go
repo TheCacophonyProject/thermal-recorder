@@ -104,11 +104,8 @@ func runMain() error {
 	log.Println("starting d-bus service")
 	err = startService(conf.OutputDir)
 	if err != nil {
-		log.Printf("serrrrrrrr %v", err)
-
 		return err
 	}
-	log.Println("started d-bus service")
 
 	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {

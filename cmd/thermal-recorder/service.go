@@ -23,7 +23,6 @@ import (
 
 	"github.com/godbus/dbus"
 	"github.com/godbus/dbus/introspect"
-	"log"
 )
 
 const (
@@ -50,21 +49,16 @@ func startService(dir string) error {
 	s := &service{}
 	conn.Export(s, dbusPath, dbusName)
 	conn.Export(genIntrospectable(s), dbusPath, "org.freedesktop.DBus.Introspectable")
-	log.Println("introspect done")
-
 	return nil
 }
 
 func genIntrospectable(v interface{}) introspect.Introspectable {
-	log.Println("introspect")
-
 	node := &introspect.Node{
 		Interfaces: []introspect.Interface{{
 			Name:    dbusName,
 			Methods: introspect.Methods(v),
 		}},
 	}
-	log.Printf("introspect %v", node)
 	return introspect.NewIntrospectable(node)
 }
 
