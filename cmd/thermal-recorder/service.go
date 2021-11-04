@@ -68,7 +68,7 @@ func (s *service) TakeSnapshot(lastFrame int) (*cptvframe.Frame, *dbus.Error) {
 	f, err := newSnapshot(lastFrame)
 	if err != nil {
 		return nil, &dbus.Error{
-			Name: dbusName + ".StayOnForError",
+			Name: dbusName + ".TakeSnapshot",
 			Body: []interface{}{err.Error()},
 		}
 	}

@@ -112,11 +112,7 @@ func (mp *MotionProcessor) Process(rawFrame []byte) error {
 		mp.stopConstantRecorder()
 		return err
 	}
-	if mp.CurrentFrame == math.MaxUint32 {
-		mp.CurrentFrame = 0
-	} else {
-		mp.CurrentFrame += 1
-	}
+	mp.CurrentFrame += 1
 	mp.process(frame)
 	mp.processConstantRecorder(frame)
 	return nil
