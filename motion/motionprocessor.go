@@ -18,7 +18,6 @@ package motion
 
 import (
 	"errors"
-	"math"
 	"reflect"
 	"time"
 
