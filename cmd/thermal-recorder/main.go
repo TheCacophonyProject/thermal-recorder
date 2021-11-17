@@ -185,12 +185,13 @@ func handleConn(conn net.Conn, conf *Config) error {
 		headerInfo,
 		constantRecorder,
 	)
-
+	heartbeat := NewHeartBeat(conf.Recorder.Window, conf.Recorder.ConstantRecorder)
 	log.Print("reading frames")
 	frameLogIntervalFirstMin *= headerInfo.FPS()
 	frameLogInterval *= headerInfo.FPS()
 	rawFrame := make([]byte, headerInfo.FrameSize())
 	for {
+		heartbeat.Check()
 		_, err := io.ReadFull(reader, rawFrame[:5])
 		if err != nil {
 			return err
