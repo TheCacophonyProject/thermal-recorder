@@ -59,6 +59,7 @@ func NewMotionProcessor(
 		log:               loglimiter.New(minLogInterval),
 		constantRecorder:  constantRecorder,
 		constantRecording: !isNullOrNullPointer(constantRecorder),
+		CurrentFrame:      0,
 	}
 }
 
@@ -89,6 +90,7 @@ type MotionProcessor struct {
 	constantRecording bool
 	constantRecorder  recorder.Recorder
 	crFrames          int
+	CurrentFrame      uint32
 }
 
 type RecordingListener interface {
@@ -109,6 +111,7 @@ func (mp *MotionProcessor) Process(rawFrame []byte) error {
 		mp.stopConstantRecorder()
 		return err
 	}
+	mp.CurrentFrame += 1
 	mp.process(frame)
 	mp.processConstantRecorder(frame)
 	return nil
@@ -190,8 +193,8 @@ func (mp *MotionProcessor) ProcessFrame(srcFrame *cptvframe.Frame) {
 	mp.process(frame)
 }
 
-func (mp *MotionProcessor) GetRecentFrame() *cptvframe.Frame {
-	return mp.frameLoop.CopyRecent()
+func (mp *MotionProcessor) GetRecentFrame() (uint32, *cptvframe.Frame) {
+	return mp.CurrentFrame, mp.frameLoop.CopyRecent()
 }
 
 func (mp *MotionProcessor) canStartWriting() error {

@@ -45,8 +45,10 @@ const (
 )
 
 var (
-	version                  = "<not set>"
-	processor                *motion.MotionProcessor
+	version    = "<not set>"
+	processor  *motion.MotionProcessor
+	headerInfo *headers.HeaderInfo = nil
+
 	frameLogIntervalFirstMin = 15
 	frameLogInterval         = 60 * 5
 )
@@ -105,8 +107,6 @@ func runMain() error {
 		return err
 	}
 
-	deleteSnapshot(conf.OutputDir)
-
 	log.Println("host initialisation")
 	if _, err := host.Init(); err != nil {
 		return err
@@ -144,33 +144,34 @@ func handleConn(conn net.Conn, conf *Config) error {
 	leptondController.SetAutoFFC(true)
 	totalFrames := 0
 	reader := bufio.NewReader(conn)
-	header, err := headers.ReadHeaderInfo(reader)
+	var err error
+	headerInfo, err = headers.ReadHeaderInfo(reader)
 	if err != nil {
 		return err
 	}
 
-	log.Printf("connection from %s %s (%dx%d@%dfps)", header.Brand(), header.Model(), header.ResX(), header.ResY(), header.FPS())
-	conf.LoadMotionConfig(header.Model())
+	log.Printf("connection from %s %s (%dx%d@%dfps)", headerInfo.Brand(), headerInfo.Model(), headerInfo.ResX(), headerInfo.ResY(), headerInfo.FPS())
+	conf.LoadMotionConfig(headerInfo.Model())
 	logConfig(conf)
 
-	parseFrame := frameParser(header.Brand(), header.Model())
+	parseFrame := frameParser(headerInfo.Brand(), headerInfo.Model())
 	if parseFrame == nil {
-		return fmt.Errorf("unable to handle frames for %s %s", header.Brand(), header.Model())
+		return fmt.Errorf("unable to handle frames for %s %s", headerInfo.Brand(), headerInfo.Model())
 	}
 
-	cptvRecorder := NewCPTVFileRecorder(conf, header, header.Brand(), header.Model(), header.CameraSerial(), header.Firmware())
+	cptvRecorder := NewCPTVFileRecorder(conf, headerInfo, headerInfo.Brand(), headerInfo.Model(), headerInfo.CameraSerial(), headerInfo.Firmware())
 	defer cptvRecorder.Stop()
 	var recorder recorder.Recorder = cptvRecorder
 
 	if conf.Throttler.Activate {
 		minRecordingLength := conf.Recorder.MinSecs + conf.Recorder.PreviewSecs
-		recorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength, new(throttle.ThrottledEventRecorder), header)
+		recorder = throttle.NewThrottledRecorder(cptvRecorder, &conf.Throttler, minRecordingLength, new(throttle.ThrottledEventRecorder), headerInfo)
 	}
 
 	// Constant Recorder
 	var constantRecorder *CPTVFileRecorder
 	if conf.Recorder.ConstantRecorder {
-		constantRecorder = NewCPTVFileRecorder(conf, header, header.Brand(), header.Model(), header.CameraSerial(), header.Firmware())
+		constantRecorder = NewCPTVFileRecorder(conf, headerInfo, headerInfo.Brand(), headerInfo.Model(), headerInfo.CameraSerial(), headerInfo.Firmware())
 		constantRecorder.SetAsConstantRecorder()
 	}
 
@@ -181,14 +182,14 @@ func handleConn(conn net.Conn, conf *Config) error {
 		&conf.Location,
 		nil,
 		recorder,
-		header,
+		headerInfo,
 		constantRecorder,
 	)
 
 	log.Print("reading frames")
-	frameLogIntervalFirstMin *= header.FPS()
-	frameLogInterval *= header.FPS()
-	rawFrame := make([]byte, header.FrameSize())
+	frameLogIntervalFirstMin *= headerInfo.FPS()
+	frameLogInterval *= headerInfo.FPS()
+	rawFrame := make([]byte, headerInfo.FrameSize())
 	for {
 		_, err := io.ReadFull(reader, rawFrame[:5])
 		if err != nil {
@@ -197,7 +198,7 @@ func handleConn(conn net.Conn, conf *Config) error {
 		message := string(rawFrame[:5])
 		if message == clearBuffer {
 			log.Print("clearing motion buffer")
-			processor.Reset(header)
+			processor.Reset(headerInfo)
 			continue
 		}
 
@@ -209,7 +210,7 @@ func handleConn(conn net.Conn, conf *Config) error {
 		totalFrames++
 
 		if totalFrames%frameLogIntervalFirstMin == 0 &&
-			totalFrames <= 60*header.FPS() || totalFrames%frameLogInterval == 0 {
+			totalFrames <= 60*headerInfo.FPS() || totalFrames%frameLogInterval == 0 {
 			log.Printf("%d frames for this connection", totalFrames)
 		}
 

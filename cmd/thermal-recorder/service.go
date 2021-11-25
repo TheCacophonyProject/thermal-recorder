@@ -19,6 +19,9 @@ package main
 import (
 	"errors"
 
+	"github.com/TheCacophonyProject/go-cptv/cptvframe"
+	"github.com/TheCacophonyProject/thermal-recorder/headers"
+
 	"github.com/godbus/dbus"
 	"github.com/godbus/dbus/introspect"
 )
@@ -29,7 +32,6 @@ const (
 )
 
 type service struct {
-	dir string
 }
 
 func startService(dir string) error {
@@ -45,12 +47,9 @@ func startService(dir string) error {
 		return errors.New("name already taken")
 	}
 
-	s := &service{
-		dir: dir,
-	}
+	s := &service{}
 	conn.Export(s, dbusPath, dbusName)
 	conn.Export(genIntrospectable(s), dbusPath, "org.freedesktop.DBus.Introspectable")
-
 	return nil
 }
 
@@ -65,13 +64,33 @@ func genIntrospectable(v interface{}) introspect.Introspectable {
 }
 
 // TakeSnapshot will save the next frame as a still
-func (s *service) TakeSnapshot() *dbus.Error {
-	err := newSnapshot(s.dir)
+func (s *service) TakeSnapshot(lastFrame int) (*cptvframe.Frame, *dbus.Error) {
+	f, err := newSnapshot(lastFrame)
 	if err != nil {
-		return &dbus.Error{
-			Name: dbusName + ".StayOnForError",
+		return nil, &dbus.Error{
+			Name: dbusName + ".TakeSnapshot",
 			Body: []interface{}{err.Error()},
 		}
 	}
-	return nil
+	return f, nil
+}
+func (s *service) CameraInfo() (map[string]interface{}, *dbus.Error) {
+
+	if headerInfo == nil {
+		return nil, &dbus.Error{
+			Name: dbusName + ".NoHeaderInfo",
+			Body: nil,
+		}
+	}
+	camera_specs := map[string]interface{}{
+		headers.XResolution: headerInfo.ResX(),
+		headers.YResolution: headerInfo.ResY(),
+		headers.FrameSize:   headerInfo.FrameSize(),
+		headers.Model:       headerInfo.Model(),
+		headers.Brand:       headerInfo.Brand(),
+		headers.FPS:         headerInfo.FPS(),
+		headers.Serial:      headerInfo.CameraSerial(),
+		headers.Firmware:    headerInfo.Firmware(),
+	}
+	return camera_specs, nil
 }
