@@ -21,6 +21,7 @@ import (
 	"fmt"
 	"log"
 	"net"
+	"os"
 	"os/exec"
 	"time"
 
@@ -98,6 +99,16 @@ func runMain() error {
 	service, err := startService()
 	if err != nil {
 		return err
+	}
+
+	// Wait for socket to be available.
+	log.Print("waiting for socket to be available")
+	for {
+		if _, err := os.Stat(conf.FrameOutput); !os.IsNotExist(err) {
+			break
+		}
+		time.Sleep(time.Second)
+		resetWatchdog()
 	}
 
 	log.Print("dialing frame output socket")
@@ -233,7 +244,7 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 		}
 
 		if notifyCount++; notifyCount >= framesPerSdNotify {
-			daemon.SdNotify(false, "WATCHDOG=1")
+			resetWatchdog()
 			notifyCount = 0
 		}
 
@@ -241,6 +252,10 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 			return err
 		}
 	}
+}
+
+func resetWatchdog() {
+	daemon.SdNotify(false, "WATCHDOG=1")
 }
 
 func logConfig(conf *Config) {
