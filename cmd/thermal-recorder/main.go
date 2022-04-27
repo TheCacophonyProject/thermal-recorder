@@ -222,8 +222,8 @@ func handleConn(conn net.Conn, conf *Config) error {
 				Details:   map[string]interface{}{"description": map[string]interface{}{"details": err.Error()}},
 			}
 			eventclient.AddEvent(event)
-			// this will cause camera power to be cycled
-			return err
+			log.Println("bad frame deteccted, requesting camera to restart")
+			leptondController.RestartCamera()
 		}
 	}
 }

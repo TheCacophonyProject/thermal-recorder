@@ -151,7 +151,7 @@ func runMain() error {
 	}
 
 	for {
-		err = runCamera(conf, camera, conn)
+		err = runCamera(conf, camera, conn, service)
 		if err != nil {
 			if _, isNextFrameErr := err.(*nextFrameErr); !isNextFrameErr {
 				return err
@@ -233,7 +233,7 @@ func sendCameraSpecs(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) 
 	return nil
 }
 
-func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error {
+func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn, service *leptondService) error {
 	conn.SetWriteBuffer(camera.ResX() * camera.ResY() * 2 * 20)
 	log.Print("reading frames")
 	frame := lepton3.NewRawFrame()
@@ -246,6 +246,12 @@ func runCamera(conf *Config, camera *lepton3.Lepton3, conn *net.UnixConn) error 
 		if notifyCount++; notifyCount >= framesPerSdNotify {
 			resetWatchdog()
 			notifyCount = 0
+		}
+
+		if service.actions.reset {
+			service.actions.reset = false
+			log.Println("reset triggered through service")
+			return nil
 		}
 
 		if _, err := conn.Write(frame[:]); err != nil {

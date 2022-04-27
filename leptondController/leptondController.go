@@ -32,3 +32,11 @@ func RunFFC() error {
 	}
 	return obj.Call(methodBase+".RunFFC", 0).Store()
 }
+
+func RestartCamera() error {
+	obj, err := getDbusObj()
+	if err != nil {
+		return err
+	}
+	return obj.Call(methodBase+".RestartCamera", 0).Store()
+}
