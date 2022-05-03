@@ -33,8 +33,13 @@ const (
 
 var mu sync.Mutex
 
+type actions struct {
+	reset bool
+}
+
 type leptondService struct {
-	camera *lepton3.Lepton3
+	camera  *lepton3.Lepton3
+	actions *actions
 }
 
 func startService() (*leptondService, error) {
@@ -49,7 +54,7 @@ func startService() (*leptondService, error) {
 	if reply != dbus.RequestNameReplyPrimaryOwner {
 		return nil, errors.New("name already taken")
 	}
-	s := &leptondService{}
+	s := &leptondService{actions: &actions{reset: false}}
 	conn.Export(s, dbusPath, dbusName)
 	conn.Export(genIntrospectable(s), dbusPath, "org.freedesktop.DBus.Introspectable")
 	return s, nil
@@ -98,6 +103,13 @@ func (s leptondService) SetAutoFFC(automatic bool) *dbus.Error {
 	if err := s.camera.SetAutoFFC(automatic); err != nil {
 		return makeDbusError("SetAutoFFC", err)
 	}
+	return nil
+}
+
+func (s leptondService) RestartCamera() *dbus.Error {
+	mu.Lock()
+	defer mu.Unlock()
+	s.actions.reset = true
 	return nil
 }
 
