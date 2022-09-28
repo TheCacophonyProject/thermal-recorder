@@ -112,7 +112,7 @@ func (d *motionDetector) Detect(frame *cptvframe.Frame) bool {
 	prevFFC := d.affectedByFCC
 	d.affectedByFCC = isAffectedByFFC(frame)
 	if d.dynamicThresh && !d.affectedByFCC {
-		backAverage, changed := d.updateBackground(frame, prevFFC)
+		backAverage, changed := d.updateBackground(frame)
 		if changed && d.backgroundFrames > d.previewFrames {
 			d.calculateThreshold(backAverage)
 		}
@@ -248,7 +248,7 @@ func (d *motionDetector) warmerDiffFrames(a, b, out *cptvframe.Frame) *cptvframe
 	return out
 }
 
-func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bool) (float64, bool) {
+func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame) (float64, bool) {
 	d.backgroundFrames++
 	if d.backgroundFrames == 1 {
 		for y := d.start; y < d.rowStop; y++ {
@@ -271,7 +271,7 @@ func (d *motionDetector) updateBackground(new_frame *cptvframe.Frame, prevFFC bo
 	for y := d.start; y < d.rowStop; y++ {
 		for x := d.start; x < d.columnStop; x++ {
 			weight := d.backgroundWeight[y][x]
-			if prevFFC || (float32(new_frame.Pix[y][x])-weight) < float32(d.background.Pix[y][x]) {
+			if (float32(new_frame.Pix[y][x]) - weight) < float32(d.background.Pix[y][x]) {
 				d.background.Pix[y][x] = new_frame.Pix[y][x]
 				d.backgroundWeight[y][x] = 0
 				changed = true
