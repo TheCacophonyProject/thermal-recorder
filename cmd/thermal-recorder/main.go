@@ -28,6 +28,7 @@ import (
 	"github.com/TheCacophonyProject/event-reporter/eventclient"
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/window"
 	arg "github.com/alexflint/go-arg"
 	"periph.io/x/periph/host"
 
@@ -184,9 +185,13 @@ func handleConn(conn net.Conn, conf *Config) error {
 		recorder,
 		headerInfo,
 		constantRecorder,
+		NewCPTVFileRecorder(conf, headerInfo, headerInfo.Brand(), headerInfo.Model(), headerInfo.CameraSerial(), headerInfo.Firmware()),
 	)
 
 	log.Print("reading frames")
+
+	go snapshotTriggers(processor, conf.Recorder.Window)
+
 	frameLogIntervalFirstMin *= headerInfo.FPS()
 	frameLogInterval *= headerInfo.FPS()
 	rawFrame := make([]byte, headerInfo.FrameSize())
@@ -253,4 +258,31 @@ func logConfig(conf *Config) {
 	log.Printf("location latitude: %v", conf.Location.Latitude)
 	log.Printf("location longitude: %v", conf.Location.Longitude)
 	log.Printf("recording window: %s", conf.Recorder.Window)
+}
+
+func snapshotTriggers(processor *motion.MotionProcessor, window window.Window) {
+	if window.NoWindow {
+		log.Println("no recording window so will make snapshot every 12 hours")
+		triggerTime := time.Now().Add(time.Minute)
+		for {
+			time.Sleep(time.Until(triggerTime))
+			log.Println("making snapshot")
+			processor.StartSnapshot = true
+			triggerTime = triggerTime.Add(time.Hour * 12)
+		}
+	}
+
+	// Make snapshot at start of window.
+	sleepTime := time.Minute
+	if !window.Active() {
+		sleepTime = time.Until(window.NextStart()) + time.Minute
+	}
+	time.Sleep(sleepTime)
+	log.Println("making start of window snapshot")
+	processor.StartSnapshot = true
+
+	// Make snapshot at end of window.
+	time.Sleep(time.Until(window.NextEnd()) - 2*time.Minute)
+	log.Println("making end of window snapshot")
+	processor.StartSnapshot = true
 }

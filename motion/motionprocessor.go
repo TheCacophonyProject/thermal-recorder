@@ -42,6 +42,7 @@ func NewMotionProcessor(
 	recorder recorder.Recorder,
 	c cptvframe.CameraSpec,
 	constantRecorder recorder.Recorder,
+	snapshotRecorder recorder.Recorder,
 ) *MotionProcessor {
 	return &MotionProcessor{
 		parseFrame:        parseFrame,
@@ -60,6 +61,7 @@ func NewMotionProcessor(
 		constantRecorder:  constantRecorder,
 		constantRecording: !isNullOrNullPointer(constantRecorder),
 		CurrentFrame:      0,
+		snapshotRecorder:  snapshotRecorder,
 	}
 }
 
@@ -91,6 +93,10 @@ type MotionProcessor struct {
 	constantRecorder  recorder.Recorder
 	crFrames          int
 	CurrentFrame      uint32
+	snapshotRecorder  recorder.Recorder
+	StartSnapshot     bool
+	SnapshotRecording bool
+	snapshotFrames    int
 }
 
 type RecordingListener interface {
@@ -114,7 +120,32 @@ func (mp *MotionProcessor) Process(rawFrame []byte) error {
 	mp.CurrentFrame += 1
 	mp.process(frame)
 	mp.processConstantRecorder(frame)
+	mp.processSnapshot(frame)
 	return nil
+}
+
+func (mp *MotionProcessor) processSnapshot(frame *cptvframe.Frame) {
+	if mp.StartSnapshot {
+		mp.StartSnapshot = false
+		if err := mp.snapshotRecorder.StartRecording(mp.motionDetector.background, 0); err != nil {
+			mp.log.Printf("error with starting constant recorder: %v", err)
+			return
+		}
+		mp.SnapshotRecording = true
+	}
+	if !mp.SnapshotRecording {
+		return
+	}
+	mp.snapshotRecorder.WriteFrame(frame)
+	mp.snapshotFrames++
+	if mp.snapshotFrames > 20 {
+		mp.SnapshotRecording = false
+		if err := mp.snapshotRecorder.StopRecording(); err != nil {
+			mp.log.Printf("error with stoping constant recorder: %v", err)
+			return
+		}
+		mp.snapshotFrames = 0
+	}
 }
 
 func (mp *MotionProcessor) stopConstantRecorder() {
