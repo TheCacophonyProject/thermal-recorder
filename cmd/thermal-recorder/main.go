@@ -117,6 +117,8 @@ func runMain() error {
 		return err
 	}
 
+	go snapshotRecordingTriggers(conf.Recorder.Window)
+
 	for {
 		// Set up listener for frames sent by leptond.
 		os.Remove(conf.FrameInput)
@@ -188,8 +190,6 @@ func handleConn(conn net.Conn, conf *Config) error {
 	)
 
 	log.Print("reading frames")
-
-	go snapshotRecordingTriggers(processor, conf.Recorder.Window)
 
 	frameLogIntervalFirstMin *= headerInfo.FPS()
 	frameLogInterval *= headerInfo.FPS()

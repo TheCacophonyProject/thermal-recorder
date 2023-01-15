@@ -23,7 +23,6 @@ import (
 	"time"
 
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
-	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/window"
 )
 
@@ -66,6 +65,7 @@ func newSnapshotRecording() error {
 	defer mu.Unlock()
 
 	if processor == nil {
+		log.Println("no motion processor so can't make snapshot")
 		return errors.New("reading from camera has not started yet")
 	}
 
@@ -73,29 +73,37 @@ func newSnapshotRecording() error {
 	return nil
 }
 
-func snapshotRecordingTriggers(processor *motion.MotionProcessor, window window.Window) {
+// snapshotRecordingTriggers will make a snapshot when in the recording window and at the end of the recording window.
+func snapshotRecordingTriggers(window window.Window) {
+
+	// Wait for motion processor to start
+	for processor == nil {
+		time.Sleep(time.Second)
+	}
+
 	if window.NoWindow {
 		log.Println("no recording window so will make snapshot every 12 hours")
 		triggerTime := time.Now().Add(time.Minute)
 		for {
 			time.Sleep(time.Until(triggerTime))
-			log.Println("making snapshot")
-			processor.StartSnapshot = true
+			_ = newSnapshotRecording()
 			triggerTime = triggerTime.Add(time.Hour * 12)
 		}
 	}
 
-	// Make snapshot at start of window.
-	sleepTime := time.Minute
-	if !window.Active() {
-		sleepTime = time.Until(window.NextStart()) + time.Minute
+	if window.Active() {
+		// If camera just started give it a minute to warm  up.
+		time.Sleep(time.Minute)
+		log.Println("making power on snapshot")
+	} else {
+		// Wait for recording window to start
+		time.Sleep(time.Until(window.NextStart()) + time.Minute)
+		log.Println("making start of window snapshot")
 	}
-	time.Sleep(sleepTime)
-	log.Println("making start of window snapshot")
-	processor.StartSnapshot = true
+	_ = newSnapshotRecording()
 
 	// Make snapshot at end of window.
 	time.Sleep(time.Until(window.NextEnd()) - 2*time.Minute)
 	log.Println("making end of window snapshot")
-	processor.StartSnapshot = true
+	_ = newSnapshotRecording()
 }

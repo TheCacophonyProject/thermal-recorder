@@ -126,6 +126,7 @@ func (mp *MotionProcessor) Process(rawFrame []byte) error {
 
 func (mp *MotionProcessor) processSnapshot(frame *cptvframe.Frame) {
 	if mp.StartSnapshot {
+		mp.log.Printf("making a snapshot")
 		mp.StartSnapshot = false
 		if err := mp.snapshotRecorder.StartRecording(mp.motionDetector.background, 0); err != nil {
 			mp.log.Printf("error with starting constant recorder: %v", err)
