@@ -117,6 +117,8 @@ func runMain() error {
 		return err
 	}
 
+	go snapshotRecordingTriggers(conf.Recorder.Window)
+
 	for {
 		// Set up listener for frames sent by leptond.
 		os.Remove(conf.FrameInput)
@@ -184,9 +186,11 @@ func handleConn(conn net.Conn, conf *Config) error {
 		recorder,
 		headerInfo,
 		constantRecorder,
+		NewCPTVFileRecorder(conf, headerInfo, headerInfo.Brand(), headerInfo.Model(), headerInfo.CameraSerial(), headerInfo.Firmware()),
 	)
 
 	log.Print("reading frames")
+
 	frameLogIntervalFirstMin *= headerInfo.FPS()
 	frameLogInterval *= headerInfo.FPS()
 	rawFrame := make([]byte, headerInfo.FrameSize())

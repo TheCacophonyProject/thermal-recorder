@@ -74,6 +74,20 @@ func (s *service) TakeSnapshot(lastFrame int) (*cptvframe.Frame, *dbus.Error) {
 	}
 	return f, nil
 }
+
+// TakeTestRecording will take a test recording of 2 seconds
+func (s *service) TakeTestRecording() *dbus.Error {
+
+	err := newSnapshotRecording()
+	if err != nil {
+		return &dbus.Error{
+			Name: dbusName + ".TakeSnapshotRecording",
+			Body: []interface{}{err.Error()},
+		}
+	}
+	return nil
+}
+
 func (s *service) CameraInfo() (map[string]interface{}, *dbus.Error) {
 
 	if headerInfo == nil {
