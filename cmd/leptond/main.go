@@ -270,36 +270,47 @@ func logConfig(conf *Config) {
 	log.Printf("frame output: %s", conf.FrameOutput)
 }
 
+// This is not the proper reset process. Check page 16 for proper sequence https://cdn.sparkfun.com/datasheets/Sensors/Infrared/FLIR_Lepton_Data_Brief.pdf
+// TODO, make this not shit. But it's working well enough for field testing for now.
 func cycleCameraPower(pinName string) error {
 	if pinName == "" {
 		return nil
 	}
 
-	// It turns out when GPIO23 is low the camera's Vin->GND voltage
-	// was only dropping to 2.5V instead of 0V. It seems the camera is
-	// still getting some kind of power via other pins. This seems to
-	// sometimes make the camera fail to reset properly (more likely
-	// in some devices than others).
-	//
-	// Uninstalling the SPI driver disables more of the camera's pins
-	// and allows the voltage to drop to 1.2V, allowing the camera to
-	// reset reliably.
-	//
-	// Side note: uninstalling the I2C driver as well allows Vin to go
-	// to 0V but we can't practically uninstall it without breaking
-	// the RTC and ATtiny.
 	uninstallSPIDriver()
 
-	pin := gpioreg.ByName(pinName)
-
 	log.Print("turning camera power off")
-	if err := pin.Out(gpio.Low); err != nil {
+	powerDownPin := gpioreg.ByName("GPIO22") // High for ON
+	resetPin := gpioreg.ByName("GPIO23")     // High for ON
+	clkEnable := gpioreg.ByName("GPIO27")    // High for ON
+	power := gpioreg.ByName("GPIO25")        // High for ON
+
+	if err := powerDownPin.Out(gpio.Low); err != nil {
+		return fmt.Errorf("failed to set camera power pin low: %v", err)
+	}
+	if err := resetPin.Out(gpio.Low); err != nil {
+		return fmt.Errorf("failed to set camera power pin low: %v", err)
+	}
+	if err := clkEnable.Out(gpio.Low); err != nil {
+		return fmt.Errorf("failed to set camera power pin low: %v", err)
+	}
+	if err := power.Out(gpio.Low); err != nil {
 		return fmt.Errorf("failed to set camera power pin low: %v", err)
 	}
 	time.Sleep(3 * time.Second)
 
 	log.Print("turning camera power on")
-	if err := pin.Out(gpio.High); err != nil {
+
+	if err := powerDownPin.Out(gpio.High); err != nil {
+		return fmt.Errorf("failed to set camera power pin high: %v", err)
+	}
+	if err := resetPin.Out(gpio.High); err != nil {
+		return fmt.Errorf("failed to set camera power pin high: %v", err)
+	}
+	if err := clkEnable.Out(gpio.High); err != nil {
+		return fmt.Errorf("failed to set camera power pin high: %v", err)
+	}
+	if err := power.Out(gpio.High); err != nil {
 		return fmt.Errorf("failed to set camera power pin high: %v", err)
 	}
 
@@ -314,6 +325,48 @@ func cycleCameraPower(pinName string) error {
 		return err
 	}
 	return nil
+
+	/*
+		// It turns out when GPIO23 is low the camera's Vin->GND voltage
+		// was only dropping to 2.5V instead of 0V. It seems the camera is
+		// still getting some kind of power via other pins. This seems to
+		// sometimes make the camera fail to reset properly (more likely
+		// in some devices than others).
+		//
+		// Uninstalling the SPI driver disables more of the camera's pins
+		// and allows the voltage to drop to 1.2V, allowing the camera to
+		// reset reliably.
+		//
+		// Side note: uninstalling the I2C driver as well allows Vin to go
+		// to 0V but we can't practically uninstall it without breaking
+		// the RTC and ATtiny.
+		uninstallSPIDriver()
+
+		pin := gpioreg.ByName(pinName)
+
+		log.Print("turning camera power off")
+		if err := pin.Out(gpio.Low); err != nil {
+			return fmt.Errorf("failed to set camera power pin low: %v", err)
+		}
+		time.Sleep(3 * time.Second)
+
+		log.Print("turning camera power on")
+		if err := pin.Out(gpio.High); err != nil {
+			return fmt.Errorf("failed to set camera power pin high: %v", err)
+		}
+
+		log.Print("waiting for camera startup")
+		time.Sleep(8 * time.Second)
+		log.Print("camera should be ready")
+
+		installSPIDriver()
+
+		log.Print("host reinitialisation")
+		if _, err := host.Init(); err != nil {
+			return err
+		}
+		return nil
+	*/
 }
 
 func uninstallSPIDriver() {
