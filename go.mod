@@ -11,9 +11,11 @@ require (
 	github.com/alexflint/go-arg v1.3.0
 	github.com/coreos/go-systemd v0.0.0-20190321100706-95778dfbb74e
 	github.com/godbus/dbus v4.1.0+incompatible
+	github.com/google/go-cmp v0.2.0
 	github.com/juju/ratelimit v1.0.1
 	github.com/niemeyer/pretty v0.0.0-20200227124842-a10e7caefd8e // indirect
 	github.com/pelletier/go-toml v1.6.0 // indirect
+	github.com/rjeczalik/notify v0.9.3
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/spf13/viper v1.5.0 // indirect

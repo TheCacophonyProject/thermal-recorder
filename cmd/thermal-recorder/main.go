@@ -23,12 +23,18 @@ import (
 	"log"
 	"net"
 	"os"
+	"path/filepath"
 	"time"
 
 	"github.com/TheCacophonyProject/event-reporter/eventclient"
+	goconfig "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/go-cptv/cptvframe"
 	"github.com/TheCacophonyProject/lepton3"
+	"github.com/TheCacophonyProject/window"
 	arg "github.com/alexflint/go-arg"
+	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
+	"github.com/rjeczalik/notify"
 	"periph.io/x/periph/host"
 
 	config "github.com/TheCacophonyProject/go-config"
@@ -78,6 +84,57 @@ func main() {
 	}
 }
 
+// checkConfigChanges will compare the config from when first loaded to a new config each time
+// the config file is modified.
+// If there is a difference then the program will exit and systemd will restart the service, causing
+// the new config to be loaded.
+func checkConfigChanges(conf *Config, configDir string) error {
+	configFilePath := filepath.Join(configDir, config.ConfigFileName)
+	fsEvents := make(chan notify.EventInfo, 1)
+	if err := notify.Watch(configFilePath, fsEvents, notify.InCloseWrite, notify.InMovedTo); err != nil {
+		return err
+	}
+	defer notify.Stop(fsEvents)
+
+	for {
+		<-fsEvents
+		newConfig, err := ParseConfig(configDir)
+		if err != nil {
+			log.Println("error reloading config:", err)
+			continue
+		}
+
+		// Need to set Window.Now in Recorder.Config to nil to compare them.
+		isRecorderConfigEqual := func(x, y recorder.RecorderConfig) bool {
+			x.Window.Now = nil
+			y.Window.Now = nil
+			return cmp.Equal(x, y, cmp.AllowUnexported(window.Window{}))
+		}
+
+		// Checking the diff of the current and new config.
+		diff := cmp.Diff(
+			conf,
+			newConfig,
+			cmp.AllowUnexported(
+				config.Location{},
+				recorder.RecorderConfig{},
+				goconfig.ThermalMotion{},
+				goconfig.ThermalThrottler{},
+				window.Window{},
+			),
+			cmpopts.IgnoreFields(Config{}, "Motion"), // Ignore the motion config as this is modified with config.LoadMotionConfig
+			cmp.Comparer(isRecorderConfigEqual))      // Custom compare function for recorder config ignoring Window.Now
+
+		if diff != "" {
+			log.Println("Config changed:", diff, "\nExiting to allow systemctl to restart service.")
+			os.Exit(0)
+		} else {
+			log.Println("No relevant changes detected in config file.")
+		}
+
+	}
+}
+
 func runMain() error {
 	args := procArgs()
 
@@ -90,6 +147,9 @@ func runMain() error {
 	if err != nil {
 		return err
 	}
+
+	// Check for config changes.
+	go checkConfigChanges(conf, args.ConfigDir)
 
 	conf.Verbose = args.Verbose
 
