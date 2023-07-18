@@ -18,16 +18,6 @@ builds:
   goarm:
     - "7"
   ldflags: -s -w -X main.version={{.Version}}
-- id: leptond
-  binary: leptond
-  main: ./cmd/leptond
-  goos:
-    - linux
-  goarch:
-    - arm
-  goarm:
-    - "7"
-  ldflags: -s -w -X main.version={{.Version}}
 - id: thermal-writer
   binary: thermal-writer
   main: ./cmd/thermal-writer
