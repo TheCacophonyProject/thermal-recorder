@@ -161,6 +161,10 @@ func runMain() error {
 		return nil
 	}
 
+	if _, err := os.Stat(conf.OutputDir); os.IsNotExist(err) {
+		return os.MkdirAll(conf.OutputDir, 0755)
+	}
+
 	log.Println("starting d-bus service")
 	err = startService(conf.OutputDir)
 	if err != nil {
