@@ -17,10 +17,6 @@
 package main
 
 import (
-	"log"
-	"os"
-	"strings"
-
 	goconfig "github.com/TheCacophonyProject/go-config"
 	"github.com/TheCacophonyProject/thermal-recorder/motion"
 	"github.com/TheCacophonyProject/thermal-recorder/recorder"
@@ -44,16 +40,6 @@ type Config struct {
 func (c *Config) LoadMotionConfig(cameraModel string) error {
 	configRW, err := goconfig.New(c.ConfigDir)
 	if err != nil {
-		return err
-	}
-
-	// Module override, just a temp fix for now.
-	overrideFile := "/etc/cacophony/lepton-module"
-	content, err := os.ReadFile(overrideFile)
-	if err == nil {
-		cameraModel = strings.TrimSpace(string(content))
-		log.Println("Camera model override: " + cameraModel)
-	} else if !os.IsNotExist(err) {
 		return err
 	}
 

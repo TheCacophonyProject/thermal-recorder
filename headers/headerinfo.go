@@ -19,6 +19,8 @@ package headers
 import (
 	"bufio"
 	"bytes"
+	"log"
+	"os"
 	"strings"
 
 	"gopkg.in/yaml.v1"
@@ -104,6 +106,17 @@ func ReadHeaderInfo(reader *bufio.Reader) (*HeaderInfo, error) {
 		model:     toStr(h[Model]),
 		serial:    toInt(h[Serial]),
 		firmware:  toStr(h[Firmware]),
+	}
+
+	// Module override, just a temp fix for now.
+	overrideFile := "/etc/cacophony/lepton-module"
+	content, err := os.ReadFile(overrideFile)
+	if err == nil {
+		cameraModel := strings.TrimSpace(string(content))
+		header.model = cameraModel
+		log.Println("Camera model override: " + cameraModel)
+	} else if !os.IsNotExist(err) {
+		return nil, err
 	}
 	return header, nil
 }
