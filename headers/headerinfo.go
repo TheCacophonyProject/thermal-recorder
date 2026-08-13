@@ -79,6 +79,12 @@ func (h *HeaderInfo) CameraSerial() int {
 	return h.serial
 }
 
+// Source identifies which process produced the frames, e.g. "tc2-agent" or
+// "thermal-recorder-py". Empty if the sender didn't report one.
+func (h *HeaderInfo) Source() string {
+	return h.source
+}
+
 func ReadHeaderInfo(reader *bufio.Reader) (*HeaderInfo, error) {
 	var buf bytes.Buffer
 	for {
