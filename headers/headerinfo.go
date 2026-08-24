@@ -35,6 +35,7 @@ type HeaderInfo struct {
 	model     string
 	serial    int
 	firmware  string
+	source    string
 }
 
 // ResX implements cptvframe.CameraSpec.
@@ -78,6 +79,12 @@ func (h *HeaderInfo) CameraSerial() int {
 	return h.serial
 }
 
+// Source identifies which process produced the frames, e.g. "tc2-agent" or
+// "thermal-recorder-py". Empty if the sender didn't report one.
+func (h *HeaderInfo) Source() string {
+	return h.source
+}
+
 func ReadHeaderInfo(reader *bufio.Reader) (*HeaderInfo, error) {
 	var buf bytes.Buffer
 	for {
@@ -105,6 +112,10 @@ func ReadHeaderInfo(reader *bufio.Reader) (*HeaderInfo, error) {
 		serial:    toInt(h[Serial]),
 		firmware:  toStr(h[Firmware]),
 	}
+	if value, ok := h["Source"]; ok {
+		header.source = toStr(value)
+	}
+
 	return header, nil
 }
 
