@@ -147,7 +147,7 @@ func TestBackgroundEdges(t *testing.T) {
 	frame := g.setupFrame(backgroundValue)
 	SetFrameEdge(frame, config.EdgePixels, edgeValue)
 
-	detector.updateBackground(frame, false)
+	detector.updateBackground(frame)
 	for y := range frame.Pix {
 		for x := 0; x < len(frame.Pix[y]); x++ {
 			assert.Equal(t, detector.background.Pix[y][x], uint16(backgroundValue))
@@ -157,7 +157,7 @@ func TestBackgroundEdges(t *testing.T) {
 	backgroundValue = 2000
 	frame = g.setupFrame(backgroundValue)
 	SetFrameEdge(frame, config.EdgePixels, edgeValue)
-	detector.updateBackground(frame, false)
+	detector.updateBackground(frame)
 
 	for y := range frame.Pix {
 		for x := 0; x < len(frame.Pix[y]); x++ {
